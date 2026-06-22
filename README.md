@@ -152,6 +152,8 @@ lugar, sin tocar la matemática de `calcular_lambdas.py`.
 | `calcular_lambdas.py` | Calcula los goles esperados (λ) ajustados. |
 | `matriz_poisson.py` | Matriz de marcadores + corrección Dixon-Coles. |
 | `ligas_config.py` | Ligas, temporadas, las 48 selecciones (nombre español ↔ FBref), **`PESOS_MODELO`** (pesos/umbrales del modelo) y **`ELO_RANKING`** (fuerza de cada selección). Todo para calibrar en un solo lugar. |
+| `proveedores.py` | **Capa de fuentes de datos intercambiables** (plug-in). FBref + football-data.org, independientes entre sí. Agregar otra API = una subclase más. |
+| `apis.example.json` | Plantilla para tus API keys (cópiala a `apis.local.json`, que no se sube a git). |
 | `paleta.py` | **Paleta de colores y tipografía** de la interfaz (design tokens). Cambia un color aquí y toda la app se actualiza. |
 | `tema_oscuro.py` | Estilo moderno de los widgets ttk (combos, sliders, progreso, checks). |
 | `calcular_promedios_liga.py` | Genera `promedios_liga.json` leyendo el caché local. |
@@ -192,6 +194,34 @@ Trae de FBref lo reciente y **fusiona los partidos nuevos** en
 > tarda varios minutos. Si solo jugaron unos pocos equipos, **pásalos como
 > argumento** y baja a segundos. En la app, la casilla *"Actualizar datos antes
 > de predecir"* hace justo esto: actualiza **solo los 2 equipos del partido**.
+
+### Fuentes de datos / APIs (arquitectura desacoplada)
+El proyecto **no depende de una sola fuente**. `proveedores.py` define una capa
+*plug-in*: cada API es un proveedor independiente con el mismo contrato, y si una
+falla o no está configurada, las demás siguen funcionando.
+
+- **FBref** (vía soccerdata): goles, tiros, posesión, xG. No necesita clave.
+- **football-data.org**: resultados/goles del Mundial (plan gratuito). Necesita
+  una API key gratis.
+
+Ver qué fuentes tienes activas:
+```powershell
+py -3.11 proveedores.py
+```
+Activar football-data.org: registra una key gratis en su web, copia
+`apis.example.json` a **`apis.local.json`** y pega tu clave (o define la variable
+de entorno `FOOTBALL_DATA_ORG_KEY`). `apis.local.json` no se sube a git.
+
+Actualizar **cruzando todas las fuentes disponibles** (más cobertura/precisión):
+```powershell
+py -3.11 proveedores.py update Spain Brazil   # solo esos equipos
+py -3.11 proveedores.py update                # todas las selecciones
+```
+La fusión deduplica por `Team + Date` y la fuente más confiable (FBref) prevalece.
+
+**Agregar otra API** (p. ej. API-Football): crea una subclase de `ProveedorDatos`
+en `proveedores.py`, implementa `disponible()` y `historial_equipo()` devolviendo
+el esquema normalizado, y regístrala en `PROVEEDORES`. Nada más cambia.
 
 ### Recalcular los promedios del torneo
 Tras una descarga nueva, regenera `promedios_liga.json` (lee solo el caché

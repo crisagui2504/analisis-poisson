@@ -8,6 +8,12 @@ venv/
 # Salidas regenerables
 montecarlo_resultados.csv
 
+# Claves de API (nunca subir)
+apis.local.json
+
+# Archivos temporales de trabajo
+_*
+
 # Cache / temporales
 downloaded_files/
 *.log

@@ -1,0 +1,11 @@
+# Dependencias del predictor. Instalar con:
+#   py -3.11 -m pip install -r requirements.txt
+pandas
+numpy
+scipy
+matplotlib
+scikit-learn
+soccerdata
+requests
+lxml
+html5lib

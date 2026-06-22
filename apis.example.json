@@ -1,0 +1,5 @@
+{
+  "_instrucciones": "Copia este archivo como 'apis.local.json' y pega tus API keys. apis.local.json NO se sube a git. Tambien puedes usar variables de entorno (FOOTBALL_DATA_ORG_KEY). Deja una clave vacia para desactivar ese proveedor.",
+  "football_data_org": "",
+  "api_football": ""
+}
