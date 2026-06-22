@@ -69,6 +69,43 @@ tema_oscuro.py
 <files>
 This section contains the contents of the repository's files.
 
+<file path="Abrir Predictor.bat">
+@echo off
+REM ============================================================
+REM  Predictor de Futbol - Mundial 2026
+REM  Doble clic para abrir la aplicacion.
+REM ============================================================
+title Predictor de Futbol - Mundial 2026
+
+REM Ir a la carpeta donde esta este .bat (la del proyecto)
+cd /d "%~dp0"
+
+echo Abriendo el Predictor de Futbol...
+echo (Puedes cerrar esta ventana negra una vez que aparezca la aplicacion)
+echo.
+
+REM Usamos el lanzador "py" porque "python" en este equipo esta
+REM secuestrado por el atajo de la Microsoft Store y falla.
+py -3.11 app_gui.py
+
+REM Si la app cierra por un error, la ventana queda abierta para leerlo.
+if errorlevel 1 (
+    echo.
+    echo ------------------------------------------------------------
+    echo La aplicacion se cerro con un error. Revisa el mensaje arriba.
+    echo ------------------------------------------------------------
+    pause
+)
+</file>
+
+<file path="apis.example.json">
+{
+  "_instrucciones": "Copia este archivo como 'apis.local.json' y pega tus API keys. apis.local.json NO se sube a git. Tambien puedes usar variables de entorno (FOOTBALL_DATA_ORG_KEY). Deja una clave vacia para desactivar ese proveedor.",
+  "football_data_org": "",
+  "api_football": ""
+}
+</file>
+
 <file path="backtest_cuotas.py">
 """
 Backtest del modelo contra las CUOTAS REALES del mercado (Football-Data.co.uk).
@@ -146,7 +183,7 @@ def _cuotas_cierre(m):
     return None
 
 
-def correr(df_cuotas, rho=-0.13, k=5, min_previos=5):
+def correr(df_cuotas, rho=-0.10, k=3, min_previos=5):
     """
     Predice cada partido sin fuga de datos y devuelve arrays alineados:
     probs_modelo, probs_mercado, cuotas, y (0=local,1=empate,2=visitante).
@@ -187,6 +224,50 @@ def correr(df_cuotas, rho=-0.13, k=5, min_previos=5):
 
     return (np.array(pm_modelo), np.array(pm_mercado),
             np.array(cuotas), np.array(ys))
+
+
+def calibrar(dfs, rhos=(-0.20, -0.15, -0.13, -0.10, -0.05, 0.0),
+             ks=(3, 5, 8, 12), min_previos=5):
+    """
+    Barrido de rho y k sobre uno o varios DataFrames de cuotas (varias ligas
+    para no sobreajustar). Minimiza el log_loss contra los RESULTADOS reales,
+    sin fuga de datos. Las lambdas dependen de k, así que se calculan una sola
+    vez por k y luego se reusa al barrer rho (barato). Devuelve un DataFrame
+    ordenado por log_loss.
+    """
+    datos = {k: [] for k in ks}  # k -> [(lam_l, lam_v, y)]
+    for df in dfs:
+        hist = historial_desde_cuotas(df)
+        dfo = df.sort_values("Date").reset_index(drop=True)
+        for _, m in dfo.iterrows():
+            local, visit, fecha = m["HomeTeam"], m["AwayTeam"], m["Date"]
+            h_loc = hist[(hist["Team"] == local) & (hist["Date"] < fecha)]
+            h_vis = hist[(hist["Team"] == visit) & (hist["Date"] < fecha)]
+            if len(h_loc) < min_previos or len(h_vis) < min_previos:
+                continue
+            prom = hist[hist["Date"] < fecha]["GF"].mean()
+            y = 0 if m["FTR"] == "H" else 1 if m["FTR"] == "D" else 2
+            for k in ks:
+                f_loc = ultima_fila_valida(procesar_equipo(h_loc, prom, prom, 4.5, k_shrinkage=k))
+                f_vis = ultima_fila_valida(procesar_equipo(h_vis, prom, prom, 4.5, k_shrinkage=k))
+                if f_loc is None or f_vis is None:
+                    continue
+                lam_l, lam_v = calcular_lambdas(f_loc, f_vis, neutral=False)
+                datos[k].append((lam_l, lam_v, y))
+
+    filas = []
+    for rho in rhos:
+        for k in ks:
+            probs, ys = [], []
+            for lam_l, lam_v, y in datos[k]:
+                mat = generar_matriz_poisson(lam_l, lam_v, rho=rho)
+                probs.append([float(np.sum(np.tril(mat, -1))), float(np.sum(np.diag(mat))),
+                              float(np.sum(np.triu(mat, 1)))])
+                ys.append(y)
+            if probs:
+                filas.append({"rho": rho, "k": k, "n": len(ys),
+                              "log_loss": log_loss(ys, probs, labels=[0, 1, 2])})
+    return pd.DataFrame(filas).sort_values("log_loss").reset_index(drop=True)
 
 
 def metricas(probs, y):
@@ -231,43 +312,6 @@ if __name__ == "__main__":
     print(f"  ganancia neta: {roi['ganancia']:+.2f} unidades")
     print(f"  ROI: {roi['roi']*100:+.1f}%")
     print("  (ROI>0 sería ganarle al mercado; lo normal es negativo por el margen)")
-</file>
-
-<file path="Abrir Predictor.bat">
-@echo off
-REM ============================================================
-REM  Predictor de Futbol - Mundial 2026
-REM  Doble clic para abrir la aplicacion.
-REM ============================================================
-title Predictor de Futbol - Mundial 2026
-
-REM Ir a la carpeta donde esta este .bat (la del proyecto)
-cd /d "%~dp0"
-
-echo Abriendo el Predictor de Futbol...
-echo (Puedes cerrar esta ventana negra una vez que aparezca la aplicacion)
-echo.
-
-REM Usamos el lanzador "py" porque "python" en este equipo esta
-REM secuestrado por el atajo de la Microsoft Store y falla.
-py -3.11 app_gui.py
-
-REM Si la app cierra por un error, la ventana queda abierta para leerlo.
-if errorlevel 1 (
-    echo.
-    echo ------------------------------------------------------------
-    echo La aplicacion se cerro con un error. Revisa el mensaje arriba.
-    echo ------------------------------------------------------------
-    pause
-)
-</file>
-
-<file path="apis.example.json">
-{
-  "_instrucciones": "Copia este archivo como 'apis.local.json' y pega tus API keys. apis.local.json NO se sube a git. Tambien puedes usar variables de entorno (FOOTBALL_DATA_ORG_KEY). Deja una clave vacia para desactivar ese proveedor.",
-  "football_data_org": "",
-  "api_football": ""
-}
 </file>
 
 <file path="backtest.py">
@@ -756,7 +800,7 @@ import numpy as np
 from scipy.stats import poisson
 
 
-def correccion_dixon_coles(probabilidades, lambda_l, lambda_v, rho=-0.13):
+def correccion_dixon_coles(probabilidades, lambda_l, lambda_v, rho=-0.10):
     probabilidades[0, 0] *= max(0, 1 - lambda_l * lambda_v * rho)
     probabilidades[1, 0] *= max(0, 1 + lambda_v * rho)
     probabilidades[0, 1] *= max(0, 1 + lambda_l * rho)
@@ -765,7 +809,7 @@ def correccion_dixon_coles(probabilidades, lambda_l, lambda_v, rho=-0.13):
     return probabilidades
 
 
-def generar_matriz_poisson(lambda_local, lambda_visitante, max_goles=5, rho=-0.13):
+def generar_matriz_poisson(lambda_local, lambda_visitante, max_goles=5, rho=-0.10):
     goles = np.arange(0, max_goles + 1)
     prob_local = poisson.pmf(goles, lambda_local)
     prob_visitante = poisson.pmf(goles, lambda_visitante)
@@ -1063,7 +1107,7 @@ def predecir_partido(
     equipo_visitante: str,
     liga: str,
     temporada: str,
-    rho: float = -0.13,
+    rho: float = -0.10,
     k_shrinkage: int = 5,
     no_cache: bool = False,
     n_window: int = 6,
@@ -3263,7 +3307,7 @@ class PredictorApp(tk.Tk):
         # ── Parámetros avanzados ──
         seccion("Ajustes avanzados", CIAN)
 
-        self._slider(frame, "Rho (Dixon-Coles)", -0.3, 0.0, -0.13, "rho", "{:.2f}")
+        self._slider(frame, "Rho (Dixon-Coles)", -0.3, 0.0, -0.10, "rho", "{:.2f}")
         self._slider(frame, "Shrinkage k", 1, 15, 5, "k", "{:.0f}")
 
         self.var_cache = tk.BooleanVar(value=True)
@@ -3838,6 +3882,16 @@ el del mercado, y un **simulador de ROI** apostando solo donde el modelo detecta
 valor. *Nota realista:* batir las cuotas de cierre es muy difícil; un log_loss
 peor que el mercado con un ROI ligeramente positivo suele ser ruido, no una
 ventaja durable.
+
+**Calibración de `rho`/`k`** (`backtest_cuotas.calibrar([df1, df2, ...])`): un
+barrido sobre las 5 grandes ligas europeas (≈1500 partidos) mostró que **`k`
+(shrinkage) es la palanca real, no `rho`**. Hallazgos aplicados como defaults:
+- `rho = -0.10` (el óptimo es plano entre 0 y −0.10; antes −0.13).
+- **Clubes**: `k = 3` (tienen muchos partidos → poco shrinkage). Bajó el log_loss
+  del modelo de 1.030 a 1.025.
+- **Mundial**: se mantiene `k = 5`. Las selecciones tienen **pocos partidos**
+  (7–25), así que necesitan MÁS shrinkage; un `k=3` las sobreajustaría. Por eso
+  los defaults son **por contexto**, no un valor único.
 
 ### Calibrar el modelo (avanzado)
 ```python

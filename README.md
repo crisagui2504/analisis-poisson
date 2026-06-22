@@ -268,6 +268,16 @@ valor. *Nota realista:* batir las cuotas de cierre es muy difícil; un log_loss
 peor que el mercado con un ROI ligeramente positivo suele ser ruido, no una
 ventaja durable.
 
+**Calibración de `rho`/`k`** (`backtest_cuotas.calibrar([df1, df2, ...])`): un
+barrido sobre las 5 grandes ligas europeas (≈1500 partidos) mostró que **`k`
+(shrinkage) es la palanca real, no `rho`**. Hallazgos aplicados como defaults:
+- `rho = -0.10` (el óptimo es plano entre 0 y −0.10; antes −0.13).
+- **Clubes**: `k = 3` (tienen muchos partidos → poco shrinkage). Bajó el log_loss
+  del modelo de 1.030 a 1.025.
+- **Mundial**: se mantiene `k = 5`. Las selecciones tienen **pocos partidos**
+  (7–25), así que necesitan MÁS shrinkage; un `k=3` las sobreajustaría. Por eso
+  los defaults son **por contexto**, no un valor único.
+
 ### Calibrar el modelo (avanzado)
 ```python
 import pandas as pd

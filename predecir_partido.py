@@ -43,7 +43,7 @@ def predecir_partido(
     equipo_visitante: str,
     liga: str,
     temporada: str,
-    rho: float = -0.13,
+    rho: float = -0.10,
     k_shrinkage: int = 5,
     no_cache: bool = False,
     n_window: int = 6,

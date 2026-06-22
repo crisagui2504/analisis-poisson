@@ -74,7 +74,7 @@ def _cuotas_cierre(m):
     return None
 
 
-def correr(df_cuotas, rho=-0.13, k=5, min_previos=5):
+def correr(df_cuotas, rho=-0.10, k=3, min_previos=5):
     """
     Predice cada partido sin fuga de datos y devuelve arrays alineados:
     probs_modelo, probs_mercado, cuotas, y (0=local,1=empate,2=visitante).
@@ -115,6 +115,50 @@ def correr(df_cuotas, rho=-0.13, k=5, min_previos=5):
 
     return (np.array(pm_modelo), np.array(pm_mercado),
             np.array(cuotas), np.array(ys))
+
+
+def calibrar(dfs, rhos=(-0.20, -0.15, -0.13, -0.10, -0.05, 0.0),
+             ks=(3, 5, 8, 12), min_previos=5):
+    """
+    Barrido de rho y k sobre uno o varios DataFrames de cuotas (varias ligas
+    para no sobreajustar). Minimiza el log_loss contra los RESULTADOS reales,
+    sin fuga de datos. Las lambdas dependen de k, así que se calculan una sola
+    vez por k y luego se reusa al barrer rho (barato). Devuelve un DataFrame
+    ordenado por log_loss.
+    """
+    datos = {k: [] for k in ks}  # k -> [(lam_l, lam_v, y)]
+    for df in dfs:
+        hist = historial_desde_cuotas(df)
+        dfo = df.sort_values("Date").reset_index(drop=True)
+        for _, m in dfo.iterrows():
+            local, visit, fecha = m["HomeTeam"], m["AwayTeam"], m["Date"]
+            h_loc = hist[(hist["Team"] == local) & (hist["Date"] < fecha)]
+            h_vis = hist[(hist["Team"] == visit) & (hist["Date"] < fecha)]
+            if len(h_loc) < min_previos or len(h_vis) < min_previos:
+                continue
+            prom = hist[hist["Date"] < fecha]["GF"].mean()
+            y = 0 if m["FTR"] == "H" else 1 if m["FTR"] == "D" else 2
+            for k in ks:
+                f_loc = ultima_fila_valida(procesar_equipo(h_loc, prom, prom, 4.5, k_shrinkage=k))
+                f_vis = ultima_fila_valida(procesar_equipo(h_vis, prom, prom, 4.5, k_shrinkage=k))
+                if f_loc is None or f_vis is None:
+                    continue
+                lam_l, lam_v = calcular_lambdas(f_loc, f_vis, neutral=False)
+                datos[k].append((lam_l, lam_v, y))
+
+    filas = []
+    for rho in rhos:
+        for k in ks:
+            probs, ys = [], []
+            for lam_l, lam_v, y in datos[k]:
+                mat = generar_matriz_poisson(lam_l, lam_v, rho=rho)
+                probs.append([float(np.sum(np.tril(mat, -1))), float(np.sum(np.diag(mat))),
+                              float(np.sum(np.triu(mat, 1)))])
+                ys.append(y)
+            if probs:
+                filas.append({"rho": rho, "k": k, "n": len(ys),
+                              "log_loss": log_loss(ys, probs, labels=[0, 1, 2])})
+    return pd.DataFrame(filas).sort_values("log_loss").reset_index(drop=True)
 
 
 def metricas(probs, y):

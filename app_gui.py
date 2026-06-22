@@ -206,7 +206,7 @@ class PredictorApp(tk.Tk):
         # ── Parámetros avanzados ──
         seccion("Ajustes avanzados", CIAN)
 
-        self._slider(frame, "Rho (Dixon-Coles)", -0.3, 0.0, -0.13, "rho", "{:.2f}")
+        self._slider(frame, "Rho (Dixon-Coles)", -0.3, 0.0, -0.10, "rho", "{:.2f}")
         self._slider(frame, "Shrinkage k", 1, 15, 5, "k", "{:.0f}")
 
         self.var_cache = tk.BooleanVar(value=True)
