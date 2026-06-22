@@ -32,7 +32,7 @@ The content is organized as follows:
 <notes>
 - Some files may have been excluded based on .gitignore rules and Repomix's configuration
 - Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
-- Files matching these patterns are excluded: base_mundial_2026.csv, montecarlo_resultados.csv
+- Files matching these patterns are excluded: base_mundial_2026.csv, montecarlo_resultados.csv, resultados_backtest.csv
 - Files matching patterns in .gitignore are excluded
 - Files matching default ignore patterns are excluded
 - Files are sorted by Git change count (files with more changes are at the bottom)
@@ -46,6 +46,7 @@ Abrir Predictor.bat
 actualizar_datos.py
 apis.example.json
 app_gui.py
+backtest_cuotas.py
 backtest.py
 calcular_lambdas.py
 calcular_promedios_liga.py
@@ -67,6 +68,170 @@ tema_oscuro.py
 
 <files>
 This section contains the contents of the repository's files.
+
+<file path="backtest_cuotas.py">
+"""
+Backtest del modelo contra las CUOTAS REALES del mercado (Football-Data.co.uk).
+
+Mide si el modelo Poisson/Dixon-Coles le gana o iguala a las casas de apuestas:
+  - Compara su log-loss / Brier / acierto contra las cuotas de cierre de Pinnacle
+    (la casa más "sharp"), que son el patrón a vencer.
+  - Simula el ROI de apostar solo cuando el modelo detecta "valor".
+
+Clave: el CSV de Football-Data ya trae los goles de cada partido, así que el
+historial de cada equipo se construye del MISMO archivo. 100% offline tras la
+descarga, sin FBref ni mapeo de nombres. Backtest SIN fuga de datos: cada partido
+se predice usando solo los partidos anteriores.
+
+Uso:
+    py -3.11 backtest_cuotas.py            # Premier League 2024-25
+    py -3.11 backtest_cuotas.py SP1 2425   # La Liga 2024-25
+"""
+import sys
+
+import numpy as np
+import pandas as pd
+from sklearn.metrics import log_loss
+
+from feature_engineering import procesar_equipo, ultima_fila_valida
+from calcular_lambdas import calcular_lambdas
+from matriz_poisson import generar_matriz_poisson
+
+# Códigos de liga de Football-Data.co.uk
+LIGAS_FD = {
+    "E0": "Premier League (Inglaterra)", "SP1": "La Liga (España)",
+    "I1": "Serie A (Italia)", "D1": "Bundesliga (Alemania)", "F1": "Ligue 1 (Francia)",
+}
+BASE_URL = "https://www.football-data.co.uk/mmz4281"
+
+
+def descargar_cuotas(codigo: str = "E0", temporada: str = "2425") -> pd.DataFrame:
+    """Descarga el CSV de resultados + cuotas de una liga/temporada."""
+    url = f"{BASE_URL}/{temporada}/{codigo}.csv"
+    df = pd.read_csv(url)
+    df["Date"] = pd.to_datetime(df["Date"], dayfirst=True, errors="coerce")
+    return df.dropna(subset=["Date", "HomeTeam", "AwayTeam", "FTHG", "FTAG", "FTR"])
+
+
+def historial_desde_cuotas(df: pd.DataFrame) -> pd.DataFrame:
+    """Construye el historial por equipo (esquema del modelo) desde el CSV."""
+    filas = []
+    for _, m in df.iterrows():
+        gh, ga = int(m["FTHG"]), int(m["FTAG"])
+        base = {"Poss": np.nan, "Sh": np.nan, "SoT": np.nan, "xG": np.nan,
+                "xGA": np.nan, "Fls": np.nan, "CrdY": 0, "CrdR": 0}
+        filas.append({"Date": m["Date"], "Team": m["HomeTeam"], "Opponent": m["AwayTeam"],
+                      "Venue": "Home", "Result": "W" if gh > ga else "D" if gh == ga else "L",
+                      "GF": gh, "GA": ga, **base})
+        filas.append({"Date": m["Date"], "Team": m["AwayTeam"], "Opponent": m["HomeTeam"],
+                      "Venue": "Away", "Result": "W" if ga > gh else "D" if gh == ga else "L",
+                      "GF": ga, "GA": gh, **base})
+    return pd.DataFrame(filas).sort_values("Date").reset_index(drop=True)
+
+
+def _devig(oh, od, oa):
+    """Cuotas decimales -> probabilidades sin margen de la casa (de-vig)."""
+    if any(pd.isna(x) or x <= 1 for x in (oh, od, oa)):
+        return None
+    imp = np.array([1 / oh, 1 / od, 1 / oa])
+    return imp / imp.sum()
+
+
+def _cuotas_cierre(m):
+    """Cuotas de cierre por prioridad: Pinnacle -> Bet365 -> promedio."""
+    for h, d, a in [("PSCH", "PSCD", "PSCA"), ("B365CH", "B365CD", "B365CA"),
+                    ("AvgCH", "AvgCD", "AvgCA"), ("B365H", "B365D", "B365A")]:
+        if all(c in m and not pd.isna(m[c]) for c in (h, d, a)):
+            return float(m[h]), float(m[d]), float(m[a])
+    return None
+
+
+def correr(df_cuotas, rho=-0.13, k=5, min_previos=5):
+    """
+    Predice cada partido sin fuga de datos y devuelve arrays alineados:
+    probs_modelo, probs_mercado, cuotas, y (0=local,1=empate,2=visitante).
+    """
+    hist = historial_desde_cuotas(df_cuotas)
+    df = df_cuotas.sort_values("Date").reset_index(drop=True)
+
+    pm_modelo, pm_mercado, cuotas, ys = [], [], [], []
+    for _, m in df.iterrows():
+        oc = _cuotas_cierre(m)
+        merc = _devig(*oc) if oc else None
+        if merc is None:
+            continue
+
+        local, visit, fecha = m["HomeTeam"], m["AwayTeam"], m["Date"]
+        h_loc = hist[(hist["Team"] == local) & (hist["Date"] < fecha)]
+        h_vis = hist[(hist["Team"] == visit) & (hist["Date"] < fecha)]
+        if len(h_loc) < min_previos or len(h_vis) < min_previos:
+            continue
+
+        prom_gf = hist[hist["Date"] < fecha]["GF"].mean()  # ~media de goles de local
+        f_loc = ultima_fila_valida(procesar_equipo(h_loc, prom_gf, prom_gf, 4.5, k_shrinkage=k))
+        f_vis = ultima_fila_valida(procesar_equipo(h_vis, prom_gf, prom_gf, 4.5, k_shrinkage=k))
+        if f_loc is None or f_vis is None:
+            continue
+
+        # Clubes: SÍ aplica ventaja de localía (neutral=False), sin Elo.
+        lam_l, lam_v = calcular_lambdas(f_loc, f_vis, neutral=False)
+        mat = generar_matriz_poisson(lam_l, lam_v, rho=rho)
+        probs = [float(np.sum(np.tril(mat, -1))), float(np.sum(np.diag(mat))),
+                 float(np.sum(np.triu(mat, 1)))]
+
+        y = 0 if m["FTR"] == "H" else 1 if m["FTR"] == "D" else 2
+        pm_modelo.append(probs)
+        pm_mercado.append(list(merc))
+        cuotas.append(oc)
+        ys.append(y)
+
+    return (np.array(pm_modelo), np.array(pm_mercado),
+            np.array(cuotas), np.array(ys))
+
+
+def metricas(probs, y):
+    onehot = np.eye(3)[y]
+    return {"log_loss": log_loss(y, probs, labels=[0, 1, 2]),
+            "brier": float(np.mean(np.sum((probs - onehot) ** 2, axis=1))),
+            "acierto": float(np.mean(np.argmax(probs, axis=1) == y))}
+
+
+def simular_roi(probs, cuotas, y, umbral=0.05, stake=1.0):
+    """Apuesta 1 unidad a cada resultado donde prob_modelo*cuota > 1+umbral."""
+    ganancia, n = 0.0, 0
+    for p, o, real in zip(probs, cuotas, y):
+        for k in range(3):
+            if p[k] * o[k] > 1 + umbral:  # valor esperado positivo
+                n += 1
+                ganancia += (o[k] - 1) * stake if real == k else -stake
+    roi = (ganancia / (n * stake)) if n else 0.0
+    return {"apuestas": n, "ganancia": ganancia, "roi": roi}
+
+
+if __name__ == "__main__":
+    codigo = sys.argv[1] if len(sys.argv) > 1 else "E0"
+    temporada = sys.argv[2] if len(sys.argv) > 2 else "2425"
+    print(f"Liga: {LIGAS_FD.get(codigo, codigo)} · temporada {temporada}")
+
+    df = descargar_cuotas(codigo, temporada)
+    print(f"Partidos descargados: {len(df)}")
+
+    pm, mk, od, y = correr(df)
+    print(f"Partidos evaluados (con historial suficiente): {len(y)}\n")
+
+    mo, me = metricas(pm, y), metricas(mk, y)
+    print(f"{'':12}{'log_loss':>10}{'brier':>9}{'acierto':>9}")
+    print(f"{'MERCADO':12}{me['log_loss']:>10.4f}{me['brier']:>9.4f}{me['acierto']*100:>8.1f}%")
+    print(f"{'MODELO':12}{mo['log_loss']:>10.4f}{mo['brier']:>9.4f}{mo['acierto']*100:>8.1f}%")
+    print("  (menor log_loss/brier = mejor; el mercado es muy dificil de batir)\n")
+
+    roi = simular_roi(pm, od, y)
+    print(f"Simulador de ROI (apostando al 'valor' del modelo):")
+    print(f"  apuestas con valor: {roi['apuestas']}")
+    print(f"  ganancia neta: {roi['ganancia']:+.2f} unidades")
+    print(f"  ROI: {roi['roi']*100:+.1f}%")
+    print("  (ROI>0 sería ganarle al mercado; lo normal es negativo por el margen)")
+</file>
 
 <file path="Abrir Predictor.bat">
 @echo off
@@ -274,105 +439,6 @@ if __name__ == "__main__":
     print("  correr_backtest(partidos_historicos_df, df_liga_completo_df)")
     print("Donde partidos_historicos_df tiene una fila por partido a evaluar (Team, Opponent, Date, Result)")
     print("y df_liga_completo_df tiene el historial de TODOS los equipos de la liga.")
-</file>
-
-<file path="calcular_lambdas.py">
-"""
-Convierte las caracteristicas de cada equipo en los goles esperados (lambda).
-
-Todos los pesos y umbrales viven en PESOS_MODELO (ligas_config.py); aqui solo
-estan las formulas. Para recalibrar el modelo, edita el diccionario alli.
-"""
-from typing import Any, Mapping, Tuple
-
-import pandas as pd
-
-from ligas_config import PESOS_MODELO
-
-
-def calcular_lambdas(
-    features_local: "pd.Series | Mapping[str, Any]",
-    features_visitante: "pd.Series | Mapping[str, Any]",
-    factor_local: float | None = None,
-    neutral: bool = True,
-    pesos: Mapping[str, Any] = PESOS_MODELO,
-    elo_local: float | None = None,
-    elo_visitante: float | None = None,
-) -> Tuple[float, float]:
-    """
-    Calcula los lambdas (goles esperados) de local y visitante.
-
-    neutral=True no aplica ventaja de localia, adecuado para la mayoria de
-    partidos de Mundial. neutral=False aplica factor_local.
-
-    Si se pasan elo_local y elo_visitante, se aplica un empuje hacia el favorito
-    segun la diferencia de Elo (ponderado por pesos["peso_elo"]).
-    """
-    if factor_local is None:
-        factor_local = pesos["factor_local"]
-
-    lambda_local_base = (
-        features_local["xg_favor_adj"] + features_visitante["xg_contra_adj"]
-    ) / 2
-    lambda_visitante_base = (
-        features_visitante["xg_favor_adj"] + features_local["xg_contra_adj"]
-    ) / 2
-
-    lambda_local = lambda_local_base if neutral else lambda_local_base * factor_local
-    lambda_visitante = lambda_visitante_base
-
-    # Fatiga
-    descanso_local = features_local["dias_descanso"]
-    descanso_visit = features_visitante["dias_descanso"]
-    if (descanso_local < pesos["umbral_descanso_bajo"]
-            and descanso_visit > pesos["umbral_descanso_alto"]):
-        lambda_local *= pesos["factor_descanso"]
-    elif (descanso_visit < pesos["umbral_descanso_bajo"]
-            and descanso_local > pesos["umbral_descanso_alto"]):
-        lambda_visitante *= pesos["factor_descanso"]
-
-    # Forma reciente
-    racha_local = features_local.get("racha_puntos_prom", pesos["default_racha"])
-    if racha_local > pesos["umbral_racha_alta"]:
-        lambda_local *= pesos["bonus_racha"]
-    elif racha_local < pesos["umbral_racha_baja"]:
-        lambda_local *= pesos["penal_racha"]
-
-    racha_visit = features_visitante.get("racha_puntos_prom", pesos["default_racha"])
-    if racha_visit > pesos["umbral_racha_alta"]:
-        lambda_visitante *= pesos["bonus_racha"]
-    elif racha_visit < pesos["umbral_racha_baja"]:
-        lambda_visitante *= pesos["penal_racha"]
-
-    # Posesion
-    if features_local.get("posesion_prom", pesos["default_posesion"]) > pesos["umbral_posesion"]:
-        lambda_local *= pesos["bonus_posesion"]
-    if features_visitante.get("posesion_prom", pesos["default_posesion"]) > pesos["umbral_posesion"]:
-        lambda_visitante *= pesos["bonus_posesion"]
-
-    # Tiros a puerta: bonus ofensivo si remata mas al arco que la media. (Antes
-    # se calculaba tiros_puerta_adj pero no se usaba; aqui queda activo.)
-    if features_local.get("tiros_puerta_adj", pesos["default_tiros"]) > pesos["umbral_tiros"]:
-        lambda_local *= pesos["bonus_tiros"]
-    if features_visitante.get("tiros_puerta_adj", pesos["default_tiros"]) > pesos["umbral_tiros"]:
-        lambda_visitante *= pesos["bonus_tiros"]
-
-    # Disciplina (un equipo indisciplinado concede algo mas al rival)
-    if features_local.get("disciplina_prom", pesos["default_disciplina"]) > pesos["umbral_disciplina"]:
-        lambda_visitante *= pesos["bonus_disciplina"]
-    if features_visitante.get("disciplina_prom", pesos["default_disciplina"]) > pesos["umbral_disciplina"]:
-        lambda_local *= pesos["bonus_disciplina"]
-
-    # Diferencia de fuerza Elo entre ambos equipos (head-to-head). Expectativa
-    # Elo estandar: E_local = 1 / (1 + 10**((elo_v - elo_l)/400)). Empujamos los
-    # lambdas hacia el favorito de forma simetrica y acotada.
-    peso_elo = pesos.get("peso_elo", 0.0)
-    if peso_elo and elo_local is not None and elo_visitante is not None:
-        e_local = 1.0 / (1.0 + 10 ** ((elo_visitante - elo_local) / 400.0))
-        lambda_local *= 1.0 + peso_elo * (e_local - 0.5)
-        lambda_visitante *= 1.0 + peso_elo * ((1.0 - e_local) - 0.5)
-
-    return float(lambda_local), float(lambda_visitante)
 </file>
 
 <file path="calcular_promedios_liga.py">
@@ -683,269 +749,6 @@ def ultima_fila_valida(df_features, columnas_requeridas=None):
     if validas.empty:
         return None
     return validas.iloc[-1]
-</file>
-
-<file path="ligas_config.py">
-"""
-Configuracion de ligas y equipos precargados para el Mundial 2026.
-"""
-
-# ── Pesos y umbrales del modelo de lambdas ──────────────────────────────────
-# Centralizados aqui para poder calibrar el modelo sin tocar las formulas
-# matematicas en calcular_lambdas.py. Cambia un numero aqui y se aplica en
-# todo el calculo.
-PESOS_MODELO = {
-    # Localia (solo se aplica si neutral=False; el Mundial juega en sede neutral)
-    "factor_local": 1.10,
-
-    # Fatiga: si un equipo descanso poco y el rival mucho, penaliza su ataque
-    "factor_descanso": 0.95,
-    "umbral_descanso_bajo": 4,   # dias: menos que esto = poco descanso
-    "umbral_descanso_alto": 6,   # dias: mas que esto = bien descansado
-
-    # Forma reciente (puntos promedio por partido en la ventana)
-    "bonus_racha": 1.03,
-    "penal_racha": 0.97,
-    "umbral_racha_alta": 2.0,
-    "umbral_racha_baja": 1.0,
-
-    # Posesion: un equipo que controla mas el balon genera algo mas de peligro
-    "bonus_posesion": 1.02,
-    "umbral_posesion": 55,
-
-    # Tiros a puerta: un equipo que remata mas al arco que la media del torneo
-    # tiene algo mas de peligro ofensivo (usa tiros_puerta_adj).
-    "bonus_tiros": 1.02,
-    "umbral_tiros": 9.0,
-    "default_tiros": 8.5,
-
-    # Disciplina: un equipo indisciplinado concede algo mas al rival
-    "bonus_disciplina": 1.02,
-    "umbral_disciplina": 20,
-
-    # Diferencia de fuerza Elo entre los dos equipos del partido. Empuja los
-    # lambdas hacia el favorito segun la formula Elo (expectativa 0..1). 0 lo
-    # desactiva; ~0.65 hace que un gigante se imponga a un equipo chico aunque
-    # este venga en racha.
-    "peso_elo": 0.65,
-
-    # Valores por defecto cuando FBref no publica el dato (selecciones)
-    "default_racha": 1.5,
-    "default_posesion": 50,
-    "default_disciplina": 15,
-}
-
-
-# ── Ranking de fuerza (Elo) ──────────────────────────────────────────────────
-# Elo aproximado de cada seleccion. Se usa para ponderar los goles por la fuerza
-# del rival (Strength of Schedule): anotar a un gigante "infla" el valor, anotar
-# a un equipo debil lo "desinfla". Ajusta los numeros aqui para recalibrar.
-ELO_REFERENCIA = 1650  # rival "promedio"; factor = elo_rival / ELO_REFERENCIA
-
-ELO_RANKING = {
-    # Selecciones del Mundial 2026 (nombres tal como los devuelve FBref)
-    "Argentina": 2120, "France": 2110, "Spain": 2100, "England": 2070,
-    "Brazil": 2060, "Portugal": 2050, "Netherlands": 2040, "Germany": 2010,
-    "Belgium": 1990, "Colombia": 1990, "Uruguay": 1980, "Croatia": 1970,
-    "Morocco": 1970, "Senegal": 1930, "Switzerland": 1920, "Japan": 1920,
-    "Ecuador": 1900, "Mexico": 1900, "Norway": 1900, "Türkiye": 1900,
-    "United States": 1900, "Korea Republic": 1860, "Austria": 1860,
-    "Sweden": 1860, "Egypt": 1850, "Scotland": 1840, "IR Iran": 1840,
-    "Côte d'Ivoire": 1840, "Algeria": 1820, "Czechia": 1820, "Paraguay": 1820,
-    "Tunisia": 1820, "Canada": 1830, "Australia": 1810, "South Africa": 1780,
-    "Bosnia & Herz.": 1760, "Ghana": 1760, "Qatar": 1750, "Uzbekistan": 1750,
-    "Congo DR": 1740, "Saudi Arabia": 1740, "Iraq": 1720, "Panama": 1720,
-    "Jordan": 1700, "Cabo Verde": 1680, "New Zealand": 1650, "Curaçao": 1620,
-    "Haiti": 1600,
-    # Rivales frecuentes de clasificatorias (mejoran el calculo de SoS)
-    "Serbia": 1850, "Nigeria": 1850, "Poland": 1850, "Ukraine": 1850,
-    "Italy": 2000, "Denmark": 1900, "Peru": 1750, "Chile": 1820,
-    "Venezuela": 1700, "Bolivia": 1600, "Iceland": 1700, "Greece": 1800,
-    "Hungary": 1800, "Honduras": 1650, "Guatemala": 1550, "Zambia": 1600,
-    "Guinea": 1650, "Mozambique": 1450, "Uganda": 1500, "Botswana": 1450,
-    "Mauritania": 1500, "Somalia": 1300, "Bangladesh": 1300, "Palestine": 1450,
-    "Lebanon": 1500,
-}
-
-# Alias: nombre "limpio" del rival -> clave en ELO_RANKING (cuando difieren).
-ELO_ALIAS = {
-    "Iran": "IR Iran", "South Korea": "Korea Republic", "USA": "United States",
-    "Ivory Coast": "Côte d'Ivoire", "Turkey": "Türkiye", "Czech Republic": "Czechia",
-    "DR Congo": "Congo DR", "Bosnia": "Bosnia & Herz.", "Cape Verde": "Cabo Verde",
-}
-
-
-def _limpiar_nombre_rival(opponent: str) -> str:
-    """FBref antepone un codigo de pais ('sa Saudi Arabia'). Lo quitamos."""
-    if not isinstance(opponent, str):
-        return ""
-    partes = opponent.strip().split(" ", 1)
-    # Si el primer token es un codigo corto en minusculas, lo descartamos.
-    if len(partes) == 2 and partes[0].islower() and len(partes[0]) <= 3:
-        return partes[1].strip()
-    return opponent.strip()
-
-
-def elo_de(opponent: str, default: float = ELO_REFERENCIA) -> float:
-    """Devuelve el Elo de un rival a partir del nombre que da FBref."""
-    nombre = _limpiar_nombre_rival(opponent)
-    if nombre in ELO_RANKING:
-        return ELO_RANKING[nombre]
-    if nombre in ELO_ALIAS:
-        return ELO_RANKING[ELO_ALIAS[nombre]]
-    return default
-
-
-LIGAS = {
-    "Mundial 2026": "INT-World Cup",
-    "Premier League (Inglaterra)": "ENG-Premier League",
-    "La Liga (España)": "ESP-La Liga",
-    "Liga MX (México)": "MEX-Liga MX",
-    "Bundesliga (Alemania)": "GER-Bundesliga",
-    "Serie A (Italia)": "ITA-Serie A",
-    "Ligue 1 (Francia)": "FRA-Ligue 1",
-}
-
-TEMPORADAS = {
-    "Mundial 2026": "2026",
-    "Premier League (Inglaterra)": "2025-2026",
-    "La Liga (España)": "2025-2026",
-    "Liga MX (México)": "2025-2026",
-    "Bundesliga (Alemania)": "2025-2026",
-    "Serie A (Italia)": "2025-2026",
-    "Ligue 1 (Francia)": "2025-2026",
-}
-
-# 48 equipos clasificados al Mundial 2026.
-# Los nombres apuntan a la forma inglesa/FBref mas probable. Si soccerdata
-# devuelve "No data found" para alguno, ajusta aqui el nombre exacto de FBref.
-EQUIPOS_MUNDIAL = [
-    "Algeria",
-    "Argentina",
-    "Australia",
-    "Austria",
-    "Belgium",
-    "Bosnia & Herz.",
-    "Brazil",
-    "Canada",
-    "Cabo Verde",
-    "Colombia",
-    "Croatia",
-    "Curaçao",
-    "Czechia",
-    "Congo DR",
-    "Ecuador",
-    "Egypt",
-    "England",
-    "France",
-    "Germany",
-    "Ghana",
-    "Haiti",
-    "IR Iran",
-    "Iraq",
-    "Côte d'Ivoire",
-    "Japan",
-    "Jordan",
-    "Korea Republic",
-    "Mexico",
-    "Morocco",
-    "Netherlands",
-    "New Zealand",
-    "Norway",
-    "Panama",
-    "Paraguay",
-    "Portugal",
-    "Qatar",
-    "Saudi Arabia",
-    "Scotland",
-    "Senegal",
-    "South Africa",
-    "Spain",
-    "Sweden",
-    "Switzerland",
-    "Tunisia",
-    "Türkiye",
-    "United States",
-    "Uruguay",
-    "Uzbekistan",
-]
-
-EQUIPOS_MUNDIAL.sort()
-assert len(EQUIPOS_MUNDIAL) == 48, f"Deberian ser 48 equipos, hay {len(EQUIPOS_MUNDIAL)}"
-
-# ── Cuadro del Mundial 2026: 12 grupos de 4 ─────────────────────────────────
-# IMPORTANTE: esta es una distribucion provisional, sembrada por Elo en bombos
-# (no es el sorteo oficial). EDITALA para reflejar los grupos reales: solo mueve
-# los nombres entre las listas. La simulacion (montecarlo_mundial.py) la lee tal
-# cual. Los nombres deben coincidir con los de FBref (los de EQUIPOS_MUNDIAL).
-GRUPOS_MUNDIAL = {
-    "A": ["Argentina", "Morocco", "Egypt", "Ghana"],
-    "B": ["France", "Senegal", "Scotland", "Qatar"],
-    "C": ["Spain", "Switzerland", "IR Iran", "Uzbekistan"],
-    "D": ["England", "Japan", "Côte d'Ivoire", "Congo DR"],
-    "E": ["Brazil", "Ecuador", "Canada", "Saudi Arabia"],
-    "F": ["Portugal", "Mexico", "Algeria", "Iraq"],
-    "G": ["Netherlands", "Norway", "Czechia", "Panama"],
-    "H": ["Germany", "Türkiye", "Paraguay", "Jordan"],
-    "I": ["Belgium", "United States", "Tunisia", "Cabo Verde"],
-    "J": ["Colombia", "Korea Republic", "Australia", "New Zealand"],
-    "K": ["Uruguay", "Austria", "South Africa", "Curaçao"],
-    "L": ["Croatia", "Sweden", "Bosnia & Herz.", "Haiti"],
-}
-
-# Nombres para mostrar en la interfaz (espanol) -> nombre FBref.
-NOMBRE_DISPLAY = {
-    "Alemania": "Germany",
-    "Arabia Saudita": "Saudi Arabia",
-    "Argelia": "Algeria",
-    "Argentina": "Argentina",
-    "Australia": "Australia",
-    "Austria": "Austria",
-    "Bélgica": "Belgium",
-    "Bosnia y Herzegovina": "Bosnia & Herz.",
-    "Brasil": "Brazil",
-    "Cabo Verde": "Cabo Verde",
-    "Canadá": "Canada",
-    "Catar": "Qatar",
-    "Chequia": "Czechia",
-    "Colombia": "Colombia",
-    "Corea del Sur": "Korea Republic",
-    "Costa de Marfil": "Côte d'Ivoire",
-    "Croacia": "Croatia",
-    "Curazao": "Curaçao",
-    "Ecuador": "Ecuador",
-    "Egipto": "Egypt",
-    "Escocia": "Scotland",
-    "España": "Spain",
-    "Estados Unidos": "United States",
-    "Francia": "France",
-    "Ghana": "Ghana",
-    "Haití": "Haiti",
-    "Inglaterra": "England",
-    "Irak": "Iraq",
-    "Irán": "IR Iran",
-    "Japón": "Japan",
-    "Jordania": "Jordan",
-    "Marruecos": "Morocco",
-    "México": "Mexico",
-    "Noruega": "Norway",
-    "Nueva Zelanda": "New Zealand",
-    "Países Bajos": "Netherlands",
-    "Panamá": "Panama",
-    "Paraguay": "Paraguay",
-    "Portugal": "Portugal",
-    "RD Congo": "Congo DR",
-    "Senegal": "Senegal",
-    "Sudáfrica": "South Africa",
-    "Suecia": "Sweden",
-    "Suiza": "Switzerland",
-    "Túnez": "Tunisia",
-    "Turquía": "Türkiye",
-    "Uruguay": "Uruguay",
-    "Uzbekistán": "Uzbekistan",
-}
-
-EQUIPOS_MUNDIAL_ES = sorted(NOMBRE_DISPLAY.keys())
 </file>
 
 <file path="matriz_poisson.py">
@@ -2239,6 +2042,105 @@ print(f"\nListo. '{CSV_MAESTRO_MUNDIAL}' actualizado. Abre la app normalmente.")
 input("Presiona Enter para cerrar...")
 </file>
 
+<file path="calcular_lambdas.py">
+"""
+Convierte las caracteristicas de cada equipo en los goles esperados (lambda).
+
+Todos los pesos y umbrales viven en PESOS_MODELO (ligas_config.py); aqui solo
+estan las formulas. Para recalibrar el modelo, edita el diccionario alli.
+"""
+from typing import Any, Mapping, Tuple
+
+import pandas as pd
+
+from ligas_config import PESOS_MODELO
+
+
+def calcular_lambdas(
+    features_local: "pd.Series | Mapping[str, Any]",
+    features_visitante: "pd.Series | Mapping[str, Any]",
+    factor_local: float | None = None,
+    neutral: bool = True,
+    pesos: Mapping[str, Any] = PESOS_MODELO,
+    elo_local: float | None = None,
+    elo_visitante: float | None = None,
+) -> Tuple[float, float]:
+    """
+    Calcula los lambdas (goles esperados) de local y visitante.
+
+    neutral=True no aplica ventaja de localia, adecuado para la mayoria de
+    partidos de Mundial. neutral=False aplica factor_local.
+
+    Si se pasan elo_local y elo_visitante, se aplica un empuje hacia el favorito
+    segun la diferencia de Elo (ponderado por pesos["peso_elo"]).
+    """
+    if factor_local is None:
+        factor_local = pesos["factor_local"]
+
+    lambda_local_base = (
+        features_local["xg_favor_adj"] + features_visitante["xg_contra_adj"]
+    ) / 2
+    lambda_visitante_base = (
+        features_visitante["xg_favor_adj"] + features_local["xg_contra_adj"]
+    ) / 2
+
+    lambda_local = lambda_local_base if neutral else lambda_local_base * factor_local
+    lambda_visitante = lambda_visitante_base
+
+    # Fatiga
+    descanso_local = features_local["dias_descanso"]
+    descanso_visit = features_visitante["dias_descanso"]
+    if (descanso_local < pesos["umbral_descanso_bajo"]
+            and descanso_visit > pesos["umbral_descanso_alto"]):
+        lambda_local *= pesos["factor_descanso"]
+    elif (descanso_visit < pesos["umbral_descanso_bajo"]
+            and descanso_local > pesos["umbral_descanso_alto"]):
+        lambda_visitante *= pesos["factor_descanso"]
+
+    # Forma reciente
+    racha_local = features_local.get("racha_puntos_prom", pesos["default_racha"])
+    if racha_local > pesos["umbral_racha_alta"]:
+        lambda_local *= pesos["bonus_racha"]
+    elif racha_local < pesos["umbral_racha_baja"]:
+        lambda_local *= pesos["penal_racha"]
+
+    racha_visit = features_visitante.get("racha_puntos_prom", pesos["default_racha"])
+    if racha_visit > pesos["umbral_racha_alta"]:
+        lambda_visitante *= pesos["bonus_racha"]
+    elif racha_visit < pesos["umbral_racha_baja"]:
+        lambda_visitante *= pesos["penal_racha"]
+
+    # Posesion
+    if features_local.get("posesion_prom", pesos["default_posesion"]) > pesos["umbral_posesion"]:
+        lambda_local *= pesos["bonus_posesion"]
+    if features_visitante.get("posesion_prom", pesos["default_posesion"]) > pesos["umbral_posesion"]:
+        lambda_visitante *= pesos["bonus_posesion"]
+
+    # Tiros a puerta: bonus ofensivo si remata mas al arco que la media. (Antes
+    # se calculaba tiros_puerta_adj pero no se usaba; aqui queda activo.)
+    if features_local.get("tiros_puerta_adj", pesos["default_tiros"]) > pesos["umbral_tiros"]:
+        lambda_local *= pesos["bonus_tiros"]
+    if features_visitante.get("tiros_puerta_adj", pesos["default_tiros"]) > pesos["umbral_tiros"]:
+        lambda_visitante *= pesos["bonus_tiros"]
+
+    # Disciplina (un equipo indisciplinado concede algo mas al rival)
+    if features_local.get("disciplina_prom", pesos["default_disciplina"]) > pesos["umbral_disciplina"]:
+        lambda_visitante *= pesos["bonus_disciplina"]
+    if features_visitante.get("disciplina_prom", pesos["default_disciplina"]) > pesos["umbral_disciplina"]:
+        lambda_local *= pesos["bonus_disciplina"]
+
+    # Diferencia de fuerza Elo entre ambos equipos (head-to-head). Expectativa
+    # Elo estandar: E_local = 1 / (1 + 10**((elo_v - elo_l)/400)). Empujamos los
+    # lambdas hacia el favorito de forma simetrica y acotada.
+    peso_elo = pesos.get("peso_elo", 0.0)
+    if peso_elo and elo_local is not None and elo_visitante is not None:
+        e_local = 1.0 / (1.0 + 10 ** ((elo_visitante - elo_local) / 400.0))
+        lambda_local *= 1.0 + peso_elo * (e_local - 0.5)
+        lambda_visitante *= 1.0 + peso_elo * ((1.0 - e_local) - 0.5)
+
+    return float(lambda_local), float(lambda_visitante)
+</file>
+
 <file path="ingest_fbref.py">
 """
 Ingesta automatica de datos desde FBref usando soccerdata.
@@ -2599,6 +2501,269 @@ def obtener_equipos_liga(df_liga):
     if "away_team" in df_liga.columns:
         equipos.update(df_liga["away_team"].dropna().unique())
     return sorted(equipos)
+</file>
+
+<file path="ligas_config.py">
+"""
+Configuracion de ligas y equipos precargados para el Mundial 2026.
+"""
+
+# ── Pesos y umbrales del modelo de lambdas ──────────────────────────────────
+# Centralizados aqui para poder calibrar el modelo sin tocar las formulas
+# matematicas en calcular_lambdas.py. Cambia un numero aqui y se aplica en
+# todo el calculo.
+PESOS_MODELO = {
+    # Localia (solo se aplica si neutral=False; el Mundial juega en sede neutral)
+    "factor_local": 1.10,
+
+    # Fatiga: si un equipo descanso poco y el rival mucho, penaliza su ataque
+    "factor_descanso": 0.95,
+    "umbral_descanso_bajo": 4,   # dias: menos que esto = poco descanso
+    "umbral_descanso_alto": 6,   # dias: mas que esto = bien descansado
+
+    # Forma reciente (puntos promedio por partido en la ventana)
+    "bonus_racha": 1.03,
+    "penal_racha": 0.97,
+    "umbral_racha_alta": 2.0,
+    "umbral_racha_baja": 1.0,
+
+    # Posesion: un equipo que controla mas el balon genera algo mas de peligro
+    "bonus_posesion": 1.02,
+    "umbral_posesion": 55,
+
+    # Tiros a puerta: un equipo que remata mas al arco que la media del torneo
+    # tiene algo mas de peligro ofensivo (usa tiros_puerta_adj).
+    "bonus_tiros": 1.02,
+    "umbral_tiros": 9.0,
+    "default_tiros": 8.5,
+
+    # Disciplina: un equipo indisciplinado concede algo mas al rival
+    "bonus_disciplina": 1.02,
+    "umbral_disciplina": 20,
+
+    # Diferencia de fuerza Elo entre los dos equipos del partido. Empuja los
+    # lambdas hacia el favorito segun la formula Elo (expectativa 0..1). 0 lo
+    # desactiva; ~0.65 hace que un gigante se imponga a un equipo chico aunque
+    # este venga en racha.
+    "peso_elo": 0.65,
+
+    # Valores por defecto cuando FBref no publica el dato (selecciones)
+    "default_racha": 1.5,
+    "default_posesion": 50,
+    "default_disciplina": 15,
+}
+
+
+# ── Ranking de fuerza (Elo) ──────────────────────────────────────────────────
+# Elo aproximado de cada seleccion. Se usa para ponderar los goles por la fuerza
+# del rival (Strength of Schedule): anotar a un gigante "infla" el valor, anotar
+# a un equipo debil lo "desinfla". Ajusta los numeros aqui para recalibrar.
+ELO_REFERENCIA = 1650  # rival "promedio"; factor = elo_rival / ELO_REFERENCIA
+
+ELO_RANKING = {
+    # Selecciones del Mundial 2026 (nombres tal como los devuelve FBref)
+    "Argentina": 2120, "France": 2110, "Spain": 2100, "England": 2070,
+    "Brazil": 2060, "Portugal": 2050, "Netherlands": 2040, "Germany": 2010,
+    "Belgium": 1990, "Colombia": 1990, "Uruguay": 1980, "Croatia": 1970,
+    "Morocco": 1970, "Senegal": 1930, "Switzerland": 1920, "Japan": 1920,
+    "Ecuador": 1900, "Mexico": 1900, "Norway": 1900, "Türkiye": 1900,
+    "United States": 1900, "Korea Republic": 1860, "Austria": 1860,
+    "Sweden": 1860, "Egypt": 1850, "Scotland": 1840, "IR Iran": 1840,
+    "Côte d'Ivoire": 1840, "Algeria": 1820, "Czechia": 1820, "Paraguay": 1820,
+    "Tunisia": 1820, "Canada": 1830, "Australia": 1810, "South Africa": 1780,
+    "Bosnia & Herz.": 1760, "Ghana": 1760, "Qatar": 1750, "Uzbekistan": 1750,
+    "Congo DR": 1740, "Saudi Arabia": 1740, "Iraq": 1720, "Panama": 1720,
+    "Jordan": 1700, "Cabo Verde": 1680, "New Zealand": 1650, "Curaçao": 1620,
+    "Haiti": 1600,
+    # Rivales frecuentes de clasificatorias (mejoran el calculo de SoS)
+    "Serbia": 1850, "Nigeria": 1850, "Poland": 1850, "Ukraine": 1850,
+    "Italy": 2000, "Denmark": 1900, "Peru": 1750, "Chile": 1820,
+    "Venezuela": 1700, "Bolivia": 1600, "Iceland": 1700, "Greece": 1800,
+    "Hungary": 1800, "Honduras": 1650, "Guatemala": 1550, "Zambia": 1600,
+    "Guinea": 1650, "Mozambique": 1450, "Uganda": 1500, "Botswana": 1450,
+    "Mauritania": 1500, "Somalia": 1300, "Bangladesh": 1300, "Palestine": 1450,
+    "Lebanon": 1500,
+}
+
+# Alias: nombre "limpio" del rival -> clave en ELO_RANKING (cuando difieren).
+ELO_ALIAS = {
+    "Iran": "IR Iran", "South Korea": "Korea Republic", "USA": "United States",
+    "Ivory Coast": "Côte d'Ivoire", "Turkey": "Türkiye", "Czech Republic": "Czechia",
+    "DR Congo": "Congo DR", "Bosnia": "Bosnia & Herz.", "Cape Verde": "Cabo Verde",
+}
+
+
+def _limpiar_nombre_rival(opponent: str) -> str:
+    """FBref antepone un codigo de pais ('sa Saudi Arabia'). Lo quitamos."""
+    if not isinstance(opponent, str):
+        return ""
+    partes = opponent.strip().split(" ", 1)
+    # Si el primer token es un codigo corto en minusculas, lo descartamos.
+    if len(partes) == 2 and partes[0].islower() and len(partes[0]) <= 3:
+        return partes[1].strip()
+    return opponent.strip()
+
+
+def elo_de(opponent: str, default: float = ELO_REFERENCIA) -> float:
+    """Devuelve el Elo de un rival a partir del nombre que da FBref."""
+    nombre = _limpiar_nombre_rival(opponent)
+    if nombre in ELO_RANKING:
+        return ELO_RANKING[nombre]
+    if nombre in ELO_ALIAS:
+        return ELO_RANKING[ELO_ALIAS[nombre]]
+    return default
+
+
+LIGAS = {
+    "Mundial 2026": "INT-World Cup",
+    "Premier League (Inglaterra)": "ENG-Premier League",
+    "La Liga (España)": "ESP-La Liga",
+    "Liga MX (México)": "MEX-Liga MX",
+    "Bundesliga (Alemania)": "GER-Bundesliga",
+    "Serie A (Italia)": "ITA-Serie A",
+    "Ligue 1 (Francia)": "FRA-Ligue 1",
+}
+
+TEMPORADAS = {
+    "Mundial 2026": "2026",
+    "Premier League (Inglaterra)": "2025-2026",
+    "La Liga (España)": "2025-2026",
+    "Liga MX (México)": "2025-2026",
+    "Bundesliga (Alemania)": "2025-2026",
+    "Serie A (Italia)": "2025-2026",
+    "Ligue 1 (Francia)": "2025-2026",
+}
+
+# 48 equipos clasificados al Mundial 2026.
+# Los nombres apuntan a la forma inglesa/FBref mas probable. Si soccerdata
+# devuelve "No data found" para alguno, ajusta aqui el nombre exacto de FBref.
+EQUIPOS_MUNDIAL = [
+    "Algeria",
+    "Argentina",
+    "Australia",
+    "Austria",
+    "Belgium",
+    "Bosnia & Herz.",
+    "Brazil",
+    "Canada",
+    "Cabo Verde",
+    "Colombia",
+    "Croatia",
+    "Curaçao",
+    "Czechia",
+    "Congo DR",
+    "Ecuador",
+    "Egypt",
+    "England",
+    "France",
+    "Germany",
+    "Ghana",
+    "Haiti",
+    "IR Iran",
+    "Iraq",
+    "Côte d'Ivoire",
+    "Japan",
+    "Jordan",
+    "Korea Republic",
+    "Mexico",
+    "Morocco",
+    "Netherlands",
+    "New Zealand",
+    "Norway",
+    "Panama",
+    "Paraguay",
+    "Portugal",
+    "Qatar",
+    "Saudi Arabia",
+    "Scotland",
+    "Senegal",
+    "South Africa",
+    "Spain",
+    "Sweden",
+    "Switzerland",
+    "Tunisia",
+    "Türkiye",
+    "United States",
+    "Uruguay",
+    "Uzbekistan",
+]
+
+EQUIPOS_MUNDIAL.sort()
+assert len(EQUIPOS_MUNDIAL) == 48, f"Deberian ser 48 equipos, hay {len(EQUIPOS_MUNDIAL)}"
+
+# ── Cuadro del Mundial 2026: 12 grupos de 4 ─────────────────────────────────
+# IMPORTANTE: esta es una distribucion provisional, sembrada por Elo en bombos
+# (no es el sorteo oficial). EDITALA para reflejar los grupos reales: solo mueve
+# los nombres entre las listas. La simulacion (montecarlo_mundial.py) la lee tal
+# cual. Los nombres deben coincidir con los de FBref (los de EQUIPOS_MUNDIAL).
+GRUPOS_MUNDIAL = {
+    "A": ["Argentina", "Morocco", "Egypt", "Ghana"],
+    "B": ["France", "Senegal", "Scotland", "Qatar"],
+    "C": ["Spain", "Switzerland", "IR Iran", "Uzbekistan"],
+    "D": ["England", "Japan", "Côte d'Ivoire", "Congo DR"],
+    "E": ["Brazil", "Ecuador", "Canada", "Saudi Arabia"],
+    "F": ["Portugal", "Mexico", "Algeria", "Iraq"],
+    "G": ["Netherlands", "Norway", "Czechia", "Panama"],
+    "H": ["Germany", "Türkiye", "Paraguay", "Jordan"],
+    "I": ["Belgium", "United States", "Tunisia", "Cabo Verde"],
+    "J": ["Colombia", "Korea Republic", "Australia", "New Zealand"],
+    "K": ["Uruguay", "Austria", "South Africa", "Curaçao"],
+    "L": ["Croatia", "Sweden", "Bosnia & Herz.", "Haiti"],
+}
+
+# Nombres para mostrar en la interfaz (espanol) -> nombre FBref.
+NOMBRE_DISPLAY = {
+    "Alemania": "Germany",
+    "Arabia Saudita": "Saudi Arabia",
+    "Argelia": "Algeria",
+    "Argentina": "Argentina",
+    "Australia": "Australia",
+    "Austria": "Austria",
+    "Bélgica": "Belgium",
+    "Bosnia y Herzegovina": "Bosnia & Herz.",
+    "Brasil": "Brazil",
+    "Cabo Verde": "Cabo Verde",
+    "Canadá": "Canada",
+    "Catar": "Qatar",
+    "Chequia": "Czechia",
+    "Colombia": "Colombia",
+    "Corea del Sur": "Korea Republic",
+    "Costa de Marfil": "Côte d'Ivoire",
+    "Croacia": "Croatia",
+    "Curazao": "Curaçao",
+    "Ecuador": "Ecuador",
+    "Egipto": "Egypt",
+    "Escocia": "Scotland",
+    "España": "Spain",
+    "Estados Unidos": "United States",
+    "Francia": "France",
+    "Ghana": "Ghana",
+    "Haití": "Haiti",
+    "Inglaterra": "England",
+    "Irak": "Iraq",
+    "Irán": "IR Iran",
+    "Japón": "Japan",
+    "Jordania": "Jordan",
+    "Marruecos": "Morocco",
+    "México": "Mexico",
+    "Noruega": "Norway",
+    "Nueva Zelanda": "New Zealand",
+    "Países Bajos": "Netherlands",
+    "Panamá": "Panama",
+    "Paraguay": "Paraguay",
+    "Portugal": "Portugal",
+    "RD Congo": "Congo DR",
+    "Senegal": "Senegal",
+    "Sudáfrica": "South Africa",
+    "Suecia": "Sweden",
+    "Suiza": "Switzerland",
+    "Túnez": "Tunisia",
+    "Turquía": "Türkiye",
+    "Uruguay": "Uruguay",
+    "Uzbekistán": "Uzbekistan",
+}
+
+EQUIPOS_MUNDIAL_ES = sorted(NOMBRE_DISPLAY.keys())
 </file>
 
 <file path="proveedores.py">
@@ -3568,6 +3733,7 @@ lugar, sin tocar la matemática de `calcular_lambdas.py`.
 | `actualizar_datos.py` | **Actualización incremental**: trae solo los partidos nuevos de FBref y los fusiona en el CSV maestro sin borrarlo. |
 | `montecarlo_mundial.py` | **Motor de simulación**: juega el Mundial completo (grupos + eliminatorias) miles de veces y estima la probabilidad de título de cada selección. |
 | `backtest.py` | Calibra `rho` y `k` contra resultados históricos. |
+| `backtest_cuotas.py` | **Backtest contra el mercado**: compara el modelo con las cuotas de cierre reales (Pinnacle/Bet365 de Football-Data.co.uk) y simula ROI. |
 | `promedios_liga.json` | Promedios del torneo usados por el shrinkage. |
 | `base_mundial_2026.csv` | **Base de datos maestra** del Mundial (historial limpio y normalizado de las 48 selecciones). El predictor la lee directamente → 100% offline y rápido. |
 | `montecarlo_resultados.csv` | Salida de la simulación: probabilidad de campeón / final / semis / cuartos por selección. |
@@ -3657,6 +3823,21 @@ el Top 12 en pantalla. Acepta argumentos opcionales: `montecarlo_mundial.py
 >
 > Rendimiento: las características de cada equipo se calculan **una sola vez** y
 > los cruces se memorizan, así 10.000 torneos completos corren en segundos.
+
+### Backtest contra cuotas reales (¿le gana al mercado?)
+Mide si el modelo iguala o supera a las casas de apuestas, usando las **cuotas de
+cierre reales** (Pinnacle, Bet365) que publica gratis Football-Data.co.uk:
+```powershell
+py -3.11 backtest_cuotas.py            # Premier League 2024-25
+py -3.11 backtest_cuotas.py SP1 2425   # La Liga 2024-25 (E0/SP1/I1/D1/F1)
+```
+Descarga el CSV de la liga, reconstruye el historial de cada equipo **del mismo
+archivo** (100% offline, sin FBref) y predice cada partido **sin fuga de datos**
+(solo con partidos anteriores). Reporta el `log_loss`/Brier/acierto del modelo vs
+el del mercado, y un **simulador de ROI** apostando solo donde el modelo detecta
+valor. *Nota realista:* batir las cuotas de cierre es muy difícil; un log_loss
+peor que el mercado con un ROI ligeramente positivo suele ser ruido, no una
+ventaja durable.
 
 ### Calibrar el modelo (avanzado)
 ```python

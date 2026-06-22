@@ -162,6 +162,7 @@ lugar, sin tocar la matemática de `calcular_lambdas.py`.
 | `actualizar_datos.py` | **Actualización incremental**: trae solo los partidos nuevos de FBref y los fusiona en el CSV maestro sin borrarlo. |
 | `montecarlo_mundial.py` | **Motor de simulación**: juega el Mundial completo (grupos + eliminatorias) miles de veces y estima la probabilidad de título de cada selección. |
 | `backtest.py` | Calibra `rho` y `k` contra resultados históricos. |
+| `backtest_cuotas.py` | **Backtest contra el mercado**: compara el modelo con las cuotas de cierre reales (Pinnacle/Bet365 de Football-Data.co.uk) y simula ROI. |
 | `promedios_liga.json` | Promedios del torneo usados por el shrinkage. |
 | `base_mundial_2026.csv` | **Base de datos maestra** del Mundial (historial limpio y normalizado de las 48 selecciones). El predictor la lee directamente → 100% offline y rápido. |
 | `montecarlo_resultados.csv` | Salida de la simulación: probabilidad de campeón / final / semis / cuartos por selección. |
@@ -251,6 +252,21 @@ el Top 12 en pantalla. Acepta argumentos opcionales: `montecarlo_mundial.py
 >
 > Rendimiento: las características de cada equipo se calculan **una sola vez** y
 > los cruces se memorizan, así 10.000 torneos completos corren en segundos.
+
+### Backtest contra cuotas reales (¿le gana al mercado?)
+Mide si el modelo iguala o supera a las casas de apuestas, usando las **cuotas de
+cierre reales** (Pinnacle, Bet365) que publica gratis Football-Data.co.uk:
+```powershell
+py -3.11 backtest_cuotas.py            # Premier League 2024-25
+py -3.11 backtest_cuotas.py SP1 2425   # La Liga 2024-25 (E0/SP1/I1/D1/F1)
+```
+Descarga el CSV de la liga, reconstruye el historial de cada equipo **del mismo
+archivo** (100% offline, sin FBref) y predice cada partido **sin fuga de datos**
+(solo con partidos anteriores). Reporta el `log_loss`/Brier/acierto del modelo vs
+el del mercado, y un **simulador de ROI** apostando solo donde el modelo detecta
+valor. *Nota realista:* batir las cuotas de cierre es muy difícil; un log_loss
+peor que el mercado con un ROI ligeramente positivo suele ser ruido, no una
+ventaja durable.
 
 ### Calibrar el modelo (avanzado)
 ```python
