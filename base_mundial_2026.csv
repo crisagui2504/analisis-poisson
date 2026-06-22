@@ -1,0 +1,743 @@
+Date,Team,Result,Opponent,Venue,GF,GA,Sh,SoT,xG,xGA,Poss,Fls,CrdY,CrdR
+2023-11-16,Algeria,W,so Somalia,Home,3.0,1.0,,,,,0,,0,0
+2023-11-19,Algeria,W,mz Mozambique,Away,2.0,0.0,,,,,0,,2,0
+2024-06-06,Algeria,L,gn Guinea,Home,1.0,2.0,,,,,0,,2,0
+2024-06-10,Algeria,W,ug Uganda,Away,2.0,1.0,,,,,0,,3,0
+2025-03-21,Algeria,W,bw Botswana,Away,3.0,1.0,,,,,0,,1,0
+2025-03-25,Algeria,W,mz Mozambique,Home,5.0,1.0,,,,,0,,1,0
+2025-09-04,Algeria,W,bw Botswana,Home,3.0,1.0,,,,,0,,4,0
+2025-09-08,Algeria,D,gn Guinea,Neutral,0.0,0.0,,,,,0,,1,0
+2025-10-09,Algeria,W,so Somalia,Neutral,3.0,0.0,,,,,0,,1,0
+2025-10-14,Algeria,W,ug Uganda,Home,2.0,1.0,,,,,0,,1,0
+2026-03-27,Algeria,W,gt Guatemala,Neutral,7.0,0.0,,,,,0,,0,0
+2026-03-31,Algeria,D,uy Uruguay,Neutral,0.0,0.0,,,,,0,,4,0
+2026-06-03,Algeria,W,nl Netherlands,Away,1.0,0.0,,,,,0,,0,0
+2026-06-10,Algeria,W,bo Bolivia,Neutral,4.0,0.0,,,,,0,,2,0
+2026-06-16,Algeria,L,ar Argentina,Neutral,0.0,3.0,7.0,0.0,,,0,8.0,0,0
+2023-09-07,Argentina,W,ec Ecuador,Home,1.0,0.0,13.0,4.0,,,0,9.0,1,0
+2023-09-12,Argentina,W,bo Bolivia,Away,3.0,0.0,15.0,8.0,,,0,10.0,0,0
+2023-10-12,Argentina,W,py Paraguay,Home,1.0,0.0,15.0,4.0,,,0,10.0,1,0
+2023-10-17,Argentina,W,pe Peru,Away,2.0,0.0,10.0,6.0,,,0,10.0,0,0
+2023-11-16,Argentina,L,uy Uruguay,Home,0.0,2.0,12.0,3.0,,,0,11.0,4,0
+2023-11-21,Argentina,W,br Brazil,Away,1.0,0.0,8.0,2.0,,,0,16.0,0,0
+2024-09-05,Argentina,W,cl Chile,Home,3.0,0.0,16.0,8.0,,,0,8.0,2,0
+2024-09-10,Argentina,L,co Colombia,Away,1.0,2.0,13.0,1.0,,,0,10.0,2,0
+2024-10-10,Argentina,D,ve Venezuela,Away,1.0,1.0,8.0,4.0,,,0,13.0,1,0
+2024-10-15,Argentina,W,bo Bolivia,Home,6.0,0.0,14.0,10.0,,,0,10.0,0,0
+2024-11-14,Argentina,L,py Paraguay,Away,1.0,2.0,9.0,1.0,,,0,9.0,1,0
+2024-11-19,Argentina,W,pe Peru,Home,1.0,0.0,10.0,3.0,,,0,10.0,0,0
+2025-03-21,Argentina,W,uy Uruguay,Away,1.0,0.0,12.0,4.0,,,0,11.0,1,1
+2025-03-25,Argentina,W,br Brazil,Home,4.0,1.0,12.0,7.0,,,0,12.0,5,0
+2025-06-05,Argentina,W,cl Chile,Away,1.0,0.0,10.0,4.0,,,0,9.0,2,0
+2025-06-10,Argentina,D,co Colombia,Home,1.0,1.0,10.0,3.0,,,0,16.0,2,1
+2025-09-04,Argentina,W,ve Venezuela,Home,3.0,0.0,17.0,9.0,,,0,9.0,1,0
+2025-09-09,Argentina,L,ec Ecuador,Away,0.0,1.0,8.0,0.0,,,0,10.0,3,1
+2026-03-27,Argentina,W,mr Mauritania,Home,2.0,1.0,,,,,0,,1,0
+2026-03-31,Argentina,W,zm Zambia,Home,5.0,0.0,,,,,0,,0,0
+2026-06-06,Argentina,W,hn Honduras,Neutral,2.0,0.0,,,,,0,,4,0
+2026-06-09,Argentina,W,is Iceland,Neutral,3.0,0.0,,,,,0,,2,0
+2026-06-16,Argentina,W,dz Algeria,Neutral,3.0,0.0,10.0,6.0,,,0,13.0,0,0
+2023-11-16,Australia,W,bd Bangladesh,Home,7.0,0.0,,,,,0,,1,0
+2023-11-21,Australia,W,ps Palestine,Neutral,1.0,0.0,,,,,0,,1,0
+2024-03-21,Australia,W,lb Lebanon,Home,2.0,0.0,,,,,0,,2,0
+2024-03-26,Australia,W,lb Lebanon,Neutral,5.0,0.0,,,,,0,,1,0
+2024-06-06,Australia,W,bd Bangladesh,Away,2.0,0.0,,,,,0,,0,0
+2024-06-11,Australia,W,ps Palestine,Home,5.0,0.0,,,,,0,,3,0
+2024-09-05,Australia,L,bh Bahrain,Home,0.0,1.0,11.0,4.0,,,0,13.0,3,1
+2024-09-10,Australia,D,id Indonesia,Away,0.0,0.0,19.0,5.0,,,0,7.0,3,0
+2024-10-10,Australia,W,cn China PR,Home,3.0,1.0,18.0,4.0,,,0,9.0,0,0
+2024-10-15,Australia,D,jp Japan,Away,1.0,1.0,1.0,0.0,,,0,9.0,4,0
+2024-11-14,Australia,D,sa Saudi Arabia,Home,0.0,0.0,13.0,2.0,,,0,10.0,2,0
+2024-11-19,Australia,D,bh Bahrain,Away,2.0,2.0,8.0,4.0,,,0,10.0,1,0
+2025-03-20,Australia,W,id Indonesia,Home,5.0,1.0,9.0,7.0,,,0,11.0,0,0
+2025-03-25,Australia,W,cn China PR,Away,2.0,0.0,7.0,2.0,,,0,3.0,0,0
+2025-06-05,Australia,W,jp Japan,Home,1.0,0.0,6.0,3.0,,,0,8.0,0,0
+2025-06-10,Australia,W,sa Saudi Arabia,Away,2.0,1.0,4.0,3.0,,,0,10.0,1,0
+2026-05-30,Australia,L,mx Mexico,Neutral,0.0,1.0,,,,,0,,1,0
+2026-06-06,Australia,D,ch Switzerland,Neutral,1.0,1.0,,,,,0,,2,0
+2026-06-13,Australia,W,tr Türkiye,Neutral,2.0,0.0,9.0,4.0,,,0,12.0,0,0
+2026-06-19,Australia,L,us United States,Neutral,0.0,2.0,5.0,2.0,,,0,16.0,4,0
+2025-06-07,Austria,W,ro Romania,Home,2.0,1.0,14.0,9.0,,,0,11.0,1,0
+2025-06-10,Austria,W,sm San Marino,Away,4.0,0.0,22.0,13.0,,,0,15.0,2,0
+2025-09-06,Austria,W,cy Cyprus,Home,1.0,0.0,10.0,3.0,,,0,14.0,1,0
+2025-09-09,Austria,W,ba Bosnia & Herz.,Away,2.0,1.0,11.0,5.0,,,0,21.0,5,1
+2025-10-09,Austria,W,sm San Marino,Home,10.0,0.0,25.0,14.0,,,0,14.0,1,0
+2025-10-12,Austria,L,ro Romania,Away,0.0,1.0,3.0,1.0,,,0,17.0,4,0
+2025-11-15,Austria,W,cy Cyprus,Away,2.0,0.0,12.0,6.0,,,0,15.0,0,0
+2025-11-18,Austria,D,ba Bosnia & Herz.,Home,1.0,1.0,10.0,3.0,,,0,8.0,1,0
+2026-03-27,Austria,W,gh Ghana,Home,5.0,1.0,,,,,0,,1,0
+2026-03-31,Austria,W,kr Korea Republic,Home,1.0,0.0,,,,,0,,1,0
+2026-06-01,Austria,W,tn Tunisia,Home,1.0,0.0,,,,,0,,2,1
+2026-06-16,Austria,W,jo Jordan,Neutral,3.0,1.0,11.0,4.0,,,0,12.0,1,0
+2025-06-06,Belgium,D,mk N. Macedonia,Away,1.0,1.0,17.0,4.0,,,0,11.0,1,0
+2025-06-09,Belgium,W,wls Wales,Home,4.0,3.0,18.0,4.0,,,0,13.0,3,0
+2025-09-04,Belgium,W,li Liechtenstein,Away,6.0,0.0,24.0,9.0,,,0,12.0,0,0
+2025-09-07,Belgium,W,kz Kazakhstan,Home,6.0,0.0,35.0,15.0,,,0,6.0,0,0
+2025-10-10,Belgium,D,mk N. Macedonia,Home,0.0,0.0,25.0,5.0,,,0,15.0,3,0
+2025-10-13,Belgium,W,wls Wales,Away,4.0,2.0,16.0,6.0,,,0,6.0,1,0
+2025-11-15,Belgium,D,kz Kazakhstan,Away,1.0,1.0,20.0,8.0,,,0,5.0,1,0
+2025-11-18,Belgium,W,li Liechtenstein,Home,7.0,0.0,23.0,13.0,,,0,9.0,0,0
+2026-03-28,Belgium,W,us United States,Away,5.0,2.0,,,,,0,,0,0
+2026-03-31,Belgium,D,mx Mexico,Neutral,1.0,1.0,,,,,0,,3,0
+2026-06-02,Belgium,W,hr Croatia,Away,2.0,0.0,,,,,0,,2,0
+2026-06-06,Belgium,W,tn Tunisia,Home,5.0,0.0,,,,,0,,2,0
+2026-06-15,Belgium,D,eg Egypt,Neutral,1.0,1.0,15.0,3.0,,,0,15.0,2,0
+2026-06-21,Belgium,D,ir IR Iran,Neutral,0.0,0.0,23.0,7.0,,,0,7.0,1,1
+2025-03-21,Bosnia & Herz.,W,ro Romania,Away,1.0,0.0,5.0,1.0,,,0,25.0,3,0
+2025-03-24,Bosnia & Herz.,W,cy Cyprus,Home,2.0,1.0,14.0,6.0,,,0,14.0,2,0
+2025-06-07,Bosnia & Herz.,W,sm San Marino,Home,1.0,0.0,21.0,6.0,,,0,21.0,1,0
+2025-09-06,Bosnia & Herz.,W,sm San Marino,Away,6.0,0.0,22.0,10.0,,,0,20.0,2,0
+2025-09-09,Bosnia & Herz.,L,at Austria,Home,1.0,2.0,16.0,3.0,,,0,16.0,2,0
+2025-10-09,Bosnia & Herz.,D,cy Cyprus,Away,2.0,2.0,13.0,5.0,,,0,19.0,4,0
+2025-11-15,Bosnia & Herz.,W,ro Romania,Home,3.0,1.0,16.0,4.0,,,0,15.0,5,0
+2025-11-18,Bosnia & Herz.,D,at Austria,Away,1.0,1.0,8.0,1.0,,,0,9.0,2,0
+2026-05-29,Bosnia & Herz.,D,mk N. Macedonia,Home,0.0,0.0,,,,,0,,0,0
+2026-06-06,Bosnia & Herz.,D,pa Panama,Neutral,1.0,1.0,,,,,0,,0,0
+2026-06-12,Bosnia & Herz.,D,ca Canada,Neutral,1.0,1.0,8.0,3.0,,,0,20.0,3,0
+2026-06-18,Bosnia & Herz.,L,ch Switzerland,Neutral,1.0,4.0,5.0,3.0,,,0,18.0,2,1
+2023-09-08,Brazil,W,bo Bolivia,Home,5.0,1.0,21.0,11.0,,,0,6.0,1,0
+2023-09-12,Brazil,W,pe Peru,Away,1.0,0.0,9.0,3.0,,,0,14.0,2,0
+2023-10-12,Brazil,D,ve Venezuela,Home,1.0,1.0,15.0,6.0,,,0,13.0,2,0
+2023-10-17,Brazil,L,uy Uruguay,Away,0.0,2.0,2.0,0.0,,,0,16.0,5,0
+2023-11-16,Brazil,L,co Colombia,Away,1.0,2.0,12.0,3.0,,,0,12.0,2,0
+2023-11-21,Brazil,L,ar Argentina,Home,0.0,1.0,8.0,4.0,,,0,26.0,3,1
+2024-09-06,Brazil,W,ec Ecuador,Home,1.0,0.0,10.0,3.0,,,0,8.0,1,0
+2024-09-10,Brazil,L,py Paraguay,Away,0.0,1.0,9.0,3.0,,,0,8.0,2,0
+2024-10-10,Brazil,W,cl Chile,Away,2.0,1.0,14.0,3.0,,,0,12.0,2,0
+2024-10-15,Brazil,W,pe Peru,Home,4.0,0.0,18.0,8.0,,,0,10.0,1,0
+2024-11-14,Brazil,D,ve Venezuela,Away,1.0,1.0,13.0,3.0,,,0,12.0,2,0
+2024-11-19,Brazil,D,uy Uruguay,Home,1.0,1.0,18.0,3.0,,,0,15.0,3,0
+2025-03-20,Brazil,W,co Colombia,Home,2.0,1.0,17.0,7.0,,,0,15.0,3,0
+2025-03-25,Brazil,L,ar Argentina,Away,1.0,4.0,3.0,1.0,,,0,19.0,5,0
+2025-06-05,Brazil,D,ec Ecuador,Away,0.0,0.0,3.0,2.0,,,0,9.0,0,0
+2025-06-10,Brazil,W,py Paraguay,Home,1.0,0.0,11.0,4.0,,,0,11.0,2,0
+2025-09-04,Brazil,W,cl Chile,Home,3.0,0.0,22.0,7.0,,,0,14.0,1,0
+2025-09-09,Brazil,L,bo Bolivia,Away,0.0,1.0,10.0,3.0,,,0,9.0,2,0
+2026-03-26,Brazil,L,fr France,Neutral,1.0,2.0,,,,,0,,4,0
+2026-03-31,Brazil,W,hr Croatia,Neutral,3.0,1.0,,,,,0,,1,0
+2026-05-31,Brazil,W,pa Panama,Home,6.0,2.0,,,,,0,,0,0
+2026-06-06,Brazil,W,eg Egypt,Neutral,2.0,1.0,,,,,0,,1,0
+2026-06-13,Brazil,D,ma Morocco,Neutral,1.0,1.0,12.0,5.0,,,0,16.0,2,0
+2026-06-19,Brazil,W,ht Haiti,Neutral,3.0,0.0,8.0,5.0,,,0,13.0,1,0
+2023-11-16,Cabo Verde,D,ao Angola,Home,0.0,0.0,,,,,0,,0,0
+2023-11-21,Cabo Verde,W,sz Eswatini,Neutral,2.0,0.0,,,,,0,,1,0
+2024-06-08,Cabo Verde,L,cm Cameroon,Away,1.0,4.0,,,,,0,,0,0
+2024-06-11,Cabo Verde,W,ly Libya,Home,1.0,0.0,,,,,0,,2,0
+2025-03-20,Cabo Verde,W,mu Mauritius,Home,1.0,0.0,,,,,0,,2,0
+2025-03-25,Cabo Verde,W,ao Angola,Away,2.0,1.0,,,,,0,,1,0
+2025-09-04,Cabo Verde,W,mu Mauritius,Away,2.0,0.0,,,,,0,,0,0
+2025-09-09,Cabo Verde,W,cm Cameroon,Home,1.0,0.0,,,,,0,,2,0
+2025-10-08,Cabo Verde,D,ly Libya,Away,3.0,3.0,,,,,0,,2,0
+2025-10-13,Cabo Verde,W,sz Eswatini,Home,3.0,0.0,,,,,0,,2,0
+2026-05-31,Cabo Verde,W,rs Serbia,Neutral,3.0,0.0,,,,,0,,3,0
+2026-06-06,Cabo Verde,W,bm Bermuda,Neutral,3.0,0.0,,,,,0,,1,0
+2026-06-15,Cabo Verde,D,es Spain,Neutral,0.0,0.0,6.0,1.0,,,0,1.0,1,0
+2026-06-21,Cabo Verde,D,uy Uruguay,Neutral,2.0,2.0,12.0,4.0,,,0,4.0,2,0
+2026-03-28,Canada,D,is Iceland,Home,2.0,2.0,,,,,0,,0,1
+2026-03-31,Canada,D,tn Tunisia,Home,0.0,0.0,,,,,0,,4,0
+2026-06-01,Canada,W,uz Uzbekistan,Home,2.0,0.0,,,,,0,,2,0
+2026-06-05,Canada,D,ie Rep. of Ireland,Home,1.0,1.0,,,,,0,,3,0
+2026-06-12,Canada,D,ba Bosnia & Herz.,Neutral,1.0,1.0,13.0,4.0,,,0,10.0,2,0
+2026-06-18,Canada,W,qa Qatar,Neutral,6.0,0.0,32.0,10.0,,,0,9.0,1,0
+2023-09-07,Colombia,W,ve Venezuela,Home,1.0,0.0,13.0,4.0,,,0,13.0,0,0
+2023-09-12,Colombia,D,cl Chile,Away,0.0,0.0,8.0,2.0,,,0,19.0,5,0
+2023-10-12,Colombia,D,uy Uruguay,Home,2.0,2.0,14.0,4.0,,,0,17.0,2,1
+2023-10-17,Colombia,D,ec Ecuador,Away,0.0,0.0,8.0,3.0,,,0,17.0,4,0
+2023-11-16,Colombia,W,br Brazil,Home,2.0,1.0,23.0,10.0,,,0,16.0,1,0
+2023-11-21,Colombia,W,py Paraguay,Away,1.0,0.0,12.0,4.0,,,0,15.0,4,0
+2024-09-06,Colombia,D,pe Peru,Away,1.0,1.0,16.0,5.0,,,0,13.0,2,0
+2024-09-10,Colombia,W,ar Argentina,Home,2.0,1.0,9.0,5.0,,,0,8.0,2,0
+2024-10-10,Colombia,L,bo Bolivia,Away,0.0,1.0,20.0,9.0,,,0,8.0,1,0
+2024-10-15,Colombia,W,cl Chile,Home,4.0,0.0,18.0,9.0,,,0,16.0,2,0
+2024-11-15,Colombia,L,uy Uruguay,Away,2.0,3.0,10.0,4.0,,,0,14.0,2,0
+2024-11-19,Colombia,L,ec Ecuador,Home,0.0,1.0,25.0,7.0,,,0,12.0,3,0
+2025-03-20,Colombia,L,br Brazil,Away,1.0,2.0,10.0,3.0,,,0,24.0,1,0
+2025-03-25,Colombia,D,py Paraguay,Home,2.0,2.0,10.0,5.0,,,0,13.0,2,0
+2025-06-06,Colombia,D,pe Peru,Home,0.0,0.0,15.0,0.0,,,0,10.0,1,0
+2025-06-10,Colombia,D,ar Argentina,Away,1.0,1.0,11.0,5.0,,,0,12.0,3,0
+2025-09-04,Colombia,W,bo Bolivia,Home,3.0,0.0,12.0,8.0,,,0,10.0,1,0
+2025-09-09,Colombia,W,ve Venezuela,Away,6.0,3.0,13.0,9.0,,,0,16.0,0,0
+2026-03-26,Colombia,L,hr Croatia,Neutral,1.0,2.0,,,,,0,,0,0
+2026-03-29,Colombia,L,fr France,Neutral,1.0,3.0,,,,,0,,1,0
+2026-06-01,Colombia,W,cr Costa Rica,Home,3.0,1.0,,,,,0,,2,0
+2026-06-07,Colombia,W,jo Jordan,Neutral,2.0,0.0,,,,,0,,0,0
+2026-06-17,Colombia,W,uz Uzbekistan,Neutral,3.0,1.0,15.0,4.0,,,0,11.0,1,0
+2023-11-15,Congo DR,W,mr Mauritania,Home,2.0,0.0,,,,,0,,2,0
+2023-11-19,Congo DR,L,sd Sudan,Neutral,0.0,1.0,,,,,0,,1,0
+2024-06-06,Congo DR,D,sn Senegal,Away,1.0,1.0,,,,,0,,1,0
+2024-06-09,Congo DR,W,tg Togo,Home,1.0,0.0,,,,,0,,1,0
+2025-03-21,Congo DR,W,ss South Sudan,Home,1.0,0.0,,,,,0,,1,0
+2025-03-25,Congo DR,W,mr Mauritania,Away,2.0,0.0,,,,,0,,0,0
+2025-09-05,Congo DR,W,ss South Sudan,Away,4.0,1.0,,,,,0,,0,0
+2025-09-09,Congo DR,L,sn Senegal,Home,2.0,3.0,,,,,0,,0,0
+2025-10-10,Congo DR,W,tg Togo,Away,1.0,0.0,,,,,0,,2,0
+2025-10-14,Congo DR,W,sd Sudan,Home,1.0,0.0,,,,,0,,2,0
+2025-11-13,Congo DR,W,cm Cameroon,Neutral,1.0,0.0,,,,,0,,1,0
+2026-03-31,Congo DR,W,jm Jamaica,Neutral,1.0,0.0,,,,,0,,0,0
+2026-06-03,Congo DR,D,dk Denmark,Neutral,0.0,0.0,,,,,0,,0,0
+2026-06-09,Congo DR,L,cl Chile,Neutral,1.0,2.0,,,,,0,,0,0
+2026-06-17,Congo DR,D,pt Portugal,Neutral,1.0,1.0,8.0,2.0,,,0,10.0,1,0
+2025-06-06,Croatia,W,gi Gibraltar,Away,7.0,0.0,30.0,13.0,,,0,10.0,1,0
+2025-06-09,Croatia,W,cz Czechia,Home,5.0,1.0,18.0,11.0,,,0,3.0,0,0
+2025-09-05,Croatia,W,fo Faroe Islands,Away,1.0,0.0,26.0,8.0,,,0,8.0,1,0
+2025-09-08,Croatia,W,me Montenegro,Home,4.0,0.0,32.0,13.0,,,0,10.0,1,0
+2025-10-09,Croatia,D,cz Czechia,Away,0.0,0.0,10.0,2.0,,,0,8.0,2,0
+2025-10-12,Croatia,W,gi Gibraltar,Home,3.0,0.0,28.0,10.0,,,0,7.0,0,0
+2025-11-14,Croatia,W,fo Faroe Islands,Home,3.0,1.0,20.0,4.0,,,0,9.0,0,0
+2025-11-17,Croatia,W,me Montenegro,Away,3.0,2.0,17.0,7.0,,,0,16.0,1,0
+2026-03-26,Croatia,W,co Colombia,Neutral,2.0,1.0,,,,,0,,3,0
+2026-03-31,Croatia,L,br Brazil,Neutral,1.0,3.0,,,,,0,,3,0
+2026-06-02,Croatia,L,be Belgium,Home,0.0,2.0,,,,,0,,2,0
+2026-06-07,Croatia,W,si Slovenia,Home,2.0,1.0,,,,,0,,0,0
+2026-06-17,Croatia,L,eng England,Neutral,2.0,4.0,10.0,5.0,,,0,12.0,0,0
+2024-06-06,Curaçao,W,bb Barbados,Home,4.0,1.0,,,,,0,,2,0
+2024-06-08,Curaçao,W,aw Aruba,Away,2.0,0.0,,,,,0,,0,0
+2025-06-06,Curaçao,W,lc St. Lucia,Home,4.0,0.0,,,,,0,,1,0
+2025-06-11,Curaçao,W,ht Haiti,Away,5.0,1.0,,,,,0,,1,0
+2025-09-05,Curaçao,D,tt Trin & Tobago,Away,0.0,0.0,,,,,0,,1,0
+2025-09-09,Curaçao,W,bm Bermuda,Home,3.0,2.0,,,,,0,,2,0
+2025-10-10,Curaçao,W,jm Jamaica,Home,2.0,0.0,,,,,0,,0,0
+2025-10-14,Curaçao,D,tt Trin & Tobago,Home,1.0,1.0,,,,,0,,3,0
+2025-11-13,Curaçao,W,bm Bermuda,Away,7.0,0.0,,,,,0,,1,0
+2025-11-18,Curaçao,D,jm Jamaica,Away,0.0,0.0,,,,,0,,2,0
+2026-05-30,Curaçao,L,sct Scotland,Away,1.0,4.0,,,,,0,,2,1
+2026-06-06,Curaçao,W,aw Aruba,Home,4.0,0.0,,,,,0,,2,0
+2026-06-14,Curaçao,L,de Germany,Neutral,1.0,7.0,8.0,2.0,,,0,11.0,0,0
+2026-06-20,Curaçao,D,ec Ecuador,Neutral,0.0,0.0,10.0,3.0,,,0,10.0,5,0
+2025-03-22,Czechia,W,fo Faroe Islands,Home,2.0,1.0,16.0,7.0,,,0,12.0,1,0
+2025-03-25,Czechia,W,gi Gibraltar,Away,4.0,0.0,29.0,11.0,,,0,10.0,1,0
+2025-06-06,Czechia,W,me Montenegro,Home,2.0,0.0,13.0,7.0,,,0,23.0,1,0
+2025-06-09,Czechia,L,hr Croatia,Away,1.0,5.0,14.0,5.0,,,0,11.0,2,0
+2025-09-05,Czechia,W,me Montenegro,Away,2.0,0.0,20.0,10.0,,,0,16.0,1,0
+2025-10-09,Czechia,D,hr Croatia,Home,0.0,0.0,11.0,2.0,,,0,17.0,0,0
+2025-10-12,Czechia,L,fo Faroe Islands,Away,1.0,2.0,15.0,1.0,,,0,13.0,1,0
+2025-11-17,Czechia,W,gi Gibraltar,Home,6.0,0.0,25.0,10.0,,,0,9.0,0,0
+2026-05-31,Czechia,W,xk Kosovo,Home,2.0,1.0,,,,,0,,0,0
+2026-06-04,Czechia,W,gt Guatemala,Neutral,3.0,1.0,,,,,0,,0,0
+2026-06-11,Czechia,L,kr Korea Republic,Neutral,1.0,2.0,7.0,4.0,,,0,16.0,0,0
+2026-06-18,Czechia,D,za South Africa,Neutral,1.0,1.0,14.0,3.0,,,0,12.0,1,0
+2023-11-17,Côte d'Ivoire,W,sc Seychelles,Home,9.0,0.0,,,,,0,,0,0
+2023-11-20,Côte d'Ivoire,W,gm Gambia,Neutral,2.0,0.0,,,,,0,,2,0
+2024-06-07,Côte d'Ivoire,W,ga Gabon,Home,1.0,0.0,,,,,0,,0,0
+2024-06-11,Côte d'Ivoire,D,ke Kenya,Neutral,0.0,0.0,,,,,0,,1,0
+2025-03-21,Côte d'Ivoire,W,bi Burundi,Neutral,1.0,0.0,,,,,0,,2,0
+2025-03-24,Côte d'Ivoire,W,gm Gambia,Home,1.0,0.0,,,,,0,,1,0
+2025-09-05,Côte d'Ivoire,W,bi Burundi,Home,1.0,0.0,,,,,0,,2,0
+2025-09-09,Côte d'Ivoire,D,ga Gabon,Away,0.0,0.0,,,,,0,,2,0
+2025-10-10,Côte d'Ivoire,W,sc Seychelles,Neutral,7.0,0.0,,,,,0,,0,0
+2025-10-14,Côte d'Ivoire,W,ke Kenya,Home,3.0,0.0,,,,,0,,1,0
+2026-03-28,Côte d'Ivoire,W,kr Korea Republic,Neutral,4.0,0.0,,,,,0,,0,0
+2026-03-31,Côte d'Ivoire,W,sct Scotland,Neutral,1.0,0.0,,,,,0,,0,0
+2026-06-04,Côte d'Ivoire,W,fr France,Away,2.0,1.0,,,,,0,,1,0
+2026-06-14,Côte d'Ivoire,W,ec Ecuador,Neutral,1.0,0.0,15.0,4.0,,,0,10.0,3,0
+2026-06-20,Côte d'Ivoire,L,de Germany,Neutral,1.0,2.0,9.0,2.0,,,0,7.0,0,0
+2023-09-07,Ecuador,L,ar Argentina,Away,0.0,1.0,5.0,3.0,,,0,0.0,0,0
+2023-09-12,Ecuador,W,uy Uruguay,Home,2.0,1.0,15.0,4.0,,,0,0.0,0,0
+2023-10-12,Ecuador,W,bo Bolivia,Away,2.0,1.0,8.0,3.0,,,0,0.0,0,0
+2023-10-17,Ecuador,D,co Colombia,Home,0.0,0.0,10.0,3.0,,,0,0.0,0,0
+2023-11-16,Ecuador,D,ve Venezuela,Away,0.0,0.0,7.0,1.0,,,0,0.0,0,0
+2023-11-21,Ecuador,W,cl Chile,Home,1.0,0.0,14.0,5.0,,,0,0.0,0,0
+2024-09-06,Ecuador,L,br Brazil,Away,0.0,1.0,9.0,2.0,,,0,0.0,0,0
+2024-09-10,Ecuador,W,pe Peru,Home,1.0,0.0,10.0,4.0,,,0,0.0,0,0
+2024-10-10,Ecuador,D,py Paraguay,Home,0.0,0.0,15.0,5.0,,,0,0.0,0,0
+2024-10-15,Ecuador,D,uy Uruguay,Away,0.0,0.0,8.0,4.0,,,0,0.0,0,0
+2024-11-14,Ecuador,W,bo Bolivia,Home,4.0,0.0,29.0,15.0,,,0,0.0,0,0
+2024-11-19,Ecuador,W,co Colombia,Away,1.0,0.0,4.0,1.0,,,0,0.0,0,0
+2025-03-21,Ecuador,W,ve Venezuela,Home,2.0,1.0,16.0,6.0,,,0,0.0,0,0
+2025-03-25,Ecuador,D,cl Chile,Away,0.0,0.0,7.0,2.0,,,0,0.0,0,0
+2025-06-05,Ecuador,D,br Brazil,Home,0.0,0.0,7.0,3.0,,,0,0.0,0,0
+2025-06-10,Ecuador,D,pe Peru,Away,0.0,0.0,10.0,3.0,,,0,0.0,0,0
+2025-09-04,Ecuador,D,py Paraguay,Away,0.0,0.0,6.0,1.0,,,0,0.0,0,0
+2025-09-09,Ecuador,W,ar Argentina,Home,1.0,0.0,11.0,4.0,,,0,0.0,0,0
+2026-03-27,Ecuador,D,ma Morocco,Neutral,1.0,1.0,,,,,0,0.0,0,0
+2026-03-31,Ecuador,D,nl Netherlands,Away,1.0,1.0,,,,,0,0.0,0,0
+2026-05-30,Ecuador,W,sa Saudi Arabia,Neutral,2.0,1.0,,,,,0,0.0,0,0
+2026-06-07,Ecuador,W,gt Guatemala,Neutral,3.0,0.0,,,,,0,0.0,0,0
+2026-06-14,Ecuador,L,ci Côte d'Ivoire,Neutral,0.0,1.0,12.0,1.0,,,0,0.0,0,0
+2026-06-20,Ecuador,D,cw Curaçao,Neutral,0.0,0.0,27.0,15.0,,,0,0.0,0,0
+2023-11-16,Egypt,W,dj Djibouti,Home,6.0,0.0,,,,,0,,1,0
+2023-11-19,Egypt,W,sl Sierra Leone,Neutral,2.0,0.0,,,,,0,,1,0
+2024-06-06,Egypt,W,bf Burkina Faso,Home,2.0,1.0,,,,,0,,2,0
+2024-06-10,Egypt,D,gw Guinea-Bissau,Away,1.0,1.0,,,,,0,,2,0
+2025-03-21,Egypt,W,et Ethiopia,Neutral,2.0,0.0,,,,,0,,0,0
+2025-03-25,Egypt,W,sl Sierra Leone,Home,1.0,0.0,,,,,0,,1,0
+2025-09-05,Egypt,W,et Ethiopia,Home,2.0,0.0,,,,,0,,2,0
+2025-09-09,Egypt,D,bf Burkina Faso,Away,0.0,0.0,,,,,0,,1,0
+2025-10-08,Egypt,W,dj Djibouti,Away,3.0,0.0,,,,,0,,2,0
+2025-10-12,Egypt,W,gw Guinea-Bissau,Home,1.0,0.0,,,,,0,,2,0
+2026-03-27,Egypt,W,sa Saudi Arabia,Away,4.0,0.0,,,,,0,,0,0
+2026-03-31,Egypt,D,es Spain,Away,0.0,0.0,,,,,0,,5,1
+2026-05-28,Egypt,W,ru Russia,Home,1.0,0.0,,,,,0,,1,0
+2026-06-06,Egypt,L,br Brazil,Neutral,1.0,2.0,,,,,0,,1,0
+2026-06-15,Egypt,D,be Belgium,Neutral,1.0,1.0,14.0,3.0,,,0,15.0,2,0
+2025-03-21,England,W,al Albania,Home,2.0,0.0,12.0,6.0,,,0,9.0,0,0
+2025-03-24,England,W,lv Latvia,Home,3.0,0.0,27.0,8.0,,,0,11.0,1,0
+2025-06-07,England,W,ad Andorra,Away,1.0,0.0,20.0,10.0,,,0,8.0,0,0
+2025-09-06,England,W,ad Andorra,Home,2.0,0.0,11.0,7.0,,,0,10.0,1,0
+2025-09-09,England,W,rs Serbia,Away,5.0,0.0,24.0,12.0,,,0,10.0,1,0
+2025-10-14,England,W,lv Latvia,Away,5.0,0.0,24.0,7.0,,,0,5.0,1,0
+2025-11-13,England,W,rs Serbia,Home,2.0,0.0,19.0,6.0,,,0,13.0,0,0
+2025-11-16,England,W,al Albania,Away,2.0,0.0,14.0,7.0,,,0,10.0,2,0
+2026-03-27,England,D,uy Uruguay,Home,1.0,1.0,,,,,0,,1,0
+2026-03-31,England,L,jp Japan,Home,0.0,1.0,,,,,0,,0,0
+2026-06-06,England,W,nz New Zealand,Neutral,1.0,0.0,,,,,0,,0,0
+2026-06-10,England,W,cr Costa Rica,Neutral,3.0,0.0,,,,,0,,0,0
+2026-06-17,England,W,hr Croatia,Neutral,4.0,2.0,22.0,11.0,,,0,10.0,0,0
+2025-09-05,France,W,ua Ukraine,Away,2.0,0.0,16.0,6.0,,,0,8.0,0,0
+2025-09-09,France,W,is Iceland,Home,2.0,1.0,20.0,8.0,,,0,12.0,3,1
+2025-10-10,France,W,az Azerbaijan,Home,3.0,0.0,33.0,9.0,,,0,8.0,1,0
+2025-10-13,France,D,is Iceland,Away,2.0,2.0,20.0,9.0,,,0,12.0,1,0
+2025-11-13,France,W,ua Ukraine,Home,4.0,0.0,25.0,10.0,,,0,9.0,1,0
+2025-11-16,France,W,az Azerbaijan,Away,3.0,1.0,17.0,4.0,,,0,12.0,0,0
+2026-03-26,France,W,br Brazil,Neutral,2.0,1.0,,,,,0,,3,1
+2026-03-29,France,W,co Colombia,Neutral,3.0,1.0,,,,,0,,3,0
+2026-06-04,France,L,ci Côte d'Ivoire,Home,1.0,2.0,,,,,0,,0,0
+2026-06-08,France,W,nir Northern Ireland,Home,3.0,1.0,,,,,0,,0,0
+2026-06-16,France,W,sn Senegal,Neutral,3.0,1.0,11.0,8.0,,,0,5.0,0,0
+2025-09-04,Germany,L,sk Slovakia,Away,0.0,2.0,14.0,4.0,,,0,18.0,2,0
+2025-09-07,Germany,W,nir Northern Ireland,Home,3.0,1.0,11.0,6.0,,,0,9.0,1,0
+2025-10-10,Germany,W,lu Luxembourg,Home,4.0,0.0,31.0,8.0,,,0,10.0,0,0
+2025-10-13,Germany,W,nir Northern Ireland,Away,1.0,0.0,11.0,2.0,,,0,14.0,2,0
+2025-11-14,Germany,W,lu Luxembourg,Away,2.0,0.0,14.0,7.0,,,0,10.0,2,0
+2025-11-17,Germany,W,sk Slovakia,Home,6.0,0.0,22.0,10.0,,,0,11.0,1,0
+2026-03-27,Germany,W,ch Switzerland,Away,4.0,3.0,,,,,0,,0,0
+2026-03-30,Germany,W,gh Ghana,Home,2.0,1.0,,,,,0,,1,0
+2026-05-31,Germany,W,fi Finland,Home,4.0,0.0,,,,,0,,0,0
+2026-06-06,Germany,W,us United States,Away,2.0,1.0,,,,,0,,3,0
+2026-06-14,Germany,W,cw Curaçao,Neutral,7.0,1.0,26.0,12.0,,,0,18.0,0,0
+2023-11-17,Ghana,W,mg Madagascar,Home,1.0,0.0,,,,,0,,1,0
+2023-11-21,Ghana,L,km Comoros,Away,0.0,1.0,,,,,0,,0,0
+2024-06-06,Ghana,W,ml Mali,Away,2.0,1.0,,,,,0,,1,0
+2024-06-10,Ghana,W,cf CAR,Home,4.0,3.0,,,,,0,,2,0
+2025-03-21,Ghana,W,td Chad,Home,5.0,0.0,,,,,0,,0,0
+2025-03-24,Ghana,W,mg Madagascar,Neutral,3.0,0.0,,,,,0,,1,0
+2025-09-04,Ghana,D,td Chad,Away,1.0,1.0,,,,,0,,1,0
+2025-09-08,Ghana,W,ml Mali,Home,1.0,0.0,,,,,0,,2,0
+2025-10-08,Ghana,W,cf CAR,Neutral,5.0,0.0,,,,,0,,1,0
+2025-10-12,Ghana,W,km Comoros,Home,1.0,0.0,,,,,0,,2,0
+2026-03-27,Ghana,L,at Austria,Away,1.0,5.0,,,,,0,,2,0
+2026-03-30,Ghana,L,de Germany,Away,1.0,2.0,,,,,0,,3,0
+2026-05-22,Ghana,L,mx Mexico,Away,0.0,2.0,,,,,0,,1,0
+2026-06-02,Ghana,D,wls Wales,Away,1.0,1.0,,,,,0,,2,0
+2026-06-17,Ghana,W,pa Panama,Neutral,1.0,0.0,8.0,2.0,,,0,9.0,1,0
+2024-06-06,Haiti,W,lc St. Lucia,Home,2.0,1.0,,,,,0,,2,0
+2024-06-09,Haiti,W,bb Barbados,Away,3.0,1.0,,,,,0,,1,0
+2025-06-07,Haiti,W,aw Aruba,Away,5.0,0.0,,,,,0,,0,0
+2025-06-11,Haiti,L,cw Curaçao,Home,1.0,5.0,,,,,0,,0,0
+2025-09-05,Haiti,D,hn Honduras,Home,0.0,0.0,,,,,0,,0,0
+2025-09-09,Haiti,D,cr Costa Rica,Away,3.0,3.0,,,,,0,,3,0
+2025-10-09,Haiti,W,ni Nicaragua,Away,3.0,0.0,,,,,0,,2,0
+2025-10-13,Haiti,L,hn Honduras,Away,0.0,3.0,,,,,0,,0,0
+2025-11-13,Haiti,W,cr Costa Rica,Home,1.0,0.0,,,,,0,,2,0
+2025-11-18,Haiti,W,ni Nicaragua,Home,2.0,0.0,,,,,0,,4,0
+2026-03-28,Haiti,L,tn Tunisia,Neutral,0.0,1.0,,,,,0,,4,1
+2026-03-31,Haiti,D,is Iceland,Neutral,1.0,1.0,,,,,0,,2,0
+2026-06-02,Haiti,W,nz New Zealand,Neutral,4.0,0.0,,,,,0,,0,0
+2026-06-05,Haiti,L,pe Peru,Neutral,1.0,2.0,,,,,0,,1,0
+2026-06-13,Haiti,L,sct Scotland,Neutral,0.0,1.0,15.0,2.0,,,0,23.0,1,0
+2026-06-19,Haiti,L,br Brazil,Neutral,0.0,3.0,7.0,3.0,,,0,14.0,3,0
+2023-11-16,IR Iran,W,hk Hong Kong,Home,4.0,0.0,,,,,0,,1,0
+2023-11-21,IR Iran,D,uz Uzbekistan,Away,2.0,2.0,,,,,0,,2,0
+2024-03-21,IR Iran,W,tm Turkmenistan,Home,5.0,0.0,,,,,0,,1,0
+2024-03-26,IR Iran,W,tm Turkmenistan,Away,1.0,0.0,,,,,0,,2,0
+2024-06-06,IR Iran,W,hk Hong Kong,Away,4.0,2.0,,,,,0,,1,0
+2024-06-11,IR Iran,D,uz Uzbekistan,Home,0.0,0.0,,,,,0,,1,0
+2024-09-05,IR Iran,W,kg Kyrgyz Republic,Home,1.0,0.0,20.0,3.0,,,0,5.0,0,0
+2024-09-10,IR Iran,W,ae UAE,Away,1.0,0.0,12.0,3.0,,,0,7.0,5,0
+2024-10-10,IR Iran,D,uz Uzbekistan,Away,0.0,0.0,10.0,5.0,,,0,5.0,1,1
+2024-10-15,IR Iran,W,qa Qatar,Neutral,4.0,1.0,15.0,7.0,,,0,12.0,3,0
+2024-11-14,IR Iran,W,kp Korea DPR,Neutral,3.0,2.0,19.0,13.0,,,0,7.0,1,1
+2024-11-19,IR Iran,W,kg Kyrgyz Republic,Away,3.0,2.0,14.0,5.0,,,0,13.0,1,0
+2025-03-20,IR Iran,W,ae UAE,Home,2.0,0.0,15.0,8.0,,,0,12.0,1,0
+2025-03-25,IR Iran,D,uz Uzbekistan,Home,2.0,2.0,20.0,8.0,,,0,13.0,0,0
+2025-06-05,IR Iran,L,qa Qatar,Away,0.0,1.0,6.0,3.0,,,0,19.0,4,1
+2025-06-10,IR Iran,W,kp Korea DPR,Home,3.0,0.0,25.0,8.0,,,0,8.0,1,0
+2026-05-29,IR Iran,W,gm Gambia,Neutral,3.0,1.0,,,,,0,,1,0
+2026-06-15,IR Iran,D,nz New Zealand,Neutral,2.0,2.0,17.0,4.0,,,0,10.0,1,0
+2023-11-16,Iraq,W,id Indonesia,Home,5.0,1.0,,,,,0,,0,0
+2023-11-21,Iraq,W,vn Vietnam,Away,1.0,0.0,,,,,0,,1,0
+2024-03-21,Iraq,W,ph Philippines,Home,1.0,0.0,,,,,0,,1,0
+2024-03-26,Iraq,W,ph Philippines,Away,5.0,0.0,,,,,0,,0,0
+2024-06-06,Iraq,W,id Indonesia,Away,2.0,0.0,,,,,0,,1,0
+2024-06-11,Iraq,W,vn Vietnam,Home,3.0,1.0,,,,,0,,1,0
+2024-09-05,Iraq,W,om Oman,Home,1.0,0.0,7.0,3.0,,,0,16.0,1,0
+2024-09-10,Iraq,D,kw Kuwait,Away,0.0,0.0,10.0,2.0,,,0,7.0,1,1
+2024-10-10,Iraq,W,ps Palestine,Home,1.0,0.0,6.0,2.0,,,0,15.0,2,0
+2024-10-15,Iraq,L,kr Korea Republic,Away,2.0,3.0,8.0,2.0,,,0,8.0,2,0
+2024-11-14,Iraq,D,jo Jordan,Home,0.0,0.0,10.0,2.0,,,0,10.0,2,0
+2024-11-19,Iraq,W,om Oman,Away,1.0,0.0,5.0,3.0,,,0,26.0,3,0
+2025-03-20,Iraq,D,kw Kuwait,Home,2.0,2.0,18.0,7.0,,,0,9.0,2,0
+2025-03-25,Iraq,L,ps Palestine,Away,1.0,2.0,13.0,3.0,,,0,13.0,3,0
+2025-06-05,Iraq,L,kr Korea Republic,Home,0.0,2.0,5.0,2.0,,,0,8.0,1,1
+2025-06-10,Iraq,W,jo Jordan,Away,1.0,0.0,7.0,4.0,,,0,10.0,1,0
+2025-10-11,Iraq,W,id Indonesia,Home,1.0,0.0,7.0,2.0,,,0,6.0,2,1
+2025-10-14,Iraq,D,sa Saudi Arabia,Away,0.0,0.0,4.0,1.0,,,0,13.0,2,0
+2025-11-13,Iraq,D,ae UAE,Away,1.0,1.0,10.0,5.0,,,0,11.0,1,0
+2025-11-18,Iraq,W,ae UAE,Home,2.0,1.0,10.0,2.0,,,0,8.0,1,0
+2026-03-31,Iraq,W,bo Bolivia,Neutral,2.0,1.0,,,,,0,,3,0
+2026-05-29,Iraq,W,ad Andorra,Neutral,1.0,0.0,,,,,0,,0,0
+2026-06-04,Iraq,D,es Spain,Away,1.0,1.0,,,,,0,,2,0
+2026-06-09,Iraq,L,ve Venezuela,Neutral,0.0,2.0,,,,,0,,1,1
+2026-06-16,Iraq,L,no Norway,Neutral,1.0,4.0,11.0,1.0,,,0,12.0,1,0
+2023-11-16,Japan,W,mm Myanmar,Home,5.0,0.0,,,,,0,,0,0
+2023-11-21,Japan,W,sy Syria,Away,5.0,0.0,,,,,0,,0,0
+2024-03-21,Japan,W,kp Korea DPR,Home,1.0,0.0,,,,,0,,1,0
+2024-06-06,Japan,W,mm Myanmar,Away,5.0,0.0,,,,,0,,1,0
+2024-06-11,Japan,W,sy Syria,Home,5.0,0.0,,,,,0,,1,0
+2024-09-05,Japan,W,cn China PR,Home,7.0,0.0,17.0,9.0,,,0,20.0,0,0
+2024-09-10,Japan,W,bh Bahrain,Away,5.0,0.0,14.0,9.0,,,0,11.0,0,0
+2024-10-10,Japan,W,sa Saudi Arabia,Away,2.0,0.0,7.0,3.0,,,0,12.0,2,0
+2024-10-15,Japan,D,au Australia,Home,1.0,1.0,12.0,3.0,,,0,12.0,0,0
+2024-11-15,Japan,W,id Indonesia,Away,4.0,0.0,12.0,7.0,,,0,6.0,1,0
+2024-11-19,Japan,W,cn China PR,Away,3.0,1.0,11.0,5.0,,,0,10.0,1,0
+2025-03-20,Japan,W,bh Bahrain,Home,2.0,0.0,12.0,4.0,,,0,18.0,1,0
+2025-03-25,Japan,D,sa Saudi Arabia,Home,0.0,0.0,12.0,2.0,,,0,10.0,0,0
+2025-06-05,Japan,L,au Australia,Away,0.0,1.0,13.0,1.0,,,0,13.0,0,0
+2025-06-10,Japan,W,id Indonesia,Home,6.0,0.0,22.0,10.0,,,0,6.0,0,0
+2026-03-28,Japan,W,sct Scotland,Away,1.0,0.0,,,,,0,,2,0
+2026-03-31,Japan,W,eng England,Away,1.0,0.0,,,,,0,,2,0
+2026-05-31,Japan,W,is Iceland,Home,1.0,0.0,,,,,0,,0,0
+2026-06-14,Japan,D,nl Netherlands,Neutral,2.0,2.0,10.0,3.0,,,0,7.0,0,0
+2023-11-16,Jordan,D,tj Tajikistan,Away,1.0,1.0,,,,,0,,2,0
+2023-11-21,Jordan,L,sa Saudi Arabia,Home,0.0,2.0,,,,,0,,3,0
+2024-03-21,Jordan,W,pk Pakistan,Away,3.0,0.0,,,,,0,,1,0
+2024-03-26,Jordan,W,pk Pakistan,Home,7.0,0.0,,,,,0,,1,0
+2024-06-06,Jordan,W,tj Tajikistan,Home,3.0,0.0,,,,,0,,1,0
+2024-06-11,Jordan,W,sa Saudi Arabia,Away,2.0,1.0,,,,,0,,2,0
+2024-09-05,Jordan,D,kw Kuwait,Home,1.0,1.0,16.0,3.0,,,0,19.0,1,0
+2024-09-10,Jordan,W,ps Palestine,Neutral,3.0,1.0,17.0,5.0,,,0,8.0,0,0
+2024-10-10,Jordan,L,kr Korea Republic,Home,0.0,2.0,13.0,2.0,,,0,12.0,1,0
+2024-10-15,Jordan,W,om Oman,Home,4.0,0.0,16.0,8.0,,,0,16.0,0,0
+2024-11-14,Jordan,D,iq Iraq,Away,0.0,0.0,9.0,4.0,,,0,14.0,2,0
+2024-11-19,Jordan,D,kw Kuwait,Away,1.0,1.0,11.0,4.0,,,0,10.0,1,0
+2025-03-20,Jordan,W,ps Palestine,Home,3.0,1.0,10.0,5.0,,,0,14.0,1,0
+2025-03-25,Jordan,D,kr Korea Republic,Away,1.0,1.0,11.0,3.0,,,0,9.0,2,0
+2025-06-05,Jordan,W,om Oman,Away,3.0,0.0,9.0,4.0,,,0,13.0,1,0
+2025-06-10,Jordan,L,iq Iraq,Home,0.0,1.0,9.0,0.0,,,0,13.0,2,0
+2026-05-31,Jordan,L,ch Switzerland,Away,1.0,4.0,,,,,0,,0,0
+2026-06-07,Jordan,L,co Colombia,Neutral,0.0,2.0,,,,,0,,2,1
+2026-06-16,Jordan,L,at Austria,Neutral,1.0,3.0,11.0,4.0,,,0,7.0,0,0
+2023-11-16,Korea Republic,W,sg Singapore,Home,5.0,0.0,,,,,0,,1,0
+2023-11-21,Korea Republic,W,cn China PR,Away,3.0,0.0,,,,,0,,1,0
+2024-03-21,Korea Republic,D,th Thailand,Home,1.0,1.0,,,,,0,,0,0
+2024-03-26,Korea Republic,W,th Thailand,Away,3.0,0.0,,,,,0,,1,0
+2024-06-06,Korea Republic,W,sg Singapore,Away,7.0,0.0,,,,,0,,0,0
+2024-06-11,Korea Republic,W,cn China PR,Home,1.0,0.0,,,,,0,,1,0
+2024-09-05,Korea Republic,D,ps Palestine,Home,0.0,0.0,16.0,5.0,,,0,12.0,1,0
+2024-09-10,Korea Republic,W,om Oman,Away,3.0,1.0,16.0,8.0,,,0,11.0,2,0
+2024-10-10,Korea Republic,W,jo Jordan,Away,2.0,0.0,12.0,5.0,,,0,7.0,0,0
+2024-10-15,Korea Republic,W,iq Iraq,Home,3.0,2.0,7.0,3.0,,,0,7.0,3,0
+2024-11-14,Korea Republic,W,kw Kuwait,Away,3.0,1.0,14.0,4.0,,,0,10.0,1,0
+2024-11-19,Korea Republic,D,ps Palestine,Neutral,1.0,1.0,16.0,6.0,,,0,6.0,0,0
+2025-03-20,Korea Republic,D,om Oman,Home,1.0,1.0,11.0,3.0,,,0,9.0,0,0
+2025-03-25,Korea Republic,D,jo Jordan,Home,1.0,1.0,12.0,3.0,,,0,12.0,0,0
+2025-06-05,Korea Republic,W,iq Iraq,Away,2.0,0.0,13.0,7.0,,,0,12.0,4,0
+2025-06-10,Korea Republic,W,kw Kuwait,Home,4.0,0.0,25.0,8.0,,,0,12.0,1,0
+2026-03-28,Korea Republic,L,ci Côte d'Ivoire,Neutral,0.0,4.0,,,,,0,,0,0
+2026-03-31,Korea Republic,L,at Austria,Away,0.0,1.0,,,,,0,,0,0
+2026-05-30,Korea Republic,W,tt Trin & Tobago,Neutral,5.0,0.0,,,,,0,,1,0
+2026-06-03,Korea Republic,W,sv El Salvador,Neutral,1.0,0.0,,,,,0,,4,0
+2026-06-11,Korea Republic,W,cz Czechia,Neutral,2.0,1.0,15.0,6.0,,,0,9.0,1,0
+2026-06-18,Korea Republic,L,mx Mexico,Neutral,0.0,1.0,9.0,2.0,,,0,7.0,2,0
+2026-03-28,Mexico,D,pt Portugal,Home,0.0,0.0,,,,,0,,1,0
+2026-03-31,Mexico,D,be Belgium,Neutral,1.0,1.0,,,,,0,,2,0
+2026-05-22,Mexico,W,gh Ghana,Home,2.0,0.0,,,,,0,,1,0
+2026-05-30,Mexico,W,au Australia,Neutral,1.0,0.0,,,,,0,,1,0
+2026-06-04,Mexico,W,rs Serbia,Home,5.0,1.0,,,,,0,,2,0
+2026-06-11,Mexico,W,za South Africa,Neutral,2.0,0.0,16.0,4.0,,,0,12.0,1,1
+2026-06-18,Mexico,W,kr Korea Republic,Neutral,1.0,0.0,8.0,4.0,,,0,9.0,0,0
+2023-11-21,Morocco,W,tz Tanzania,Away,2.0,0.0,,,,,0,,4,0
+2024-06-07,Morocco,W,zm Zambia,Home,2.0,1.0,,,,,0,,0,0
+2024-06-11,Morocco,W,cg Congo,Neutral,6.0,0.0,,,,,0,,0,0
+2025-03-21,Morocco,W,ne Niger,Neutral,2.0,1.0,,,,,0,,2,0
+2025-03-25,Morocco,W,tz Tanzania,Home,2.0,0.0,,,,,0,,0,0
+2025-09-05,Morocco,W,ne Niger,Home,5.0,0.0,,,,,0,,0,0
+2025-09-08,Morocco,W,zm Zambia,Away,2.0,0.0,,,,,0,,4,0
+2025-10-14,Morocco,W,cg Congo,Home,1.0,0.0,,,,,0,,1,0
+2026-03-27,Morocco,D,ec Ecuador,Neutral,1.0,1.0,,,,,0,,1,0
+2026-03-31,Morocco,W,py Paraguay,Neutral,2.0,1.0,,,,,0,,3,0
+2026-06-02,Morocco,W,mg Madagascar,Home,4.0,0.0,,,,,0,,2,0
+2026-06-07,Morocco,D,no Norway,Neutral,1.0,1.0,,,,,0,,1,0
+2026-06-13,Morocco,D,br Brazil,Neutral,1.0,1.0,14.0,3.0,,,0,14.0,0,0
+2026-06-19,Morocco,W,sct Scotland,Neutral,1.0,0.0,12.0,2.0,,,0,8.0,1,0
+2025-06-07,Netherlands,W,fi Finland,Away,2.0,0.0,17.0,6.0,,,0,9.0,2,0
+2025-06-10,Netherlands,W,mt Malta,Home,8.0,0.0,27.0,9.0,,,0,12.0,1,0
+2025-09-04,Netherlands,D,pl Poland,Home,1.0,1.0,14.0,5.0,,,0,11.0,0,0
+2025-09-07,Netherlands,W,lt Lithuania,Away,3.0,2.0,14.0,7.0,,,0,10.0,0,0
+2025-10-09,Netherlands,W,mt Malta,Away,4.0,0.0,22.0,8.0,,,0,6.0,2,0
+2025-10-12,Netherlands,W,fi Finland,Home,4.0,0.0,17.0,6.0,,,0,8.0,0,0
+2025-11-14,Netherlands,D,pl Poland,Away,1.0,1.0,8.0,3.0,,,0,14.0,1,0
+2025-11-17,Netherlands,W,lt Lithuania,Home,4.0,0.0,20.0,8.0,,,0,10.0,0,0
+2026-03-27,Netherlands,W,no Norway,Home,2.0,1.0,,,,,0,,0,0
+2026-03-31,Netherlands,D,ec Ecuador,Home,1.0,1.0,,,,,0,,0,1
+2026-06-03,Netherlands,L,dz Algeria,Home,0.0,1.0,,,,,0,,0,0
+2026-06-08,Netherlands,W,uz Uzbekistan,Neutral,2.0,1.0,,,,,0,,1,1
+2026-06-14,Netherlands,D,jp Japan,Neutral,2.0,2.0,10.0,6.0,,,0,7.0,3,0
+2024-10-11,New Zealand,W,pf Tahiti,Neutral,3.0,0.0,,,,,0,,1,0
+2024-11-15,New Zealand,W,vu Vanuatu,Neutral,8.0,1.0,,,,,0,,0,0
+2024-11-18,New Zealand,W,ws Samoa,Neutral,8.0,0.0,,,,,0,,0,0
+2025-03-21,New Zealand,W,fj Fiji,Neutral,7.0,0.0,,,,,0,,0,0
+2025-03-24,New Zealand,W,nc New Caledonia,Neutral,3.0,0.0,,,,,0,,0,0
+2026-06-02,New Zealand,L,ht Haiti,Neutral,0.0,4.0,,,,,0,,1,0
+2026-06-06,New Zealand,L,eng England,Neutral,0.0,1.0,,,,,0,,0,0
+2026-06-15,New Zealand,D,ir IR Iran,Neutral,2.0,2.0,14.0,8.0,,,0,8.0,0,0
+2025-03-22,Norway,W,md Moldova,Away,5.0,0.0,24.0,8.0,,,0,9.0,1,0
+2025-03-25,Norway,W,il Israel,Away,4.0,2.0,23.0,12.0,,,0,9.0,2,0
+2025-06-06,Norway,W,it Italy,Home,3.0,0.0,8.0,4.0,,,0,11.0,2,0
+2025-06-09,Norway,W,ee Estonia,Away,1.0,0.0,19.0,3.0,,,0,9.0,1,0
+2025-09-09,Norway,W,md Moldova,Home,11.0,1.0,34.0,18.0,,,0,6.0,0,0
+2025-10-11,Norway,W,il Israel,Home,5.0,0.0,16.0,5.0,,,0,10.0,0,0
+2025-11-13,Norway,W,ee Estonia,Home,4.0,1.0,18.0,7.0,,,0,9.0,0,0
+2025-11-16,Norway,W,it Italy,Away,4.0,1.0,13.0,5.0,,,0,8.0,2,0
+2026-03-27,Norway,L,nl Netherlands,Away,1.0,2.0,,,,,0,,1,0
+2026-03-31,Norway,D,ch Switzerland,Home,0.0,0.0,,,,,0,,0,0
+2026-06-01,Norway,W,se Sweden,Home,3.0,1.0,,,,,0,,0,0
+2026-06-07,Norway,D,ma Morocco,Neutral,1.0,1.0,,,,,0,,1,0
+2026-06-16,Norway,W,iq Iraq,Neutral,4.0,1.0,12.0,5.0,,,0,13.0,0,0
+2024-06-06,Panama,W,gy Guyana,Home,2.0,0.0,,,,,0,,3,0
+2024-06-09,Panama,W,ms Montserrat,Away,3.0,1.0,,,,,0,,0,0
+2025-06-07,Panama,W,bz Belize,Away,2.0,0.0,,,,,0,,3,0
+2025-06-10,Panama,W,ni Nicaragua,Home,3.0,0.0,,,,,0,,1,0
+2025-09-04,Panama,D,sr Suriname,Away,0.0,0.0,,,,,0,,1,0
+2025-09-08,Panama,D,gt Guatemala,Home,1.0,1.0,,,,,0,,3,0
+2025-10-10,Panama,W,sv El Salvador,Away,1.0,0.0,,,,,0,,0,0
+2025-10-14,Panama,D,sr Suriname,Home,1.0,1.0,,,,,0,,0,0
+2025-11-13,Panama,W,gt Guatemala,Away,3.0,2.0,,,,,0,,2,0
+2025-11-18,Panama,W,sv El Salvador,Home,3.0,0.0,,,,,0,,1,0
+2026-03-27,Panama,D,za South Africa,Away,1.0,1.0,,,,,0,,2,0
+2026-03-31,Panama,W,za South Africa,Away,2.0,1.0,,,,,0,,4,0
+2026-05-31,Panama,L,br Brazil,Away,2.0,6.0,,,,,0,,1,0
+2026-06-03,Panama,W,do Dominican Rep.,Home,4.0,2.0,,,,,0,,1,0
+2026-06-06,Panama,D,ba Bosnia & Herz.,Neutral,1.0,1.0,,,,,0,,1,0
+2026-06-17,Panama,L,gh Ghana,Neutral,0.0,1.0,11.0,4.0,,,0,11.0,2,0
+2023-09-07,Paraguay,D,pe Peru,Home,0.0,0.0,19.0,6.0,,,0,19.0,0,0
+2023-09-12,Paraguay,L,ve Venezuela,Away,0.0,1.0,18.0,5.0,,,0,14.0,4,0
+2023-10-12,Paraguay,L,ar Argentina,Away,0.0,1.0,4.0,1.0,,,0,19.0,2,0
+2023-10-17,Paraguay,W,bo Bolivia,Home,1.0,0.0,13.0,7.0,,,0,12.0,2,0
+2023-11-16,Paraguay,D,cl Chile,Away,0.0,0.0,11.0,3.0,,,0,18.0,3,1
+2023-11-21,Paraguay,L,co Colombia,Home,0.0,1.0,13.0,2.0,,,0,10.0,2,0
+2024-09-06,Paraguay,D,uy Uruguay,Away,0.0,0.0,8.0,2.0,,,0,11.0,2,0
+2024-09-10,Paraguay,W,br Brazil,Home,1.0,0.0,7.0,2.0,,,0,13.0,4,0
+2024-10-10,Paraguay,D,ec Ecuador,Away,0.0,0.0,3.0,2.0,,,0,10.0,1,0
+2024-10-15,Paraguay,W,ve Venezuela,Home,2.0,1.0,13.0,6.0,,,0,10.0,2,0
+2024-11-14,Paraguay,W,ar Argentina,Home,2.0,1.0,8.0,2.0,,,0,17.0,3,0
+2024-11-19,Paraguay,D,bo Bolivia,Away,2.0,2.0,13.0,4.0,,,0,10.0,0,1
+2025-03-20,Paraguay,W,cl Chile,Home,1.0,0.0,16.0,5.0,,,0,10.0,0,0
+2025-03-25,Paraguay,D,co Colombia,Away,2.0,2.0,21.0,6.0,,,0,13.0,4,0
+2025-06-05,Paraguay,W,uy Uruguay,Home,2.0,0.0,12.0,5.0,,,0,18.0,2,0
+2025-06-10,Paraguay,L,br Brazil,Away,0.0,1.0,5.0,1.0,,,0,16.0,1,0
+2025-09-04,Paraguay,D,ec Ecuador,Home,0.0,0.0,7.0,3.0,,,0,15.0,3,0
+2025-09-09,Paraguay,W,pe Peru,Away,1.0,0.0,7.0,5.0,,,0,12.0,1,0
+2026-03-27,Paraguay,W,gr Greece,Away,1.0,0.0,,,,,0,,0,0
+2026-03-31,Paraguay,L,ma Morocco,Neutral,1.0,2.0,,,,,0,,6,0
+2026-06-05,Paraguay,W,ni Nicaragua,Home,4.0,0.0,,,,,0,,0,0
+2026-06-12,Paraguay,L,us United States,Neutral,1.0,4.0,9.0,1.0,,,0,17.0,5,0
+2026-06-19,Paraguay,W,tr Türkiye,Neutral,1.0,0.0,7.0,2.0,,,0,15.0,1,1
+2025-09-06,Portugal,W,am Armenia,Away,5.0,0.0,24.0,9.0,,,0,7.0,0,0
+2025-09-09,Portugal,W,hu Hungary,Away,3.0,2.0,15.0,7.0,,,0,9.0,2,0
+2025-10-11,Portugal,W,ie Rep. of Ireland,Home,1.0,0.0,30.0,6.0,,,0,6.0,2,0
+2025-10-14,Portugal,D,hu Hungary,Home,2.0,2.0,20.0,8.0,,,0,7.0,2,0
+2025-11-13,Portugal,L,ie Rep. of Ireland,Away,0.0,2.0,27.0,5.0,,,0,6.0,2,1
+2025-11-16,Portugal,W,am Armenia,Home,9.0,1.0,34.0,15.0,,,0,7.0,0,0
+2026-03-28,Portugal,D,mx Mexico,Away,0.0,0.0,,,,,0,,1,0
+2026-03-31,Portugal,W,us United States,Away,2.0,0.0,,,,,0,,1,0
+2026-06-06,Portugal,W,cl Chile,Home,2.0,1.0,,,,,0,,0,1
+2026-06-10,Portugal,W,ng Nigeria,Home,2.0,1.0,,,,,0,,2,0
+2026-06-17,Portugal,D,cd Congo DR,Neutral,1.0,1.0,7.0,1.0,,,0,9.0,3,0
+2023-11-16,Qatar,W,af Afghanistan,Home,8.0,1.0,,,,,0,,0,0
+2023-11-21,Qatar,W,in India,Away,3.0,0.0,,,,,0,,0,0
+2024-03-21,Qatar,W,kw Kuwait,Home,3.0,0.0,,,,,0,,0,0
+2024-03-26,Qatar,W,kw Kuwait,Away,2.0,1.0,,,,,0,,2,0
+2024-06-06,Qatar,D,af Afghanistan,Neutral,0.0,0.0,,,,,0,,3,0
+2024-06-11,Qatar,W,in India,Home,2.0,1.0,,,,,0,,2,0
+2024-09-05,Qatar,L,ae UAE,Home,1.0,3.0,8.0,1.0,,,0,16.0,2,0
+2024-09-10,Qatar,D,kp Korea DPR,Neutral,2.0,2.0,23.0,6.0,,,0,14.0,2,0
+2024-10-10,Qatar,W,kg Kyrgyz Republic,Home,3.0,1.0,30.0,8.0,,,0,4.0,2,0
+2024-10-15,Qatar,L,ir IR Iran,Neutral,1.0,4.0,11.0,1.0,,,0,3.0,0,0
+2024-11-14,Qatar,W,uz Uzbekistan,Home,3.0,2.0,10.0,7.0,,,0,10.0,2,0
+2024-11-19,Qatar,L,ae UAE,Away,0.0,5.0,9.0,0.0,,,0,19.0,3,0
+2025-03-20,Qatar,W,kp Korea DPR,Home,5.0,1.0,12.0,9.0,,,0,10.0,1,0
+2025-03-25,Qatar,L,kg Kyrgyz Republic,Away,1.0,3.0,9.0,4.0,,,0,7.0,1,1
+2025-06-05,Qatar,W,ir IR Iran,Home,1.0,0.0,6.0,3.0,,,0,15.0,3,0
+2025-06-10,Qatar,L,uz Uzbekistan,Away,0.0,3.0,1.0,0.0,,,0,12.0,5,0
+2025-10-08,Qatar,D,om Oman,Away,0.0,0.0,13.0,2.0,,,0,9.0,2,0
+2025-10-14,Qatar,W,ae UAE,Home,2.0,1.0,7.0,3.0,,,0,7.0,2,1
+2026-05-28,Qatar,L,ie Rep. of Ireland,Away,0.0,1.0,,,,,0,,0,1
+2026-06-06,Qatar,D,sv El Salvador,Neutral,0.0,0.0,,,,,0,,1,0
+2026-06-13,Qatar,D,ch Switzerland,Neutral,1.0,1.0,7.0,4.0,,,0,12.0,2,0
+2026-06-18,Qatar,L,ca Canada,Neutral,0.0,6.0,2.0,0.0,,,0,10.0,1,2
+2023-11-16,Saudi Arabia,W,pk Pakistan,Home,4.0,0.0,,,,,0,,1,0
+2023-11-21,Saudi Arabia,W,jo Jordan,Away,2.0,0.0,,,,,0,,1,0
+2024-03-21,Saudi Arabia,W,tj Tajikistan,Home,1.0,0.0,,,,,0,,2,0
+2024-03-26,Saudi Arabia,D,tj Tajikistan,Away,1.0,1.0,,,,,0,,1,0
+2024-06-06,Saudi Arabia,W,pk Pakistan,Away,3.0,0.0,,,,,0,,0,0
+2024-06-11,Saudi Arabia,L,jo Jordan,Home,1.0,2.0,,,,,0,,3,0
+2024-09-05,Saudi Arabia,D,id Indonesia,Home,1.0,1.0,18.0,4.0,,,0,6.0,2,0
+2024-09-10,Saudi Arabia,W,cn China PR,Away,2.0,1.0,11.0,3.0,,,0,9.0,3,1
+2024-10-10,Saudi Arabia,L,jp Japan,Home,0.0,2.0,13.0,2.0,,,0,8.0,1,0
+2024-10-15,Saudi Arabia,D,bh Bahrain,Home,0.0,0.0,13.0,4.0,,,0,9.0,1,0
+2024-11-14,Saudi Arabia,D,au Australia,Away,0.0,0.0,3.0,1.0,,,0,8.0,2,0
+2024-11-19,Saudi Arabia,L,id Indonesia,Away,0.0,2.0,23.0,3.0,,,0,4.0,3,0
+2025-03-20,Saudi Arabia,W,cn China PR,Home,1.0,0.0,19.0,7.0,,,0,4.0,0,0
+2025-03-25,Saudi Arabia,D,jp Japan,Away,0.0,0.0,1.0,0.0,,,0,3.0,0,0
+2025-06-05,Saudi Arabia,W,bh Bahrain,Away,2.0,0.0,10.0,3.0,,,0,10.0,2,0
+2025-06-10,Saudi Arabia,L,au Australia,Home,1.0,2.0,14.0,6.0,,,0,13.0,1,0
+2025-10-08,Saudi Arabia,W,id Indonesia,Away,3.0,2.0,17.0,10.0,,,0,9.0,3,1
+2025-10-14,Saudi Arabia,D,iq Iraq,Home,0.0,0.0,15.0,4.0,,,0,13.0,4,0
+2026-03-27,Saudi Arabia,L,eg Egypt,Home,0.0,4.0,,,,,0,,2,0
+2026-03-31,Saudi Arabia,L,rs Serbia,Away,1.0,2.0,,,,,0,,2,0
+2026-05-30,Saudi Arabia,L,ec Ecuador,Neutral,1.0,2.0,,,,,0,,1,0
+2026-06-05,Saudi Arabia,W,pr Puerto Rico,Neutral,3.0,0.0,,,,,0,,0,0
+2026-06-09,Saudi Arabia,D,sn Senegal,Neutral,0.0,0.0,,,,,0,,3,0
+2026-06-15,Saudi Arabia,D,uy Uruguay,Neutral,1.0,1.0,7.0,3.0,,,0,11.0,1,0
+2026-06-21,Saudi Arabia,L,es Spain,Neutral,0.0,4.0,3.0,1.0,,,0,2.0,2,0
+2025-09-05,Scotland,D,dk Denmark,Away,0.0,0.0,11.0,1.0,,,0,15.0,5,0
+2025-09-08,Scotland,W,by Belarus,Away,2.0,0.0,14.0,8.0,,,0,10.0,1,0
+2025-10-09,Scotland,W,gr Greece,Home,3.0,1.0,8.0,3.0,,,0,12.0,2,0
+2025-10-12,Scotland,W,by Belarus,Home,2.0,1.0,12.0,6.0,,,0,10.0,0,0
+2025-11-15,Scotland,L,gr Greece,Away,2.0,3.0,12.0,6.0,,,0,14.0,3,0
+2025-11-18,Scotland,W,dk Denmark,Home,4.0,2.0,10.0,5.0,,,0,15.0,1,0
+2026-03-28,Scotland,L,jp Japan,Home,0.0,1.0,,,,,0,,0,0
+2026-03-31,Scotland,L,ci Côte d'Ivoire,Neutral,0.0,1.0,,,,,0,,0,0
+2026-05-30,Scotland,W,cw Curaçao,Home,4.0,1.0,,,,,0,,2,0
+2026-06-06,Scotland,W,bo Bolivia,Neutral,4.0,0.0,,,,,0,,1,0
+2026-06-13,Scotland,W,ht Haiti,Neutral,1.0,0.0,9.0,2.0,,,0,21.0,3,0
+2026-06-19,Scotland,L,ma Morocco,Neutral,0.0,1.0,6.0,0.0,,,0,11.0,1,0
+2023-11-18,Senegal,W,ss South Sudan,Home,4.0,0.0,,,,,0,,0,0
+2023-11-21,Senegal,D,tg Togo,Away,0.0,0.0,,,,,0,,2,0
+2024-06-06,Senegal,D,cd Congo DR,Home,1.0,1.0,,,,,0,,2,0
+2024-06-09,Senegal,W,mr Mauritania,Away,1.0,0.0,,,,,0,,1,0
+2025-03-22,Senegal,D,sd Sudan,Neutral,0.0,0.0,,,,,0,,1,0
+2025-03-25,Senegal,W,tg Togo,Home,2.0,0.0,,,,,0,,0,0
+2025-09-05,Senegal,W,sd Sudan,Home,2.0,0.0,,,,,0,,1,0
+2025-09-09,Senegal,W,cd Congo DR,Away,3.0,2.0,,,,,0,,2,0
+2025-10-10,Senegal,W,ss South Sudan,Away,5.0,0.0,,,,,0,,0,0
+2025-10-14,Senegal,W,mr Mauritania,Home,4.0,0.0,,,,,0,,1,0
+2026-03-28,Senegal,W,pe Peru,Neutral,2.0,0.0,,,,,0,,1,0
+2026-03-31,Senegal,W,gm Gambia,Home,3.0,1.0,,,,,0,,1,0
+2026-05-31,Senegal,L,us United States,Away,2.0,3.0,,,,,0,,0,0
+2026-06-09,Senegal,D,sa Saudi Arabia,Neutral,0.0,0.0,,,,,0,,3,1
+2026-06-16,Senegal,L,fr France,Neutral,1.0,3.0,6.0,2.0,,,0,9.0,0,0
+2023-11-18,South Africa,W,bj Benin,Home,2.0,1.0,,,,,0,,1,0
+2023-11-21,South Africa,L,rw Rwanda,Away,0.0,2.0,,,,,0,,0,0
+2024-06-07,South Africa,D,ng Nigeria,Away,1.0,1.0,,,,,0,,3,0
+2024-06-11,South Africa,W,zw Zimbabwe,Home,3.0,1.0,,,,,0,,1,0
+2025-03-21,South Africa,L,ls Lesotho,Home,0.0,3.0,,,,,0,,1,0
+2025-03-25,South Africa,W,bj Benin,Neutral,2.0,0.0,,,,,0,,0,0
+2025-09-05,South Africa,W,ls Lesotho,Neutral,3.0,0.0,,,,,0,,1,0
+2025-09-09,South Africa,D,ng Nigeria,Home,1.0,1.0,,,,,0,,3,0
+2025-10-10,South Africa,D,zw Zimbabwe,Neutral,0.0,0.0,,,,,0,,3,1
+2025-10-14,South Africa,W,rw Rwanda,Home,3.0,0.0,,,,,0,,3,0
+2026-03-27,South Africa,D,pa Panama,Home,1.0,1.0,,,,,0,,1,0
+2026-03-31,South Africa,L,pa Panama,Home,1.0,2.0,,,,,0,,3,0
+2026-05-29,South Africa,D,ni Nicaragua,Home,0.0,0.0,,,,,0,,0,0
+2026-06-11,South Africa,L,mx Mexico,Neutral,0.0,2.0,3.0,2.0,,,0,11.0,2,2
+2026-06-18,South Africa,D,cz Czechia,Neutral,1.0,1.0,17.0,4.0,,,0,10.0,2,0
+2025-09-04,Spain,W,bg Bulgaria,Away,3.0,0.0,24.0,12.0,,,0,17.0,1,0
+2025-09-07,Spain,W,tr Türkiye,Away,6.0,0.0,21.0,12.0,,,0,9.0,0,0
+2025-10-11,Spain,W,ge Georgia,Home,2.0,0.0,24.0,7.0,,,0,12.0,1,0
+2025-10-14,Spain,W,bg Bulgaria,Home,4.0,0.0,33.0,11.0,,,0,7.0,0,0
+2025-11-15,Spain,W,ge Georgia,Away,4.0,0.0,14.0,7.0,,,0,9.0,1,0
+2025-11-18,Spain,D,tr Türkiye,Home,2.0,2.0,21.0,9.0,,,0,5.0,1,0
+2026-03-27,Spain,W,rs Serbia,Home,3.0,0.0,,,,,0,,0,0
+2026-03-31,Spain,D,eg Egypt,Home,0.0,0.0,,,,,0,,0,0
+2026-06-04,Spain,D,iq Iraq,Home,1.0,1.0,,,,,0,,2,0
+2026-06-08,Spain,W,pe Peru,Neutral,3.0,1.0,,,,,0,,0,0
+2026-06-15,Spain,D,cv Cabo Verde,Neutral,0.0,0.0,27.0,7.0,,,0,10.0,1,0
+2026-06-21,Spain,W,sa Saudi Arabia,Neutral,4.0,0.0,22.0,8.0,,,0,10.0,0,0
+2025-09-05,Sweden,D,si Slovenia,Away,2.0,2.0,6.0,2.0,,,0,21.0,2,0
+2025-09-08,Sweden,L,xk Kosovo,Away,0.0,2.0,13.0,4.0,,,0,12.0,4,0
+2025-10-10,Sweden,L,ch Switzerland,Home,0.0,2.0,7.0,0.0,,,0,13.0,1,0
+2025-10-13,Sweden,L,xk Kosovo,Home,0.0,1.0,13.0,4.0,,,0,16.0,0,0
+2025-11-15,Sweden,L,ch Switzerland,Away,1.0,4.0,6.0,3.0,,,0,18.0,4,0
+2025-11-18,Sweden,D,si Slovenia,Home,1.0,1.0,11.0,2.0,,,0,6.0,2,0
+2026-03-26,Sweden,W,ua Ukraine,Neutral,3.0,1.0,10.0,4.0,,,0,10.0,1,0
+2026-03-31,Sweden,W,pl Poland,Home,3.0,2.0,9.0,5.0,,,0,15.0,2,0
+2026-06-01,Sweden,L,no Norway,Away,1.0,3.0,,,,,0,,1,0
+2026-06-04,Sweden,D,gr Greece,Home,2.0,2.0,,,,,0,,0,0
+2026-06-14,Sweden,W,tn Tunisia,Neutral,5.0,1.0,13.0,7.0,,,0,10.0,0,0
+2025-09-05,Switzerland,W,xk Kosovo,Home,4.0,0.0,10.0,5.0,,,0,11.0,2,0
+2025-09-08,Switzerland,W,si Slovenia,Home,3.0,0.0,12.0,6.0,,,0,10.0,0,0
+2025-10-10,Switzerland,W,se Sweden,Away,2.0,0.0,17.0,8.0,,,0,10.0,1,0
+2025-10-13,Switzerland,D,si Slovenia,Away,0.0,0.0,11.0,3.0,,,0,5.0,0,0
+2025-11-15,Switzerland,W,se Sweden,Home,4.0,1.0,9.0,7.0,,,0,13.0,1,0
+2025-11-18,Switzerland,D,xk Kosovo,Away,1.0,1.0,6.0,3.0,,,0,9.0,0,0
+2026-03-27,Switzerland,L,de Germany,Home,3.0,4.0,,,,,0,,0,0
+2026-03-31,Switzerland,D,no Norway,Away,0.0,0.0,,,,,0,,0,0
+2026-05-31,Switzerland,W,jo Jordan,Home,4.0,1.0,,,,,0,,0,0
+2026-06-06,Switzerland,D,au Australia,Neutral,1.0,1.0,,,,,0,,3,0
+2026-06-13,Switzerland,D,qa Qatar,Neutral,1.0,1.0,26.0,7.0,,,0,11.0,1,0
+2026-06-18,Switzerland,W,ba Bosnia & Herz.,Neutral,4.0,1.0,13.0,7.0,,,0,7.0,1,0
+2023-11-17,Tunisia,W,st São Tomé,Home,4.0,0.0,,,,,0,,2,0
+2023-11-21,Tunisia,W,mw Malawi,Away,1.0,0.0,,,,,0,,1,0
+2024-06-05,Tunisia,W,gq Equ. Guinea,Home,1.0,0.0,,,,,0,,5,0
+2024-06-09,Tunisia,D,na Namibia,Neutral,0.0,0.0,,,,,0,,0,0
+2025-03-19,Tunisia,W,lr Liberia,Away,1.0,0.0,,,,,0,,1,0
+2025-03-24,Tunisia,W,mw Malawi,Home,2.0,0.0,,,,,0,,2,0
+2025-09-04,Tunisia,W,lr Liberia,Home,3.0,0.0,,,,,0,,1,0
+2025-09-08,Tunisia,W,gq Equ. Guinea,Away,1.0,0.0,,,,,0,,5,0
+2025-10-10,Tunisia,W,st São Tomé,Neutral,6.0,0.0,,,,,0,,1,0
+2025-10-13,Tunisia,W,na Namibia,Home,3.0,0.0,,,,,0,,1,0
+2026-03-28,Tunisia,W,ht Haiti,Neutral,1.0,0.0,,,,,0,,2,0
+2026-03-31,Tunisia,D,ca Canada,Away,0.0,0.0,,,,,0,,2,0
+2026-06-01,Tunisia,L,at Austria,Away,0.0,1.0,,,,,0,,1,0
+2026-06-06,Tunisia,L,be Belgium,Away,0.0,5.0,,,,,0,,2,1
+2026-06-14,Tunisia,L,se Sweden,Neutral,1.0,5.0,6.0,2.0,,,0,8.0,1,0
+2025-09-04,Türkiye,W,ge Georgia,Away,3.0,2.0,6.0,3.0,,,0,14.0,3,1
+2025-09-07,Türkiye,L,es Spain,Home,0.0,6.0,11.0,2.0,,,0,6.0,0,0
+2025-10-11,Türkiye,W,bg Bulgaria,Away,6.0,1.0,18.0,8.0,,,0,4.0,1,0
+2025-10-14,Türkiye,W,ge Georgia,Home,4.0,1.0,10.0,6.0,,,0,14.0,1,0
+2025-11-15,Türkiye,W,bg Bulgaria,Home,2.0,0.0,19.0,6.0,,,0,11.0,3,0
+2025-11-18,Türkiye,D,es Spain,Away,2.0,2.0,13.0,7.0,,,0,8.0,5,0
+2026-03-26,Türkiye,W,ro Romania,Neutral,1.0,0.0,16.0,2.0,,,0,7.0,2,0
+2026-03-31,Türkiye,W,xk Kosovo,Away,1.0,0.0,12.0,3.0,,,0,10.0,5,0
+2026-06-01,Türkiye,W,mk N. Macedonia,Home,4.0,0.0,,,,,0,,0,0
+2026-06-06,Türkiye,W,ve Venezuela,Neutral,2.0,1.0,,,,,0,,1,0
+2026-06-13,Türkiye,L,au Australia,Neutral,0.0,2.0,30.0,8.0,,,0,4.0,1,0
+2026-06-19,Türkiye,L,py Paraguay,Neutral,0.0,1.0,32.0,5.0,,,0,14.0,2,0
+2026-03-28,United States,L,be Belgium,Home,2.0,5.0,,,,,0,,2,0
+2026-03-31,United States,L,pt Portugal,Home,0.0,2.0,,,,,0,,1,0
+2026-05-31,United States,W,sn Senegal,Home,3.0,2.0,,,,,0,,1,0
+2026-06-06,United States,L,de Germany,Home,1.0,2.0,,,,,0,,1,0
+2026-06-12,United States,W,py Paraguay,Neutral,4.0,1.0,16.0,6.0,,,0,13.0,1,0
+2026-06-19,United States,W,au Australia,Neutral,2.0,0.0,10.0,2.0,,,0,12.0,3,0
+2023-09-08,Uruguay,W,cl Chile,Home,3.0,1.0,18.0,7.0,,,0,17.0,4,0
+2023-09-12,Uruguay,L,ec Ecuador,Away,1.0,2.0,5.0,2.0,,,0,18.0,3,0
+2023-10-12,Uruguay,D,co Colombia,Away,2.0,2.0,15.0,6.0,,,0,10.0,0,0
+2023-10-17,Uruguay,W,br Brazil,Home,2.0,0.0,5.0,2.0,,,0,18.0,3,0
+2023-11-16,Uruguay,W,ar Argentina,Away,2.0,0.0,6.0,2.0,,,0,22.0,3,0
+2023-11-21,Uruguay,W,bo Bolivia,Home,3.0,0.0,18.0,4.0,,,0,10.0,0,0
+2024-09-06,Uruguay,D,py Paraguay,Home,0.0,0.0,11.0,1.0,,,0,13.0,4,0
+2024-09-10,Uruguay,D,ve Venezuela,Away,0.0,0.0,8.0,2.0,,,0,17.0,4,0
+2024-10-11,Uruguay,L,pe Peru,Away,0.0,1.0,8.0,3.0,,,0,6.0,1,0
+2024-10-15,Uruguay,D,ec Ecuador,Home,0.0,0.0,11.0,4.0,,,0,14.0,1,0
+2024-11-15,Uruguay,W,co Colombia,Home,3.0,2.0,10.0,5.0,,,0,18.0,4,0
+2024-11-19,Uruguay,D,br Brazil,Away,1.0,1.0,8.0,2.0,,,0,11.0,2,0
+2025-03-21,Uruguay,L,ar Argentina,Home,0.0,1.0,6.0,2.0,,,0,11.0,2,0
+2025-03-25,Uruguay,D,bo Bolivia,Away,0.0,0.0,11.0,0.0,,,0,5.0,2,0
+2025-06-05,Uruguay,L,py Paraguay,Away,0.0,2.0,5.0,1.0,,,0,10.0,0,0
+2025-06-10,Uruguay,W,ve Venezuela,Home,2.0,0.0,12.0,5.0,,,0,15.0,2,0
+2025-09-04,Uruguay,W,pe Peru,Home,3.0,0.0,24.0,7.0,,,0,8.0,2,0
+2025-09-09,Uruguay,D,cl Chile,Away,0.0,0.0,6.0,3.0,,,0,14.0,1,0
+2026-03-27,Uruguay,D,eng England,Away,1.0,1.0,,,,,0,,2,0
+2026-03-31,Uruguay,D,dz Algeria,Neutral,0.0,0.0,,,,,0,,3,0
+2026-06-15,Uruguay,D,sa Saudi Arabia,Neutral,1.0,1.0,27.0,10.0,,,0,6.0,0,0
+2023-11-16,Uzbekistan,W,tm Turkmenistan,Away,3.0,1.0,,,,,0,,1,0
+2023-11-21,Uzbekistan,D,ir IR Iran,Home,2.0,2.0,,,,,0,,3,0
+2024-03-21,Uzbekistan,W,hk Hong Kong,Away,2.0,0.0,,,,,0,,0,0
+2024-03-26,Uzbekistan,W,hk Hong Kong,Home,3.0,0.0,,,,,0,,2,0
+2024-06-06,Uzbekistan,W,tm Turkmenistan,Home,3.0,1.0,,,,,0,,2,0
+2024-06-11,Uzbekistan,D,ir IR Iran,Away,0.0,0.0,,,,,0,,1,0
+2024-09-05,Uzbekistan,W,kp Korea DPR,Home,1.0,0.0,13.0,4.0,,,0,11.0,0,0
+2024-09-10,Uzbekistan,W,kg Kyrgyz Republic,Away,3.0,2.0,17.0,9.0,,,0,8.0,2,0
+2024-10-10,Uzbekistan,D,ir IR Iran,Home,0.0,0.0,10.0,1.0,,,0,19.0,3,0
+2024-10-15,Uzbekistan,W,ae UAE,Home,1.0,0.0,24.0,4.0,,,0,9.0,1,0
+2024-11-14,Uzbekistan,L,qa Qatar,Away,2.0,3.0,19.0,8.0,,,0,7.0,1,0
+2024-11-19,Uzbekistan,W,kp Korea DPR,Neutral,1.0,0.0,16.0,2.0,,,0,9.0,1,1
+2025-03-20,Uzbekistan,W,kg Kyrgyz Republic,Home,1.0,0.0,26.0,9.0,,,0,13.0,4,0
+2025-03-25,Uzbekistan,D,ir IR Iran,Away,2.0,2.0,13.0,4.0,,,0,11.0,0,0
+2025-06-05,Uzbekistan,D,ae UAE,Away,0.0,0.0,4.0,0.0,,,0,13.0,1,0
+2025-06-10,Uzbekistan,W,qa Qatar,Home,3.0,0.0,18.0,8.0,,,0,11.0,2,0
+2026-06-01,Uzbekistan,L,ca Canada,Away,0.0,2.0,,,,,0,,2,0
+2026-06-08,Uzbekistan,L,nl Netherlands,Neutral,1.0,2.0,,,,,0,,1,0
+2026-06-17,Uzbekistan,L,co Colombia,Neutral,1.0,3.0,8.0,2.0,,,0,14.0,1,0

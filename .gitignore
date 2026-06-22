@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Salidas regenerables
+montecarlo_resultados.csv
+
+# Cache / temporales
+downloaded_files/
+*.log
+.DS_Store
+Thumbs.db
