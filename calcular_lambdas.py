@@ -71,6 +71,13 @@ def calcular_lambdas(
     if features_visitante.get("posesion_prom", pesos["default_posesion"]) > pesos["umbral_posesion"]:
         lambda_visitante *= pesos["bonus_posesion"]
 
+    # Tiros a puerta: bonus ofensivo si remata mas al arco que la media. (Antes
+    # se calculaba tiros_puerta_adj pero no se usaba; aqui queda activo.)
+    if features_local.get("tiros_puerta_adj", pesos["default_tiros"]) > pesos["umbral_tiros"]:
+        lambda_local *= pesos["bonus_tiros"]
+    if features_visitante.get("tiros_puerta_adj", pesos["default_tiros"]) > pesos["umbral_tiros"]:
+        lambda_visitante *= pesos["bonus_tiros"]
+
     # Disciplina (un equipo indisciplinado concede algo mas al rival)
     if features_local.get("disciplina_prom", pesos["default_disciplina"]) > pesos["umbral_disciplina"]:
         lambda_visitante *= pesos["bonus_disciplina"]

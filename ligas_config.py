@@ -25,6 +25,12 @@ PESOS_MODELO = {
     "bonus_posesion": 1.02,
     "umbral_posesion": 55,
 
+    # Tiros a puerta: un equipo que remata mas al arco que la media del torneo
+    # tiene algo mas de peligro ofensivo (usa tiros_puerta_adj).
+    "bonus_tiros": 1.02,
+    "umbral_tiros": 9.0,
+    "default_tiros": 8.5,
+
     # Disciplina: un equipo indisciplinado concede algo mas al rival
     "bonus_disciplina": 1.02,
     "umbral_disciplina": 20,

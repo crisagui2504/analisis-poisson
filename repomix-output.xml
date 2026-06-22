@@ -350,6 +350,13 @@ def calcular_lambdas(
     if features_visitante.get("posesion_prom", pesos["default_posesion"]) > pesos["umbral_posesion"]:
         lambda_visitante *= pesos["bonus_posesion"]
 
+    # Tiros a puerta: bonus ofensivo si remata mas al arco que la media. (Antes
+    # se calculaba tiros_puerta_adj pero no se usaba; aqui queda activo.)
+    if features_local.get("tiros_puerta_adj", pesos["default_tiros"]) > pesos["umbral_tiros"]:
+        lambda_local *= pesos["bonus_tiros"]
+    if features_visitante.get("tiros_puerta_adj", pesos["default_tiros"]) > pesos["umbral_tiros"]:
+        lambda_visitante *= pesos["bonus_tiros"]
+
     # Disciplina (un equipo indisciplinado concede algo mas al rival)
     if features_local.get("disciplina_prom", pesos["default_disciplina"]) > pesos["umbral_disciplina"]:
         lambda_visitante *= pesos["bonus_disciplina"]
@@ -705,6 +712,12 @@ PESOS_MODELO = {
     # Posesion: un equipo que controla mas el balon genera algo mas de peligro
     "bonus_posesion": 1.02,
     "umbral_posesion": 55,
+
+    # Tiros a puerta: un equipo que remata mas al arco que la media del torneo
+    # tiene algo mas de peligro ofensivo (usa tiros_puerta_adj).
+    "bonus_tiros": 1.02,
+    "umbral_tiros": 9.0,
+    "default_tiros": 8.5,
 
     # Disciplina: un equipo indisciplinado concede algo mas al rival
     "bonus_disciplina": 1.02,
@@ -1378,294 +1391,6 @@ def cargar_equipos(liga: str, temporada: str):
   "xg_contra": 0.8272,
   "sot": 8.7169
 }
-</file>
-
-<file path="proveedores.py">
-"""
-Capa de proveedores de datos INTERCAMBIABLES (patrón plug-in).
-
-Objetivo: no casarse con ninguna fuente. Cada proveedor implementa el mismo
-contrato (`historial_equipo` -> DataFrame en el esquema normalizado) y es
-INDEPENDIENTE: si uno falla, no tiene API key o se cae, los demás siguen
-funcionando. Puedes agregar APIs nuevas creando otra subclase de
-`ProveedorDatos` y registrándola en PROVEEDORES — nada más cambia.
-
-Fuentes incluidas:
-  - FBref (vía soccerdata): goles, tiros, posesión, xG. No necesita clave.
-  - football-data.org: resultados/goles del Mundial (free). Necesita API key
-    gratis (header X-Auth-Token). No trae tiros/xG en el plan gratuito.
-
-Claves de API: se leen de variables de entorno o de un archivo local
-`apis.local.json` (NO se sube a git). Ver apis.example.json.
-"""
-import json
-import os
-
-import numpy as np
-import pandas as pd
-
-from ingest_fbref import (
-    COLUMNAS_REQUERIDAS, sd, _chequear_dependencia,
-    construir_historial_equipo_directo, fusionar_historiales,
-    cargar_historial_csv, existe_csv_maestro, CSV_MAESTRO_MUNDIAL,
-)
-
-ESQUEMA = COLUMNAS_REQUERIDAS  # esquema normalizado que consume el modelo
-
-
-def _leer_clave(nombre_env: str, json_key: str) -> str:
-    """Lee una API key de variable de entorno o de apis.local.json."""
-    valor = os.environ.get(nombre_env, "").strip()
-    if valor:
-        return valor
-    try:
-        with open("apis.local.json", encoding="utf-8") as f:
-            return str(json.load(f).get(json_key, "")).strip()
-    except Exception:
-        return ""
-
-
-# ── Contrato común ───────────────────────────────────────────────────────────
-
-class ProveedorDatos:
-    nombre = "base"
-    prioridad = 0          # mayor = más confiable (gana al fusionar)
-    requiere_clave = False
-    rapida = False         # True si responde rápido (API REST) vs scraping lento
-
-    def disponible(self) -> bool:
-        raise NotImplementedError
-
-    def historial_equipo(self, equipo: str, temporada: str = "2026") -> pd.DataFrame:
-        """Devuelve los partidos del equipo en el esquema ESQUEMA."""
-        raise NotImplementedError
-
-
-# ── FBref (soccerdata) ───────────────────────────────────────────────────────
-
-class FBrefProvider(ProveedorDatos):
-    nombre = "FBref"
-    prioridad = 10  # fuente más rica (xG, tiros) -> prevalece
-    requiere_clave = False
-    rapida = False   # scraping con rate-limit: lento
-
-    def disponible(self) -> bool:
-        return sd is not None
-
-    def historial_equipo(self, equipo, temporada="2026", no_cache=True):
-        _chequear_dependencia()
-        fbref = sd.FBref(leagues="INT-World Cup", seasons=temporada, no_cache=no_cache)
-        df = construir_historial_equipo_directo(fbref, equipo)
-        df["Team"] = equipo
-        return df
-
-
-# ── football-data.org ────────────────────────────────────────────────────────
-
-# Nombres de selección que football-data.org escribe distinto a FBref/el modelo.
-ALIAS_FDORG = {
-    "Bosnia & Herz.": "Bosnia-Herzegovina",
-    "Cabo Verde": "Cape Verde Islands",
-    "Côte d'Ivoire": "Ivory Coast",
-    "IR Iran": "Iran",
-    "Korea Republic": "South Korea",
-    "Türkiye": "Turkey",
-}
-
-
-def _parsear_fdorg(data: dict, equipo: str, nombre_busqueda: str = None) -> pd.DataFrame:
-    """Convierte la respuesta de /competitions/WC/matches al esquema normalizado
-    desde la perspectiva de `equipo`. `nombre_busqueda` es el nombre tal como lo
-    escribe football-data.org (puede diferir del nombre del modelo); por defecto
-    se usa `equipo`. La columna Team siempre guarda `equipo` (nombre del modelo).
-    Función pura (testeable sin red)."""
-    busca = (nombre_busqueda or equipo).lower()
-    filas = []
-    for m in data.get("matches", []):
-        if m.get("status") != "FINISHED":
-            continue
-        home = (m.get("homeTeam") or {}).get("name") or ""
-        away = (m.get("awayTeam") or {}).get("name") or ""
-        ft = (m.get("score") or {}).get("fullTime") or {}
-        gh, ga = ft.get("home"), ft.get("away")
-        if gh is None or ga is None:
-            continue
-        if busca == home.lower():
-            rival, gf, gc, venue = away, gh, ga, "Home"
-        elif busca == away.lower():
-            rival, gf, gc, venue = home, ga, gh, "Away"
-        else:
-            continue
-        res = "W" if gf > gc else ("L" if gf < gc else "D")
-        filas.append({
-            "Date": m["utcDate"][:10], "Team": equipo, "Opponent": rival,
-            "Venue": venue, "Result": res, "GF": gf, "GA": gc,
-            "Poss": 0, "Sh": 0, "SoT": 0, "xG": np.nan, "xGA": np.nan,
-            "Fls": 0, "CrdY": 0, "CrdR": 0,
-        })
-    df = pd.DataFrame(filas, columns=ESQUEMA)
-    if not df.empty:
-        df["Date"] = pd.to_datetime(df["Date"])
-    return df
-
-
-class FootballDataOrgProvider(ProveedorDatos):
-    nombre = "football-data.org"
-    prioridad = 5  # solo goles/resultados -> cede ante FBref
-    requiere_clave = True
-    rapida = True   # API REST: responde en segundos
-    BASE = "https://api.football-data.org/v4"
-
-    def __init__(self):
-        self.clave = _leer_clave("FOOTBALL_DATA_ORG_KEY", "football_data_org")
-        self._cache_matches = None
-
-    def disponible(self) -> bool:
-        return bool(self.clave)
-
-    def _matches_mundial(self) -> dict:
-        if self._cache_matches is None:
-            import requests
-            r = requests.get(f"{self.BASE}/competitions/WC/matches",
-                             headers={"X-Auth-Token": self.clave}, timeout=20)
-            r.raise_for_status()
-            self._cache_matches = r.json()
-        return self._cache_matches
-
-    def historial_equipo(self, equipo, temporada="2026"):
-        fd_nombre = ALIAS_FDORG.get(equipo, equipo)
-        return _parsear_fdorg(self._matches_mundial(), equipo, nombre_busqueda=fd_nombre)
-
-
-# ── Registro de proveedores (agrega aquí nuevas APIs) ────────────────────────
-
-PROVEEDORES = [
-    FBrefProvider(),
-    FootballDataOrgProvider(),
-]
-
-
-def proveedores_disponibles():
-    """Lista de proveedores configurados y usables, de mayor a menor prioridad."""
-    return sorted([p for p in PROVEEDORES if p.disponible()],
-                  key=lambda x: -x.prioridad)
-
-
-def diagnostico():
-    """Imprime qué proveedores están disponibles (para que sepas qué tienes)."""
-    print("Proveedores de datos registrados:")
-    for p in sorted(PROVEEDORES, key=lambda x: -x.prioridad):
-        if p.disponible():
-            estado = "[disponible]"
-        elif p.requiere_clave:
-            estado = "[falta API key]"
-        else:
-            estado = "[no instalado]"
-        print(f"  - {p.nombre:<20} (prioridad {p.prioridad:>2})  {estado}")
-
-
-def historial_equipo(equipo, temporada="2026", proveedor=None):
-    """
-    Devuelve (DataFrame, nombre_fuente) del PRIMER proveedor que responda, en
-    orden de prioridad. Cada proveedor está aislado: si uno lanza error, se
-    intenta el siguiente — uno no descompone a los demás.
-    """
-    candidatos = [proveedor] if proveedor else proveedores_disponibles()
-    errores = []
-    for p in candidatos:
-        try:
-            df = p.historial_equipo(equipo, temporada)
-            if df is not None and not df.empty:
-                return df, p.nombre
-        except Exception as e:
-            errores.append(f"{p.nombre}: {e}")
-    raise RuntimeError(f"Ningún proveedor devolvió datos para '{equipo}'. {errores}")
-
-
-def historial_combinado(equipo, temporada="2026", provs=None) -> pd.DataFrame:
-    """
-    Fusiona el historial de los proveedores indicados (o todos los disponibles).
-    Cruza fuentes para más cobertura/precisión: se aplican de menor a mayor
-    prioridad, así la fuente más confiable (FBref) prevalece. Aislado: un
-    proveedor que falle no rompe a los demás. Deduplica por Team+Date.
-    """
-    if provs is None:
-        provs = proveedores_disponibles()
-    combinado = pd.DataFrame()
-    for p in sorted(provs, key=lambda x: x.prioridad):
-        try:
-            df = p.historial_equipo(equipo, temporada)
-            if df is not None and not df.empty:
-                combinado = fusionar_historiales(combinado, df, claves=["Team", "Date"])
-        except Exception:
-            continue
-    return combinado
-
-
-def actualizar_csv(equipos=None, temporada="2026", ruta=CSV_MAESTRO_MUNDIAL,
-                   verbose=False, callback=None, solo_rapidas=False) -> dict:
-    """
-    Actualiza el CSV maestro combinando proveedores, sin borrarlo (fusión
-    incremental). Si solo hay FBref, equivale al updater normal; si además hay
-    football-data.org, cruza ambas fuentes.
-
-    solo_rapidas=True usa solo fuentes rápidas (API REST, p. ej. football-data.org)
-    y evita el scraping lento de FBref — ideal para actualizar justo antes de
-    predecir. Si no hay ninguna fuente rápida, cae a usar todas las disponibles.
-    """
-    if equipos is None:
-        from ligas_config import EQUIPOS_MUNDIAL
-        equipos = EQUIPOS_MUNDIAL
-
-    disponibles = proveedores_disponibles()
-    if solo_rapidas:
-        rapidas = [p for p in disponibles if p.rapida]
-        usar = rapidas if rapidas else disponibles
-    else:
-        usar = disponibles
-
-    existente = cargar_historial_csv(ruta) if existe_csv_maestro(ruta) else pd.DataFrame()
-    antes = len(existente)
-
-    nuevos = []
-    total = len(equipos)
-    for i, eq in enumerate(equipos, 1):
-        if callback is not None:
-            callback(i, total, eq)
-        if verbose:
-            print(f"[{i}/{total}] {eq}...")
-        try:
-            df = historial_combinado(eq, temporada, provs=usar)
-            if not df.empty:
-                nuevos.append(df)
-        except Exception as e:
-            print(f"  Aviso: {eq}: {e}")
-
-    df_nuevo = pd.concat(nuevos, ignore_index=True) if nuevos else pd.DataFrame()
-    maestro = fusionar_historiales(existente, df_nuevo, claves=["Team", "Date"])
-    maestro.to_csv(ruta, index=False, encoding="utf-8")
-    resumen = {"filas_antes": antes, "filas_despues": len(maestro),
-               "partidos_nuevos": len(maestro) - antes,
-               "equipos": int(maestro["Team"].nunique()) if "Team" in maestro else 0,
-               "fuentes": [p.nombre for p in usar]}
-    print(f"Actualizado '{ruta}': +{resumen['partidos_nuevos']} partidos "
-          f"(fuentes: {', '.join(resumen['fuentes']) or 'ninguna'}).")
-    return resumen
-
-
-if __name__ == "__main__":
-    import sys
-    if len(sys.argv) > 1 and sys.argv[1] == "update":
-        # py proveedores.py update            -> todas las selecciones (multi-fuente)
-        # py proveedores.py update Spain Brazil -> solo esas (rapido)
-        equipos = sys.argv[2:] or None
-        diagnostico()
-        print()
-        actualizar_csv(equipos=equipos, verbose=True)
-    else:
-        diagnostico()
-        print("\nUso: py proveedores.py            (diagnostico)")
-        print("     py proveedores.py update [Equipo1 Equipo2 ...]  (actualizar)")
 </file>
 
 <file path="requirements.txt">
@@ -2514,6 +2239,656 @@ print(f"\nListo. '{CSV_MAESTRO_MUNDIAL}' actualizado. Abre la app normalmente.")
 input("Presiona Enter para cerrar...")
 </file>
 
+<file path="ingest_fbref.py">
+"""
+Ingesta automatica de datos desde FBref usando soccerdata.
+
+Para el Mundial, la ruta rapida evita read_schedule() y pide shooting/misc por
+equipo, igual que descargar_datos.py. soccerdata cachea por firma exacta de
+peticion, asi que esto reutiliza el cache local ya descargado.
+"""
+import os
+from typing import List, Sequence
+
+import pandas as pd
+import numpy as np
+
+try:
+    import soccerdata as sd
+except ImportError:
+    sd = None
+
+
+COLUMNAS_REQUERIDAS = [
+    "Date", "Team", "Opponent", "Venue", "Result", "GF", "GA",
+    "Poss", "Sh", "SoT", "xG", "xGA", "Fls", "CrdY", "CrdR",
+]
+
+# Archivo maestro limpio del Mundial. Se genera con descargar_datos.py y permite
+# que la prediccion sea 100% offline y rapida (sin tocar el cache de soccerdata).
+CSV_MAESTRO_MUNDIAL = "base_mundial_2026.csv"
+
+
+def _chequear_dependencia():
+    if sd is None:
+        raise ImportError("Falta instalar 'soccerdata'. Ejecuta: pip install soccerdata")
+
+
+def _aplanar_columnas(df):
+    """Aplana columnas MultiIndex de FBref a nombres simples."""
+    df = df.copy()
+    if isinstance(df.columns, pd.MultiIndex):
+        nuevas = []
+        for col in df.columns:
+            partes = [str(c).strip() for c in col if c and "Unnamed" not in str(c)]
+            nuevas.append("_".join(partes) if partes else str(col[-1]).strip())
+        df.columns = nuevas
+    df.columns = [str(c).strip() for c in df.columns]
+    return df
+
+
+def _buscar_columna(df, *posibles_nombres):
+    """Busca por coincidencia exacta o por sufijo tras aplanar MultiIndex."""
+    cols_lower = {c.lower(): c for c in df.columns}
+
+    for nombre in posibles_nombres:
+        encontrado = cols_lower.get(nombre.lower())
+        if encontrado is not None:
+            return encontrado
+
+    for nombre in posibles_nombres:
+        objetivo = nombre.lower()
+        for c_lower, c_original in cols_lower.items():
+            partes = c_lower.replace("-", "_").replace(" ", "_").split("_")
+            if objetivo in partes or c_lower.endswith("_" + objetivo):
+                return c_original
+
+    return None
+
+
+def _copiar_columna_si_falta(origen, destino, *nombres):
+    col_origen = _buscar_columna(origen, *nombres)
+    if col_origen is None:
+        return
+    col_destino = col_origen
+    if col_destino not in destino.columns:
+        destino[col_destino] = origen[col_origen].values
+
+
+def exportar_historiales_csv(fbref, equipos: Sequence[str],
+                             ruta: str = CSV_MAESTRO_MUNDIAL) -> pd.DataFrame:
+    """
+    Construye el historial normalizado de cada equipo y lo guarda en un unico
+    CSV maestro limpio. El predictor luego lo lee directamente, sin depender del
+    cache interno de soccerdata.
+    """
+    historiales: List[pd.DataFrame] = []
+    for equipo in equipos:
+        try:
+            df = construir_historial_equipo_directo(fbref, equipo)
+            df["Team"] = equipo
+            historiales.append(df)
+        except Exception as exc:
+            print(f"  Aviso: no se pudo normalizar '{equipo}': {exc}")
+
+    if not historiales:
+        raise RuntimeError("No se pudo construir el historial de ningun equipo.")
+
+    maestro = pd.concat(historiales, ignore_index=True)
+    maestro.to_csv(ruta, index=False, encoding="utf-8")
+    print(f"CSV maestro guardado en '{ruta}' ({len(maestro)} filas, "
+          f"{maestro['Team'].nunique()} equipos).")
+    return maestro
+
+
+def cargar_historial_csv(ruta: str = CSV_MAESTRO_MUNDIAL) -> pd.DataFrame:
+    """Carga el CSV maestro y normaliza la columna de fecha. Sin red."""
+    df = pd.read_csv(ruta, encoding="utf-8")
+    if "Date" in df.columns:
+        df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
+    return df
+
+
+CLAVES_PARTIDO = ["Team", "Date", "Opponent"]
+
+
+def fusionar_historiales(df_existente: pd.DataFrame, df_nuevo: pd.DataFrame,
+                         claves: Sequence[str] = CLAVES_PARTIDO) -> pd.DataFrame:
+    """
+    Une el historial existente con datos nuevos SIN duplicar partidos. Si un
+    partido aparece en ambos (misma clave Team+Date+Opponent), conserva la
+    version nueva (datos mas recientes/corregidos). Devuelve el historial
+    completo, ordenado.
+    """
+    if df_existente is None or df_existente.empty:
+        combinado = df_nuevo.copy()
+    elif df_nuevo is None or df_nuevo.empty:
+        combinado = df_existente.copy()
+    else:
+        combinado = pd.concat([df_existente, df_nuevo], ignore_index=True)
+
+    if "Date" in combinado.columns:
+        combinado["Date"] = pd.to_datetime(combinado["Date"], errors="coerce")
+
+    claves_presentes = [c for c in claves if c in combinado.columns]
+    # keep="last" => prevalece df_nuevo, que va despues en el concat.
+    combinado = combinado.drop_duplicates(subset=claves_presentes, keep="last")
+    orden = [c for c in ["Team", "Date"] if c in combinado.columns]
+    if orden:
+        combinado = combinado.sort_values(orden)
+    return combinado.reset_index(drop=True)
+
+
+def actualizar_csv_maestro(fbref, equipos: Sequence[str],
+                           ruta: str = CSV_MAESTRO_MUNDIAL,
+                           pausa: float = 0.0, verbose: bool = False,
+                           callback=None) -> dict:
+    """
+    Actualiza el CSV maestro incrementalmente: descarga el historial actual de
+    cada equipo, lo fusiona con el CSV existente y guarda solo el resultado. No
+    borra nada; solo agrega los partidos nuevos. Devuelve un resumen.
+
+    pausa:    segundos a esperar entre equipos (anti-bloqueo de FBref).
+    callback: funcion opcional callback(i, total, equipo) para reportar avance.
+    """
+    import time
+
+    existente = cargar_historial_csv(ruta) if os.path.exists(ruta) else pd.DataFrame()
+    filas_antes = len(existente)
+
+    nuevos = []
+    total = len(equipos)
+    for i, equipo in enumerate(equipos, 1):
+        if verbose:
+            print(f"[{i}/{total}] {equipo}...")
+        if callback is not None:
+            callback(i, total, equipo)
+        try:
+            df = construir_historial_equipo_directo(fbref, equipo)
+            df["Team"] = equipo
+            nuevos.append(df)
+        except Exception as exc:
+            print(f"  Aviso: no se pudo actualizar '{equipo}': {exc}")
+        if pausa and i < total:
+            time.sleep(pausa)
+
+    df_nuevo = pd.concat(nuevos, ignore_index=True) if nuevos else pd.DataFrame()
+    maestro = fusionar_historiales(existente, df_nuevo)
+    maestro.to_csv(ruta, index=False, encoding="utf-8")
+
+    resumen = {
+        "filas_antes": filas_antes,
+        "filas_despues": len(maestro),
+        "partidos_nuevos": len(maestro) - filas_antes,
+        "equipos": int(maestro["Team"].nunique()) if "Team" in maestro else 0,
+    }
+    print(f"Actualizado '{ruta}': {resumen['partidos_nuevos']} partidos nuevos "
+          f"({filas_antes} -> {resumen['filas_despues']} filas, "
+          f"{resumen['equipos']} equipos).")
+    return resumen
+
+
+def existe_csv_maestro(ruta: str = CSV_MAESTRO_MUNDIAL) -> bool:
+    return os.path.exists(ruta)
+
+
+def construir_historial_equipo_directo(fbref, nombre_equipo: str) -> pd.DataFrame:
+    """
+    Lee shooting y misc para un solo equipo y normaliza columnas para
+    feature_engineering.py. No llama read_schedule().
+    """
+    _chequear_dependencia()
+
+    tiros = _aplanar_columnas(
+        fbref.read_team_match_stats(stat_type="shooting", team=nombre_equipo).reset_index()
+    )
+
+    try:
+        misc = _aplanar_columnas(
+            fbref.read_team_match_stats(stat_type="misc", team=nombre_equipo).reset_index()
+        )
+    except Exception:
+        misc = pd.DataFrame()
+
+    combinado = tiros.copy()
+    if not misc.empty:
+        posibles_claves = ["league", "season", "game", "date", "team"]
+        claves = [c for c in posibles_claves if c in combinado.columns and c in misc.columns]
+        if claves:
+            combinado = combinado.merge(misc, on=claves, how="left", suffixes=("", "_misc"))
+        elif len(combinado) == len(misc):
+            for nombres in [("Fls", "fls"), ("CrdY", "crdy"), ("CrdR", "crdr")]:
+                _copiar_columna_si_falta(misc, combinado, *nombres)
+
+    resultado = pd.DataFrame()
+    mapa_destino = {
+        "Date": ("date",),
+        "Team": ("team",),
+        "Result": ("result",),
+        "Opponent": ("opponent",),
+        "Venue": ("venue",),
+        "GF": ("gf",),
+        "GA": ("ga",),
+        "Poss": ("poss",),
+        "Sh": ("sh",),
+        "SoT": ("sot",),
+        "xG": ("xg",),
+        "xGA": ("xga",),
+        "Fls": ("fls",),
+        "CrdY": ("crdy",),
+        "CrdR": ("crdr",),
+    }
+
+    faltantes = []
+    for destino, posibles in mapa_destino.items():
+        col_real = _buscar_columna(combinado, *posibles)
+        if col_real is not None:
+            resultado[destino] = combinado[col_real]
+        else:
+            faltantes.append(destino)
+
+    if "Team" not in resultado.columns:
+        resultado["Team"] = nombre_equipo
+
+    obligatorias_faltantes = [c for c in ["Date", "Result", "GF", "GA"] if c in faltantes]
+    if obligatorias_faltantes:
+        raise KeyError(
+            f"No se pudieron mapear columnas obligatorias {obligatorias_faltantes} "
+            f"para '{nombre_equipo}'. Columnas disponibles: {list(combinado.columns)}"
+        )
+
+    for col in ["Poss", "Sh", "SoT", "xG", "xGA", "Fls", "CrdY", "CrdR"]:
+        if col not in resultado.columns:
+            resultado[col] = np.nan if col in ["xG", "xGA"] else 0
+
+    resultado["Date"] = pd.to_datetime(resultado["Date"])
+    return resultado.sort_values("Date").reset_index(drop=True)
+
+
+def descargar_liga(liga, temporada, no_cache=False):
+    """Descarga calendario de una liga; se conserva para cargar equipos de clubes."""
+    _chequear_dependencia()
+    fbref = sd.FBref(leagues=liga, seasons=temporada, no_cache=no_cache)
+    return _aplanar_columnas(fbref.read_schedule().reset_index())
+
+
+def descargar_stats_equipo(liga, temporada, equipo, no_cache=False):
+    """Compatibilidad: descarga/lee stats de un equipo sin read_schedule()."""
+    _chequear_dependencia()
+    fbref = sd.FBref(leagues=liga, seasons=temporada, no_cache=no_cache)
+    return construir_historial_equipo_directo(fbref, equipo)
+
+
+def actualizar_mundial(temporada: str = "2026", equipos: Sequence[str] = None,
+                       pausa: float = 0.0, verbose: bool = False,
+                       callback=None) -> dict:
+    """
+    Atajo: actualiza incrementalmente el CSV maestro del Mundial trayendo los
+    partidos recientes de FBref. Lo usa tanto la GUI como actualizar_datos.py.
+
+    equipos: lista de selecciones a actualizar. Si es None, actualiza las 48
+    (lento). Para actualizar solo las que vas a predecir, pasa esos 2-3 nombres
+    y la descarga baja de ~96 peticiones a unas pocas.
+    """
+    _chequear_dependencia()
+    from ligas_config import EQUIPOS_MUNDIAL
+    if equipos is None:
+        equipos = EQUIPOS_MUNDIAL
+    fbref = sd.FBref(leagues="INT-World Cup", seasons=temporada, no_cache=True)
+    return actualizar_csv_maestro(fbref, equipos, pausa=pausa, verbose=verbose,
+                                  callback=callback)
+
+
+def construir_historial_equipo(df_liga, nombre_equipo):
+    if "team" in df_liga.columns:
+        equipo_df = df_liga[df_liga["team"] == nombre_equipo].copy()
+    elif "Team" in df_liga.columns:
+        equipo_df = df_liga[df_liga["Team"] == nombre_equipo].copy()
+    else:
+        equipo_df = df_liga.copy()
+        equipo_df["Team"] = nombre_equipo
+
+    if equipo_df.empty:
+        raise ValueError(
+            f"No se encontraron partidos para '{nombre_equipo}'. "
+            f"Verifica el nombre exacto tal como aparece en FBref."
+        )
+
+    mapeo = {
+        "date": "Date", "Date": "Date",
+        "team": "Team", "Team": "Team",
+        "result": "Result", "Result": "Result",
+        "opponent": "Opponent", "Opponent": "Opponent",
+        "venue": "Venue", "Venue": "Venue",
+        "GF": "GF", "gf": "GF",
+        "GA": "GA", "ga": "GA",
+        "Poss": "Poss", "poss": "Poss",
+        "Sh": "Sh", "sh": "Sh",
+        "SoT": "SoT", "sot": "SoT",
+        "xG": "xG", "xg": "xG",
+        "xGA": "xGA", "xga": "xGA",
+        "Fls": "Fls", "fls": "Fls",
+        "CrdY": "CrdY", "crdy": "CrdY",
+        "CrdR": "CrdR", "crdr": "CrdR",
+    }
+    equipo_df = equipo_df.rename(columns={c: mapeo[c] for c in equipo_df.columns if c in mapeo})
+
+    faltantes = [c for c in ["Date", "Result", "GF", "GA"] if c not in equipo_df.columns]
+    if faltantes:
+        raise KeyError(
+            f"Faltan columnas esperadas tras el mapeo: {faltantes}. "
+            f"Columnas disponibles: {list(equipo_df.columns)}."
+        )
+
+    for c in ["Poss", "SoT", "xG", "xGA", "Fls", "CrdY", "CrdR"]:
+        if c not in equipo_df.columns:
+            equipo_df[c] = np.nan if c in ["xG", "xGA"] else 0
+
+    return equipo_df.sort_values("Date").reset_index(drop=True)
+
+
+def obtener_equipos_liga(df_liga):
+    """Devuelve lista ordenada de equipos unicos en el DataFrame de liga."""
+    for col in ["team", "Team"]:
+        if col in df_liga.columns:
+            return sorted(df_liga[col].dropna().unique().tolist())
+
+    equipos = set()
+    if "home_team" in df_liga.columns:
+        equipos.update(df_liga["home_team"].dropna().unique())
+    if "away_team" in df_liga.columns:
+        equipos.update(df_liga["away_team"].dropna().unique())
+    return sorted(equipos)
+</file>
+
+<file path="proveedores.py">
+"""
+Capa de proveedores de datos INTERCAMBIABLES (patrón plug-in).
+
+Objetivo: no casarse con ninguna fuente. Cada proveedor implementa el mismo
+contrato (`historial_equipo` -> DataFrame en el esquema normalizado) y es
+INDEPENDIENTE: si uno falla, no tiene API key o se cae, los demás siguen
+funcionando. Puedes agregar APIs nuevas creando otra subclase de
+`ProveedorDatos` y registrándola en PROVEEDORES — nada más cambia.
+
+Fuentes incluidas:
+  - FBref (vía soccerdata): goles, tiros, posesión, xG. No necesita clave.
+  - football-data.org: resultados/goles del Mundial (free). Necesita API key
+    gratis (header X-Auth-Token). No trae tiros/xG en el plan gratuito.
+
+Claves de API: se leen de variables de entorno o de un archivo local
+`apis.local.json` (NO se sube a git). Ver apis.example.json.
+"""
+import json
+import os
+
+import numpy as np
+import pandas as pd
+
+from ingest_fbref import (
+    COLUMNAS_REQUERIDAS, sd, _chequear_dependencia,
+    construir_historial_equipo_directo, fusionar_historiales,
+    cargar_historial_csv, existe_csv_maestro, CSV_MAESTRO_MUNDIAL,
+)
+
+ESQUEMA = COLUMNAS_REQUERIDAS  # esquema normalizado que consume el modelo
+
+
+def _leer_clave(nombre_env: str, json_key: str) -> str:
+    """Lee una API key de variable de entorno o de apis.local.json."""
+    valor = os.environ.get(nombre_env, "").strip()
+    if valor:
+        return valor
+    try:
+        with open("apis.local.json", encoding="utf-8") as f:
+            return str(json.load(f).get(json_key, "")).strip()
+    except Exception:
+        return ""
+
+
+# ── Contrato común ───────────────────────────────────────────────────────────
+
+class ProveedorDatos:
+    nombre = "base"
+    prioridad = 0          # mayor = más confiable (gana al fusionar)
+    requiere_clave = False
+    rapida = False         # True si responde rápido (API REST) vs scraping lento
+
+    def disponible(self) -> bool:
+        raise NotImplementedError
+
+    def historial_equipo(self, equipo: str, temporada: str = "2026") -> pd.DataFrame:
+        """Devuelve los partidos del equipo en el esquema ESQUEMA."""
+        raise NotImplementedError
+
+
+# ── FBref (soccerdata) ───────────────────────────────────────────────────────
+
+class FBrefProvider(ProveedorDatos):
+    nombre = "FBref"
+    prioridad = 10  # fuente más rica (xG, tiros) -> prevalece
+    requiere_clave = False
+    rapida = False   # scraping con rate-limit: lento
+
+    def disponible(self) -> bool:
+        return sd is not None
+
+    def historial_equipo(self, equipo, temporada="2026", no_cache=True):
+        _chequear_dependencia()
+        fbref = sd.FBref(leagues="INT-World Cup", seasons=temporada, no_cache=no_cache)
+        df = construir_historial_equipo_directo(fbref, equipo)
+        df["Team"] = equipo
+        return df
+
+
+# ── football-data.org ────────────────────────────────────────────────────────
+
+# Nombres de selección que football-data.org escribe distinto a FBref/el modelo.
+ALIAS_FDORG = {
+    "Bosnia & Herz.": "Bosnia-Herzegovina",
+    "Cabo Verde": "Cape Verde Islands",
+    "Côte d'Ivoire": "Ivory Coast",
+    "IR Iran": "Iran",
+    "Korea Republic": "South Korea",
+    "Türkiye": "Turkey",
+}
+
+
+def _parsear_fdorg(data: dict, equipo: str, nombre_busqueda: str = None) -> pd.DataFrame:
+    """Convierte la respuesta de /competitions/WC/matches al esquema normalizado
+    desde la perspectiva de `equipo`. `nombre_busqueda` es el nombre tal como lo
+    escribe football-data.org (puede diferir del nombre del modelo); por defecto
+    se usa `equipo`. La columna Team siempre guarda `equipo` (nombre del modelo).
+    Función pura (testeable sin red)."""
+    busca = (nombre_busqueda or equipo).lower()
+    filas = []
+    for m in data.get("matches", []):
+        if m.get("status") != "FINISHED":
+            continue
+        home = (m.get("homeTeam") or {}).get("name") or ""
+        away = (m.get("awayTeam") or {}).get("name") or ""
+        ft = (m.get("score") or {}).get("fullTime") or {}
+        gh, ga = ft.get("home"), ft.get("away")
+        if gh is None or ga is None:
+            continue
+        if busca == home.lower():
+            rival, gf, gc, venue = away, gh, ga, "Home"
+        elif busca == away.lower():
+            rival, gf, gc, venue = home, ga, gh, "Away"
+        else:
+            continue
+        res = "W" if gf > gc else ("L" if gf < gc else "D")
+        filas.append({
+            "Date": m["utcDate"][:10], "Team": equipo, "Opponent": rival,
+            "Venue": venue, "Result": res, "GF": gf, "GA": gc,
+            "Poss": 0, "Sh": 0, "SoT": 0, "xG": np.nan, "xGA": np.nan,
+            "Fls": 0, "CrdY": 0, "CrdR": 0,
+        })
+    df = pd.DataFrame(filas, columns=ESQUEMA)
+    if not df.empty:
+        df["Date"] = pd.to_datetime(df["Date"])
+    return df
+
+
+class FootballDataOrgProvider(ProveedorDatos):
+    nombre = "football-data.org"
+    prioridad = 5  # solo goles/resultados -> cede ante FBref
+    requiere_clave = True
+    rapida = True   # API REST: responde en segundos
+    BASE = "https://api.football-data.org/v4"
+
+    def __init__(self):
+        self.clave = _leer_clave("FOOTBALL_DATA_ORG_KEY", "football_data_org")
+        self._cache_matches = None
+
+    def disponible(self) -> bool:
+        return bool(self.clave)
+
+    def _matches_mundial(self) -> dict:
+        if self._cache_matches is None:
+            import requests
+            r = requests.get(f"{self.BASE}/competitions/WC/matches",
+                             headers={"X-Auth-Token": self.clave}, timeout=20)
+            r.raise_for_status()
+            self._cache_matches = r.json()
+        return self._cache_matches
+
+    def historial_equipo(self, equipo, temporada="2026"):
+        fd_nombre = ALIAS_FDORG.get(equipo, equipo)
+        return _parsear_fdorg(self._matches_mundial(), equipo, nombre_busqueda=fd_nombre)
+
+
+# ── Registro de proveedores (agrega aquí nuevas APIs) ────────────────────────
+
+PROVEEDORES = [
+    FBrefProvider(),
+    FootballDataOrgProvider(),
+]
+
+
+def proveedores_disponibles():
+    """Lista de proveedores configurados y usables, de mayor a menor prioridad."""
+    return sorted([p for p in PROVEEDORES if p.disponible()],
+                  key=lambda x: -x.prioridad)
+
+
+def diagnostico():
+    """Imprime qué proveedores están disponibles (para que sepas qué tienes)."""
+    print("Proveedores de datos registrados:")
+    for p in sorted(PROVEEDORES, key=lambda x: -x.prioridad):
+        if p.disponible():
+            estado = "[disponible]"
+        elif p.requiere_clave:
+            estado = "[falta API key]"
+        else:
+            estado = "[no instalado]"
+        print(f"  - {p.nombre:<20} (prioridad {p.prioridad:>2})  {estado}")
+
+
+def historial_equipo(equipo, temporada="2026", proveedor=None):
+    """
+    Devuelve (DataFrame, nombre_fuente) del PRIMER proveedor que responda, en
+    orden de prioridad. Cada proveedor está aislado: si uno lanza error, se
+    intenta el siguiente — uno no descompone a los demás.
+    """
+    candidatos = [proveedor] if proveedor else proveedores_disponibles()
+    errores = []
+    for p in candidatos:
+        try:
+            df = p.historial_equipo(equipo, temporada)
+            if df is not None and not df.empty:
+                return df, p.nombre
+        except Exception as e:
+            errores.append(f"{p.nombre}: {e}")
+    raise RuntimeError(f"Ningún proveedor devolvió datos para '{equipo}'. {errores}")
+
+
+def historial_combinado(equipo, temporada="2026", provs=None) -> pd.DataFrame:
+    """
+    Fusiona el historial de los proveedores indicados (o todos los disponibles).
+    Cruza fuentes para más cobertura/precisión: se aplican de menor a mayor
+    prioridad, así la fuente más confiable (FBref) prevalece. Aislado: un
+    proveedor que falle no rompe a los demás. Deduplica por Team+Date.
+    """
+    if provs is None:
+        provs = proveedores_disponibles()
+    combinado = pd.DataFrame()
+    for p in sorted(provs, key=lambda x: x.prioridad):
+        try:
+            df = p.historial_equipo(equipo, temporada)
+            if df is not None and not df.empty:
+                combinado = fusionar_historiales(combinado, df, claves=["Team", "Date"])
+        except Exception:
+            continue
+    return combinado
+
+
+def actualizar_csv(equipos=None, temporada="2026", ruta=CSV_MAESTRO_MUNDIAL,
+                   verbose=False, callback=None, solo_rapidas=False) -> dict:
+    """
+    Actualiza el CSV maestro combinando proveedores, sin borrarlo (fusión
+    incremental). Si solo hay FBref, equivale al updater normal; si además hay
+    football-data.org, cruza ambas fuentes.
+
+    solo_rapidas=True usa solo fuentes rápidas (API REST, p. ej. football-data.org)
+    y evita el scraping lento de FBref — ideal para actualizar justo antes de
+    predecir. Si no hay ninguna fuente rápida, cae a usar todas las disponibles.
+    """
+    if equipos is None:
+        from ligas_config import EQUIPOS_MUNDIAL
+        equipos = EQUIPOS_MUNDIAL
+
+    disponibles = proveedores_disponibles()
+    if solo_rapidas:
+        rapidas = [p for p in disponibles if p.rapida]
+        usar = rapidas if rapidas else disponibles
+    else:
+        usar = disponibles
+
+    existente = cargar_historial_csv(ruta) if existe_csv_maestro(ruta) else pd.DataFrame()
+    antes = len(existente)
+
+    nuevos = []
+    total = len(equipos)
+    for i, eq in enumerate(equipos, 1):
+        if callback is not None:
+            callback(i, total, eq)
+        if verbose:
+            print(f"[{i}/{total}] {eq}...")
+        try:
+            df = historial_combinado(eq, temporada, provs=usar)
+            if not df.empty:
+                nuevos.append(df)
+        except Exception as e:
+            print(f"  Aviso: {eq}: {e}")
+
+    df_nuevo = pd.concat(nuevos, ignore_index=True) if nuevos else pd.DataFrame()
+    maestro = fusionar_historiales(existente, df_nuevo, claves=["Team", "Date"])
+    maestro.to_csv(ruta, index=False, encoding="utf-8")
+    resumen = {"filas_antes": antes, "filas_despues": len(maestro),
+               "partidos_nuevos": len(maestro) - antes,
+               "equipos": int(maestro["Team"].nunique()) if "Team" in maestro else 0,
+               "fuentes": [p.nombre for p in usar]}
+    print(f"Actualizado '{ruta}': +{resumen['partidos_nuevos']} partidos "
+          f"(fuentes: {', '.join(resumen['fuentes']) or 'ninguna'}).")
+    return resumen
+
+
+if __name__ == "__main__":
+    import sys
+    if len(sys.argv) > 1 and sys.argv[1] == "update":
+        # py proveedores.py update            -> todas las selecciones (multi-fuente)
+        # py proveedores.py update Spain Brazil -> solo esas (rapido)
+        equipos = sys.argv[2:] or None
+        diagnostico()
+        print()
+        actualizar_csv(equipos=equipos, verbose=True)
+    else:
+        diagnostico()
+        print("\nUso: py proveedores.py            (diagnostico)")
+        print("     py proveedores.py update [Equipo1 Equipo2 ...]  (actualizar)")
+</file>
+
 <file path="app_gui.py">
 """
 Interfaz gráfica del predictor de fútbol — estilo moderno.
@@ -3028,368 +3403,6 @@ if __name__ == "__main__":
     app.mainloop()
 </file>
 
-<file path="ingest_fbref.py">
-"""
-Ingesta automatica de datos desde FBref usando soccerdata.
-
-Para el Mundial, la ruta rapida evita read_schedule() y pide shooting/misc por
-equipo, igual que descargar_datos.py. soccerdata cachea por firma exacta de
-peticion, asi que esto reutiliza el cache local ya descargado.
-"""
-import os
-from typing import List, Sequence
-
-import pandas as pd
-import numpy as np
-
-try:
-    import soccerdata as sd
-except ImportError:
-    sd = None
-
-
-COLUMNAS_REQUERIDAS = [
-    "Date", "Team", "Opponent", "Venue", "Result", "GF", "GA",
-    "Poss", "Sh", "SoT", "xG", "xGA", "Fls", "CrdY", "CrdR",
-]
-
-# Archivo maestro limpio del Mundial. Se genera con descargar_datos.py y permite
-# que la prediccion sea 100% offline y rapida (sin tocar el cache de soccerdata).
-CSV_MAESTRO_MUNDIAL = "base_mundial_2026.csv"
-
-
-def _chequear_dependencia():
-    if sd is None:
-        raise ImportError("Falta instalar 'soccerdata'. Ejecuta: pip install soccerdata")
-
-
-def _aplanar_columnas(df):
-    """Aplana columnas MultiIndex de FBref a nombres simples."""
-    df = df.copy()
-    if isinstance(df.columns, pd.MultiIndex):
-        nuevas = []
-        for col in df.columns:
-            partes = [str(c).strip() for c in col if c and "Unnamed" not in str(c)]
-            nuevas.append("_".join(partes) if partes else str(col[-1]).strip())
-        df.columns = nuevas
-    df.columns = [str(c).strip() for c in df.columns]
-    return df
-
-
-def _buscar_columna(df, *posibles_nombres):
-    """Busca por coincidencia exacta o por sufijo tras aplanar MultiIndex."""
-    cols_lower = {c.lower(): c for c in df.columns}
-
-    for nombre in posibles_nombres:
-        encontrado = cols_lower.get(nombre.lower())
-        if encontrado is not None:
-            return encontrado
-
-    for nombre in posibles_nombres:
-        objetivo = nombre.lower()
-        for c_lower, c_original in cols_lower.items():
-            partes = c_lower.replace("-", "_").replace(" ", "_").split("_")
-            if objetivo in partes or c_lower.endswith("_" + objetivo):
-                return c_original
-
-    return None
-
-
-def _copiar_columna_si_falta(origen, destino, *nombres):
-    col_origen = _buscar_columna(origen, *nombres)
-    if col_origen is None:
-        return
-    col_destino = col_origen
-    if col_destino not in destino.columns:
-        destino[col_destino] = origen[col_origen].values
-
-
-def exportar_historiales_csv(fbref, equipos: Sequence[str],
-                             ruta: str = CSV_MAESTRO_MUNDIAL) -> pd.DataFrame:
-    """
-    Construye el historial normalizado de cada equipo y lo guarda en un unico
-    CSV maestro limpio. El predictor luego lo lee directamente, sin depender del
-    cache interno de soccerdata.
-    """
-    historiales: List[pd.DataFrame] = []
-    for equipo in equipos:
-        try:
-            df = construir_historial_equipo_directo(fbref, equipo)
-            df["Team"] = equipo
-            historiales.append(df)
-        except Exception as exc:
-            print(f"  Aviso: no se pudo normalizar '{equipo}': {exc}")
-
-    if not historiales:
-        raise RuntimeError("No se pudo construir el historial de ningun equipo.")
-
-    maestro = pd.concat(historiales, ignore_index=True)
-    maestro.to_csv(ruta, index=False, encoding="utf-8")
-    print(f"CSV maestro guardado en '{ruta}' ({len(maestro)} filas, "
-          f"{maestro['Team'].nunique()} equipos).")
-    return maestro
-
-
-def cargar_historial_csv(ruta: str = CSV_MAESTRO_MUNDIAL) -> pd.DataFrame:
-    """Carga el CSV maestro y normaliza la columna de fecha. Sin red."""
-    df = pd.read_csv(ruta, encoding="utf-8")
-    if "Date" in df.columns:
-        df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
-    return df
-
-
-CLAVES_PARTIDO = ["Team", "Date", "Opponent"]
-
-
-def fusionar_historiales(df_existente: pd.DataFrame, df_nuevo: pd.DataFrame,
-                         claves: Sequence[str] = CLAVES_PARTIDO) -> pd.DataFrame:
-    """
-    Une el historial existente con datos nuevos SIN duplicar partidos. Si un
-    partido aparece en ambos (misma clave Team+Date+Opponent), conserva la
-    version nueva (datos mas recientes/corregidos). Devuelve el historial
-    completo, ordenado.
-    """
-    if df_existente is None or df_existente.empty:
-        combinado = df_nuevo.copy()
-    elif df_nuevo is None or df_nuevo.empty:
-        combinado = df_existente.copy()
-    else:
-        combinado = pd.concat([df_existente, df_nuevo], ignore_index=True)
-
-    if "Date" in combinado.columns:
-        combinado["Date"] = pd.to_datetime(combinado["Date"], errors="coerce")
-
-    claves_presentes = [c for c in claves if c in combinado.columns]
-    # keep="last" => prevalece df_nuevo, que va despues en el concat.
-    combinado = combinado.drop_duplicates(subset=claves_presentes, keep="last")
-    orden = [c for c in ["Team", "Date"] if c in combinado.columns]
-    if orden:
-        combinado = combinado.sort_values(orden)
-    return combinado.reset_index(drop=True)
-
-
-def actualizar_csv_maestro(fbref, equipos: Sequence[str],
-                           ruta: str = CSV_MAESTRO_MUNDIAL,
-                           pausa: float = 0.0, verbose: bool = False,
-                           callback=None) -> dict:
-    """
-    Actualiza el CSV maestro incrementalmente: descarga el historial actual de
-    cada equipo, lo fusiona con el CSV existente y guarda solo el resultado. No
-    borra nada; solo agrega los partidos nuevos. Devuelve un resumen.
-
-    pausa:    segundos a esperar entre equipos (anti-bloqueo de FBref).
-    callback: funcion opcional callback(i, total, equipo) para reportar avance.
-    """
-    import time
-
-    existente = cargar_historial_csv(ruta) if os.path.exists(ruta) else pd.DataFrame()
-    filas_antes = len(existente)
-
-    nuevos = []
-    total = len(equipos)
-    for i, equipo in enumerate(equipos, 1):
-        if verbose:
-            print(f"[{i}/{total}] {equipo}...")
-        if callback is not None:
-            callback(i, total, equipo)
-        try:
-            df = construir_historial_equipo_directo(fbref, equipo)
-            df["Team"] = equipo
-            nuevos.append(df)
-        except Exception as exc:
-            print(f"  Aviso: no se pudo actualizar '{equipo}': {exc}")
-        if pausa and i < total:
-            time.sleep(pausa)
-
-    df_nuevo = pd.concat(nuevos, ignore_index=True) if nuevos else pd.DataFrame()
-    maestro = fusionar_historiales(existente, df_nuevo)
-    maestro.to_csv(ruta, index=False, encoding="utf-8")
-
-    resumen = {
-        "filas_antes": filas_antes,
-        "filas_despues": len(maestro),
-        "partidos_nuevos": len(maestro) - filas_antes,
-        "equipos": int(maestro["Team"].nunique()) if "Team" in maestro else 0,
-    }
-    print(f"Actualizado '{ruta}': {resumen['partidos_nuevos']} partidos nuevos "
-          f"({filas_antes} -> {resumen['filas_despues']} filas, "
-          f"{resumen['equipos']} equipos).")
-    return resumen
-
-
-def existe_csv_maestro(ruta: str = CSV_MAESTRO_MUNDIAL) -> bool:
-    return os.path.exists(ruta)
-
-
-def construir_historial_equipo_directo(fbref, nombre_equipo: str) -> pd.DataFrame:
-    """
-    Lee shooting y misc para un solo equipo y normaliza columnas para
-    feature_engineering.py. No llama read_schedule().
-    """
-    _chequear_dependencia()
-
-    tiros = _aplanar_columnas(
-        fbref.read_team_match_stats(stat_type="shooting", team=nombre_equipo).reset_index()
-    )
-
-    try:
-        misc = _aplanar_columnas(
-            fbref.read_team_match_stats(stat_type="misc", team=nombre_equipo).reset_index()
-        )
-    except Exception:
-        misc = pd.DataFrame()
-
-    combinado = tiros.copy()
-    if not misc.empty:
-        posibles_claves = ["league", "season", "game", "date", "team"]
-        claves = [c for c in posibles_claves if c in combinado.columns and c in misc.columns]
-        if claves:
-            combinado = combinado.merge(misc, on=claves, how="left", suffixes=("", "_misc"))
-        elif len(combinado) == len(misc):
-            for nombres in [("Fls", "fls"), ("CrdY", "crdy"), ("CrdR", "crdr")]:
-                _copiar_columna_si_falta(misc, combinado, *nombres)
-
-    resultado = pd.DataFrame()
-    mapa_destino = {
-        "Date": ("date",),
-        "Team": ("team",),
-        "Result": ("result",),
-        "Opponent": ("opponent",),
-        "Venue": ("venue",),
-        "GF": ("gf",),
-        "GA": ("ga",),
-        "Poss": ("poss",),
-        "Sh": ("sh",),
-        "SoT": ("sot",),
-        "xG": ("xg",),
-        "xGA": ("xga",),
-        "Fls": ("fls",),
-        "CrdY": ("crdy",),
-        "CrdR": ("crdr",),
-    }
-
-    faltantes = []
-    for destino, posibles in mapa_destino.items():
-        col_real = _buscar_columna(combinado, *posibles)
-        if col_real is not None:
-            resultado[destino] = combinado[col_real]
-        else:
-            faltantes.append(destino)
-
-    if "Team" not in resultado.columns:
-        resultado["Team"] = nombre_equipo
-
-    obligatorias_faltantes = [c for c in ["Date", "Result", "GF", "GA"] if c in faltantes]
-    if obligatorias_faltantes:
-        raise KeyError(
-            f"No se pudieron mapear columnas obligatorias {obligatorias_faltantes} "
-            f"para '{nombre_equipo}'. Columnas disponibles: {list(combinado.columns)}"
-        )
-
-    for col in ["Poss", "Sh", "SoT", "xG", "xGA", "Fls", "CrdY", "CrdR"]:
-        if col not in resultado.columns:
-            resultado[col] = np.nan if col in ["xG", "xGA"] else 0
-
-    resultado["Date"] = pd.to_datetime(resultado["Date"])
-    return resultado.sort_values("Date").reset_index(drop=True)
-
-
-def descargar_liga(liga, temporada, no_cache=False):
-    """Descarga calendario de una liga; se conserva para cargar equipos de clubes."""
-    _chequear_dependencia()
-    fbref = sd.FBref(leagues=liga, seasons=temporada, no_cache=no_cache)
-    return _aplanar_columnas(fbref.read_schedule().reset_index())
-
-
-def descargar_stats_equipo(liga, temporada, equipo, no_cache=False):
-    """Compatibilidad: descarga/lee stats de un equipo sin read_schedule()."""
-    _chequear_dependencia()
-    fbref = sd.FBref(leagues=liga, seasons=temporada, no_cache=no_cache)
-    return construir_historial_equipo_directo(fbref, equipo)
-
-
-def actualizar_mundial(temporada: str = "2026", equipos: Sequence[str] = None,
-                       pausa: float = 0.0, verbose: bool = False,
-                       callback=None) -> dict:
-    """
-    Atajo: actualiza incrementalmente el CSV maestro del Mundial trayendo los
-    partidos recientes de FBref. Lo usa tanto la GUI como actualizar_datos.py.
-
-    equipos: lista de selecciones a actualizar. Si es None, actualiza las 48
-    (lento). Para actualizar solo las que vas a predecir, pasa esos 2-3 nombres
-    y la descarga baja de ~96 peticiones a unas pocas.
-    """
-    _chequear_dependencia()
-    from ligas_config import EQUIPOS_MUNDIAL
-    if equipos is None:
-        equipos = EQUIPOS_MUNDIAL
-    fbref = sd.FBref(leagues="INT-World Cup", seasons=temporada, no_cache=True)
-    return actualizar_csv_maestro(fbref, equipos, pausa=pausa, verbose=verbose,
-                                  callback=callback)
-
-
-def construir_historial_equipo(df_liga, nombre_equipo):
-    if "team" in df_liga.columns:
-        equipo_df = df_liga[df_liga["team"] == nombre_equipo].copy()
-    elif "Team" in df_liga.columns:
-        equipo_df = df_liga[df_liga["Team"] == nombre_equipo].copy()
-    else:
-        equipo_df = df_liga.copy()
-        equipo_df["Team"] = nombre_equipo
-
-    if equipo_df.empty:
-        raise ValueError(
-            f"No se encontraron partidos para '{nombre_equipo}'. "
-            f"Verifica el nombre exacto tal como aparece en FBref."
-        )
-
-    mapeo = {
-        "date": "Date", "Date": "Date",
-        "team": "Team", "Team": "Team",
-        "result": "Result", "Result": "Result",
-        "opponent": "Opponent", "Opponent": "Opponent",
-        "venue": "Venue", "Venue": "Venue",
-        "GF": "GF", "gf": "GF",
-        "GA": "GA", "ga": "GA",
-        "Poss": "Poss", "poss": "Poss",
-        "Sh": "Sh", "sh": "Sh",
-        "SoT": "SoT", "sot": "SoT",
-        "xG": "xG", "xg": "xG",
-        "xGA": "xGA", "xga": "xGA",
-        "Fls": "Fls", "fls": "Fls",
-        "CrdY": "CrdY", "crdy": "CrdY",
-        "CrdR": "CrdR", "crdr": "CrdR",
-    }
-    equipo_df = equipo_df.rename(columns={c: mapeo[c] for c in equipo_df.columns if c in mapeo})
-
-    faltantes = [c for c in ["Date", "Result", "GF", "GA"] if c not in equipo_df.columns]
-    if faltantes:
-        raise KeyError(
-            f"Faltan columnas esperadas tras el mapeo: {faltantes}. "
-            f"Columnas disponibles: {list(equipo_df.columns)}."
-        )
-
-    for c in ["Poss", "SoT", "xG", "xGA", "Fls", "CrdY", "CrdR"]:
-        if c not in equipo_df.columns:
-            equipo_df[c] = np.nan if c in ["xG", "xGA"] else 0
-
-    return equipo_df.sort_values("Date").reset_index(drop=True)
-
-
-def obtener_equipos_liga(df_liga):
-    """Devuelve lista ordenada de equipos unicos en el DataFrame de liga."""
-    for col in ["team", "Team"]:
-        if col in df_liga.columns:
-            return sorted(df_liga[col].dropna().unique().tolist())
-
-    equipos = set()
-    if "home_team" in df_liga.columns:
-        equipos.update(df_liga["home_team"].dropna().unique())
-    if "away_team" in df_liga.columns:
-        equipos.update(df_liga["away_team"].dropna().unique())
-    return sorted(equipos)
-</file>
-
 <file path="README.md">
 # ⚽ Predictor de Fútbol · Mundial 2026
 
@@ -3703,6 +3716,9 @@ correr_backtest(partidos, df_liga, verbose=True)
 6. **Ingesta automática**: ya no hay que copiar tablas de FBref a mano.
 7. **Matriz normalizada con `rho=0`**: la rama sin Dixon-Coles no reescalaba la
    Poisson truncada (las probabilidades sumaban ~0.98). Ahora siempre suma 1.
+8. **Tiros a puerta ahora activos**: `tiros_puerta_adj` se calculaba pero
+   `calcular_lambdas` lo ignoraba. Ahora aplica un bonus ofensivo cuando un
+   equipo remata más al arco que la media (variable que estaba "muerta").
 
 ## 🧼 Mejoras de calidad de código (refactor)
 

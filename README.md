@@ -310,6 +310,9 @@ correr_backtest(partidos, df_liga, verbose=True)
 6. **Ingesta automática**: ya no hay que copiar tablas de FBref a mano.
 7. **Matriz normalizada con `rho=0`**: la rama sin Dixon-Coles no reescalaba la
    Poisson truncada (las probabilidades sumaban ~0.98). Ahora siempre suma 1.
+8. **Tiros a puerta ahora activos**: `tiros_puerta_adj` se calculaba pero
+   `calcular_lambdas` lo ignoraba. Ahora aplica un bonus ofensivo cuando un
+   equipo remata más al arco que la media (variable que estaba "muerta").
 
 ## 🧼 Mejoras de calidad de código (refactor)
 
