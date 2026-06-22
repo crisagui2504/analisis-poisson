@@ -14,6 +14,7 @@ Date,Team,Result,Opponent,Venue,GF,GA,Sh,SoT,xG,xGA,Poss,Fls,CrdY,CrdR
 2026-06-03,Algeria,W,nl Netherlands,Away,1.0,0.0,,,,,0,,0,0
 2026-06-10,Algeria,W,bo Bolivia,Neutral,4.0,0.0,,,,,0,,2,0
 2026-06-16,Algeria,L,ar Argentina,Neutral,0.0,3.0,7.0,0.0,,,0,8.0,0,0
+2026-06-17,Algeria,L,Argentina,Away,0.0,3.0,0.0,0.0,,,0,0.0,0,0
 2023-09-07,Argentina,W,ec Ecuador,Home,1.0,0.0,13.0,4.0,,,0,9.0,1,0
 2023-09-12,Argentina,W,bo Bolivia,Away,3.0,0.0,15.0,8.0,,,0,10.0,0,0
 2023-10-12,Argentina,W,py Paraguay,Home,1.0,0.0,15.0,4.0,,,0,10.0,1,0
@@ -37,6 +38,8 @@ Date,Team,Result,Opponent,Venue,GF,GA,Sh,SoT,xG,xGA,Poss,Fls,CrdY,CrdR
 2026-06-06,Argentina,W,hn Honduras,Neutral,2.0,0.0,,,,,0,,4,0
 2026-06-09,Argentina,W,is Iceland,Neutral,3.0,0.0,,,,,0,,2,0
 2026-06-16,Argentina,W,dz Algeria,Neutral,3.0,0.0,10.0,6.0,,,0,13.0,0,0
+2026-06-17,Argentina,W,Algeria,Home,3.0,0.0,0.0,0.0,,,0,0.0,0,0
+2026-06-22,Argentina,W,Austria,Home,2.0,0.0,0.0,0.0,,,0,0.0,0,0
 2023-11-16,Australia,W,bd Bangladesh,Home,7.0,0.0,,,,,0,,1,0
 2023-11-21,Australia,W,ps Palestine,Neutral,1.0,0.0,,,,,0,,1,0
 2024-03-21,Australia,W,lb Lebanon,Home,2.0,0.0,,,,,0,,2,0
@@ -56,7 +59,8 @@ Date,Team,Result,Opponent,Venue,GF,GA,Sh,SoT,xG,xGA,Poss,Fls,CrdY,CrdR
 2026-05-30,Australia,L,mx Mexico,Neutral,0.0,1.0,,,,,0,,1,0
 2026-06-06,Australia,D,ch Switzerland,Neutral,1.0,1.0,,,,,0,,2,0
 2026-06-13,Australia,W,tr Türkiye,Neutral,2.0,0.0,9.0,4.0,,,0,12.0,0,0
-2026-06-19,Australia,L,us United States,Neutral,0.0,2.0,5.0,2.0,,,0,16.0,4,0
+2026-06-14,Australia,W,Turkey,Home,2.0,0.0,0.0,0.0,,,0,0.0,0,0
+2026-06-19,Australia,L,United States,Away,0.0,2.0,0.0,0.0,,,0,0.0,0,0
 2025-06-07,Austria,W,ro Romania,Home,2.0,1.0,14.0,9.0,,,0,11.0,1,0
 2025-06-10,Austria,W,sm San Marino,Away,4.0,0.0,22.0,13.0,,,0,15.0,2,0
 2025-09-06,Austria,W,cy Cyprus,Home,1.0,0.0,10.0,3.0,,,0,14.0,1,0
@@ -69,6 +73,8 @@ Date,Team,Result,Opponent,Venue,GF,GA,Sh,SoT,xG,xGA,Poss,Fls,CrdY,CrdR
 2026-03-31,Austria,W,kr Korea Republic,Home,1.0,0.0,,,,,0,,1,0
 2026-06-01,Austria,W,tn Tunisia,Home,1.0,0.0,,,,,0,,2,1
 2026-06-16,Austria,W,jo Jordan,Neutral,3.0,1.0,11.0,4.0,,,0,12.0,1,0
+2026-06-17,Austria,W,Jordan,Home,3.0,1.0,0.0,0.0,,,0,0.0,0,0
+2026-06-22,Austria,L,Argentina,Away,0.0,2.0,0.0,0.0,,,0,0.0,0,0
 2025-06-06,Belgium,D,mk N. Macedonia,Away,1.0,1.0,17.0,4.0,,,0,11.0,1,0
 2025-06-09,Belgium,W,wls Wales,Home,4.0,3.0,18.0,4.0,,,0,13.0,3,0
 2025-09-04,Belgium,W,li Liechtenstein,Away,6.0,0.0,24.0,9.0,,,0,12.0,0,0
@@ -81,8 +87,8 @@ Date,Team,Result,Opponent,Venue,GF,GA,Sh,SoT,xG,xGA,Poss,Fls,CrdY,CrdR
 2026-03-31,Belgium,D,mx Mexico,Neutral,1.0,1.0,,,,,0,,3,0
 2026-06-02,Belgium,W,hr Croatia,Away,2.0,0.0,,,,,0,,2,0
 2026-06-06,Belgium,W,tn Tunisia,Home,5.0,0.0,,,,,0,,2,0
-2026-06-15,Belgium,D,eg Egypt,Neutral,1.0,1.0,15.0,3.0,,,0,15.0,2,0
-2026-06-21,Belgium,D,ir IR Iran,Neutral,0.0,0.0,23.0,7.0,,,0,7.0,1,1
+2026-06-15,Belgium,D,Egypt,Home,1.0,1.0,0.0,0.0,,,0,0.0,0,0
+2026-06-21,Belgium,D,Iran,Home,0.0,0.0,0.0,0.0,,,0,0.0,0,0
 2025-03-21,Bosnia & Herz.,W,ro Romania,Away,1.0,0.0,5.0,1.0,,,0,25.0,3,0
 2025-03-24,Bosnia & Herz.,W,cy Cyprus,Home,2.0,1.0,14.0,6.0,,,0,14.0,2,0
 2025-06-07,Bosnia & Herz.,W,sm San Marino,Home,1.0,0.0,21.0,6.0,,,0,21.0,1,0
@@ -93,8 +99,8 @@ Date,Team,Result,Opponent,Venue,GF,GA,Sh,SoT,xG,xGA,Poss,Fls,CrdY,CrdR
 2025-11-18,Bosnia & Herz.,D,at Austria,Away,1.0,1.0,8.0,1.0,,,0,9.0,2,0
 2026-05-29,Bosnia & Herz.,D,mk N. Macedonia,Home,0.0,0.0,,,,,0,,0,0
 2026-06-06,Bosnia & Herz.,D,pa Panama,Neutral,1.0,1.0,,,,,0,,0,0
-2026-06-12,Bosnia & Herz.,D,ca Canada,Neutral,1.0,1.0,8.0,3.0,,,0,20.0,3,0
-2026-06-18,Bosnia & Herz.,L,ch Switzerland,Neutral,1.0,4.0,5.0,3.0,,,0,18.0,2,1
+2026-06-12,Bosnia & Herz.,D,Canada,Away,1.0,1.0,0.0,0.0,,,0,0.0,0,0
+2026-06-18,Bosnia & Herz.,L,Switzerland,Away,1.0,4.0,0.0,0.0,,,0,0.0,0,0
 2023-09-08,Brazil,W,bo Bolivia,Home,5.0,1.0,21.0,11.0,,,0,6.0,1,0
 2023-09-12,Brazil,W,pe Peru,Away,1.0,0.0,9.0,3.0,,,0,14.0,2,0
 2023-10-12,Brazil,D,ve Venezuela,Home,1.0,1.0,15.0,6.0,,,0,13.0,2,0
@@ -117,8 +123,9 @@ Date,Team,Result,Opponent,Venue,GF,GA,Sh,SoT,xG,xGA,Poss,Fls,CrdY,CrdR
 2026-03-31,Brazil,W,hr Croatia,Neutral,3.0,1.0,,,,,0,,1,0
 2026-05-31,Brazil,W,pa Panama,Home,6.0,2.0,,,,,0,,0,0
 2026-06-06,Brazil,W,eg Egypt,Neutral,2.0,1.0,,,,,0,,1,0
-2026-06-13,Brazil,D,ma Morocco,Neutral,1.0,1.0,12.0,5.0,,,0,16.0,2,0
+2026-06-13,Brazil,D,Morocco,Home,1.0,1.0,0.0,0.0,,,0,0.0,0,0
 2026-06-19,Brazil,W,ht Haiti,Neutral,3.0,0.0,8.0,5.0,,,0,13.0,1,0
+2026-06-20,Brazil,W,Haiti,Home,3.0,0.0,0.0,0.0,,,0,0.0,0,0
 2023-11-16,Cabo Verde,D,ao Angola,Home,0.0,0.0,,,,,0,,0,0
 2023-11-21,Cabo Verde,W,sz Eswatini,Neutral,2.0,0.0,,,,,0,,1,0
 2024-06-08,Cabo Verde,L,cm Cameroon,Away,1.0,4.0,,,,,0,,0,0
@@ -131,14 +138,14 @@ Date,Team,Result,Opponent,Venue,GF,GA,Sh,SoT,xG,xGA,Poss,Fls,CrdY,CrdR
 2025-10-13,Cabo Verde,W,sz Eswatini,Home,3.0,0.0,,,,,0,,2,0
 2026-05-31,Cabo Verde,W,rs Serbia,Neutral,3.0,0.0,,,,,0,,3,0
 2026-06-06,Cabo Verde,W,bm Bermuda,Neutral,3.0,0.0,,,,,0,,1,0
-2026-06-15,Cabo Verde,D,es Spain,Neutral,0.0,0.0,6.0,1.0,,,0,1.0,1,0
-2026-06-21,Cabo Verde,D,uy Uruguay,Neutral,2.0,2.0,12.0,4.0,,,0,4.0,2,0
+2026-06-15,Cabo Verde,D,Spain,Away,0.0,0.0,0.0,0.0,,,0,0.0,0,0
+2026-06-21,Cabo Verde,D,Uruguay,Away,2.0,2.0,0.0,0.0,,,0,0.0,0,0
 2026-03-28,Canada,D,is Iceland,Home,2.0,2.0,,,,,0,,0,1
 2026-03-31,Canada,D,tn Tunisia,Home,0.0,0.0,,,,,0,,4,0
 2026-06-01,Canada,W,uz Uzbekistan,Home,2.0,0.0,,,,,0,,2,0
 2026-06-05,Canada,D,ie Rep. of Ireland,Home,1.0,1.0,,,,,0,,3,0
-2026-06-12,Canada,D,ba Bosnia & Herz.,Neutral,1.0,1.0,13.0,4.0,,,0,10.0,2,0
-2026-06-18,Canada,W,qa Qatar,Neutral,6.0,0.0,32.0,10.0,,,0,9.0,1,0
+2026-06-12,Canada,D,Bosnia-Herzegovina,Home,1.0,1.0,0.0,0.0,,,0,0.0,0,0
+2026-06-18,Canada,W,Qatar,Home,6.0,0.0,0.0,0.0,,,0,0.0,0,0
 2023-09-07,Colombia,W,ve Venezuela,Home,1.0,0.0,13.0,4.0,,,0,13.0,0,0
 2023-09-12,Colombia,D,cl Chile,Away,0.0,0.0,8.0,2.0,,,0,19.0,5,0
 2023-10-12,Colombia,D,uy Uruguay,Home,2.0,2.0,14.0,4.0,,,0,17.0,2,1
@@ -162,6 +169,7 @@ Date,Team,Result,Opponent,Venue,GF,GA,Sh,SoT,xG,xGA,Poss,Fls,CrdY,CrdR
 2026-06-01,Colombia,W,cr Costa Rica,Home,3.0,1.0,,,,,0,,2,0
 2026-06-07,Colombia,W,jo Jordan,Neutral,2.0,0.0,,,,,0,,0,0
 2026-06-17,Colombia,W,uz Uzbekistan,Neutral,3.0,1.0,15.0,4.0,,,0,11.0,1,0
+2026-06-18,Colombia,W,Uzbekistan,Away,3.0,1.0,0.0,0.0,,,0,0.0,0,0
 2023-11-15,Congo DR,W,mr Mauritania,Home,2.0,0.0,,,,,0,,2,0
 2023-11-19,Congo DR,L,sd Sudan,Neutral,0.0,1.0,,,,,0,,1,0
 2024-06-06,Congo DR,D,sn Senegal,Away,1.0,1.0,,,,,0,,1,0
@@ -176,7 +184,7 @@ Date,Team,Result,Opponent,Venue,GF,GA,Sh,SoT,xG,xGA,Poss,Fls,CrdY,CrdR
 2026-03-31,Congo DR,W,jm Jamaica,Neutral,1.0,0.0,,,,,0,,0,0
 2026-06-03,Congo DR,D,dk Denmark,Neutral,0.0,0.0,,,,,0,,0,0
 2026-06-09,Congo DR,L,cl Chile,Neutral,1.0,2.0,,,,,0,,0,0
-2026-06-17,Congo DR,D,pt Portugal,Neutral,1.0,1.0,8.0,2.0,,,0,10.0,1,0
+2026-06-17,Congo DR,D,Portugal,Away,1.0,1.0,0.0,0.0,,,0,0.0,0,0
 2025-06-06,Croatia,W,gi Gibraltar,Away,7.0,0.0,30.0,13.0,,,0,10.0,1,0
 2025-06-09,Croatia,W,cz Czechia,Home,5.0,1.0,18.0,11.0,,,0,3.0,0,0
 2025-09-05,Croatia,W,fo Faroe Islands,Away,1.0,0.0,26.0,8.0,,,0,8.0,1,0
@@ -189,7 +197,7 @@ Date,Team,Result,Opponent,Venue,GF,GA,Sh,SoT,xG,xGA,Poss,Fls,CrdY,CrdR
 2026-03-31,Croatia,L,br Brazil,Neutral,1.0,3.0,,,,,0,,3,0
 2026-06-02,Croatia,L,be Belgium,Home,0.0,2.0,,,,,0,,2,0
 2026-06-07,Croatia,W,si Slovenia,Home,2.0,1.0,,,,,0,,0,0
-2026-06-17,Croatia,L,eng England,Neutral,2.0,4.0,10.0,5.0,,,0,12.0,0,0
+2026-06-17,Croatia,L,England,Away,2.0,4.0,0.0,0.0,,,0,0.0,0,0
 2024-06-06,Curaçao,W,bb Barbados,Home,4.0,1.0,,,,,0,,2,0
 2024-06-08,Curaçao,W,aw Aruba,Away,2.0,0.0,,,,,0,,0,0
 2025-06-06,Curaçao,W,lc St. Lucia,Home,4.0,0.0,,,,,0,,1,0
@@ -202,8 +210,9 @@ Date,Team,Result,Opponent,Venue,GF,GA,Sh,SoT,xG,xGA,Poss,Fls,CrdY,CrdR
 2025-11-18,Curaçao,D,jm Jamaica,Away,0.0,0.0,,,,,0,,2,0
 2026-05-30,Curaçao,L,sct Scotland,Away,1.0,4.0,,,,,0,,2,1
 2026-06-06,Curaçao,W,aw Aruba,Home,4.0,0.0,,,,,0,,2,0
-2026-06-14,Curaçao,L,de Germany,Neutral,1.0,7.0,8.0,2.0,,,0,11.0,0,0
+2026-06-14,Curaçao,L,Germany,Away,1.0,7.0,0.0,0.0,,,0,0.0,0,0
 2026-06-20,Curaçao,D,ec Ecuador,Neutral,0.0,0.0,10.0,3.0,,,0,10.0,5,0
+2026-06-21,Curaçao,D,Ecuador,Away,0.0,0.0,0.0,0.0,,,0,0.0,0,0
 2025-03-22,Czechia,W,fo Faroe Islands,Home,2.0,1.0,16.0,7.0,,,0,12.0,1,0
 2025-03-25,Czechia,W,gi Gibraltar,Away,4.0,0.0,29.0,11.0,,,0,10.0,1,0
 2025-06-06,Czechia,W,me Montenegro,Home,2.0,0.0,13.0,7.0,,,0,23.0,1,0
@@ -215,7 +224,8 @@ Date,Team,Result,Opponent,Venue,GF,GA,Sh,SoT,xG,xGA,Poss,Fls,CrdY,CrdR
 2026-05-31,Czechia,W,xk Kosovo,Home,2.0,1.0,,,,,0,,0,0
 2026-06-04,Czechia,W,gt Guatemala,Neutral,3.0,1.0,,,,,0,,0,0
 2026-06-11,Czechia,L,kr Korea Republic,Neutral,1.0,2.0,7.0,4.0,,,0,16.0,0,0
-2026-06-18,Czechia,D,za South Africa,Neutral,1.0,1.0,14.0,3.0,,,0,12.0,1,0
+2026-06-12,Czechia,L,South Korea,Away,1.0,2.0,0.0,0.0,,,0,0.0,0,0
+2026-06-18,Czechia,D,South Africa,Home,1.0,1.0,0.0,0.0,,,0,0.0,0,0
 2023-11-17,Côte d'Ivoire,W,sc Seychelles,Home,9.0,0.0,,,,,0,,0,0
 2023-11-20,Côte d'Ivoire,W,gm Gambia,Neutral,2.0,0.0,,,,,0,,2,0
 2024-06-07,Côte d'Ivoire,W,ga Gabon,Home,1.0,0.0,,,,,0,,0,0
@@ -229,8 +239,8 @@ Date,Team,Result,Opponent,Venue,GF,GA,Sh,SoT,xG,xGA,Poss,Fls,CrdY,CrdR
 2026-03-28,Côte d'Ivoire,W,kr Korea Republic,Neutral,4.0,0.0,,,,,0,,0,0
 2026-03-31,Côte d'Ivoire,W,sct Scotland,Neutral,1.0,0.0,,,,,0,,0,0
 2026-06-04,Côte d'Ivoire,W,fr France,Away,2.0,1.0,,,,,0,,1,0
-2026-06-14,Côte d'Ivoire,W,ec Ecuador,Neutral,1.0,0.0,15.0,4.0,,,0,10.0,3,0
-2026-06-20,Côte d'Ivoire,L,de Germany,Neutral,1.0,2.0,9.0,2.0,,,0,7.0,0,0
+2026-06-14,Côte d'Ivoire,W,Ecuador,Home,1.0,0.0,0.0,0.0,,,0,0.0,0,0
+2026-06-20,Côte d'Ivoire,L,Germany,Away,1.0,2.0,0.0,0.0,,,0,0.0,0,0
 2023-09-07,Ecuador,L,ar Argentina,Away,0.0,1.0,5.0,3.0,,,0,0.0,0,0
 2023-09-12,Ecuador,W,uy Uruguay,Home,2.0,1.0,15.0,4.0,,,0,0.0,0,0
 2023-10-12,Ecuador,W,bo Bolivia,Away,2.0,1.0,8.0,3.0,,,0,0.0,0,0
@@ -253,8 +263,9 @@ Date,Team,Result,Opponent,Venue,GF,GA,Sh,SoT,xG,xGA,Poss,Fls,CrdY,CrdR
 2026-03-31,Ecuador,D,nl Netherlands,Away,1.0,1.0,,,,,0,0.0,0,0
 2026-05-30,Ecuador,W,sa Saudi Arabia,Neutral,2.0,1.0,,,,,0,0.0,0,0
 2026-06-07,Ecuador,W,gt Guatemala,Neutral,3.0,0.0,,,,,0,0.0,0,0
-2026-06-14,Ecuador,L,ci Côte d'Ivoire,Neutral,0.0,1.0,12.0,1.0,,,0,0.0,0,0
+2026-06-14,Ecuador,L,Ivory Coast,Away,0.0,1.0,0.0,0.0,,,0,0.0,0,0
 2026-06-20,Ecuador,D,cw Curaçao,Neutral,0.0,0.0,27.0,15.0,,,0,0.0,0,0
+2026-06-21,Ecuador,D,Curaçao,Home,0.0,0.0,0.0,0.0,,,0,0.0,0,0
 2023-11-16,Egypt,W,dj Djibouti,Home,6.0,0.0,,,,,0,,1,0
 2023-11-19,Egypt,W,sl Sierra Leone,Neutral,2.0,0.0,,,,,0,,1,0
 2024-06-06,Egypt,W,bf Burkina Faso,Home,2.0,1.0,,,,,0,,2,0
@@ -269,7 +280,8 @@ Date,Team,Result,Opponent,Venue,GF,GA,Sh,SoT,xG,xGA,Poss,Fls,CrdY,CrdR
 2026-03-31,Egypt,D,es Spain,Away,0.0,0.0,,,,,0,,5,1
 2026-05-28,Egypt,W,ru Russia,Home,1.0,0.0,,,,,0,,1,0
 2026-06-06,Egypt,L,br Brazil,Neutral,1.0,2.0,,,,,0,,1,0
-2026-06-15,Egypt,D,be Belgium,Neutral,1.0,1.0,14.0,3.0,,,0,15.0,2,0
+2026-06-15,Egypt,D,Belgium,Away,1.0,1.0,0.0,0.0,,,0,0.0,0,0
+2026-06-22,Egypt,W,New Zealand,Away,3.0,1.0,0.0,0.0,,,0,0.0,0,0
 2025-03-21,England,W,al Albania,Home,2.0,0.0,12.0,6.0,,,0,9.0,0,0
 2025-03-24,England,W,lv Latvia,Home,3.0,0.0,27.0,8.0,,,0,11.0,1,0
 2025-06-07,England,W,ad Andorra,Away,1.0,0.0,20.0,10.0,,,0,8.0,0,0
@@ -282,7 +294,7 @@ Date,Team,Result,Opponent,Venue,GF,GA,Sh,SoT,xG,xGA,Poss,Fls,CrdY,CrdR
 2026-03-31,England,L,jp Japan,Home,0.0,1.0,,,,,0,,0,0
 2026-06-06,England,W,nz New Zealand,Neutral,1.0,0.0,,,,,0,,0,0
 2026-06-10,England,W,cr Costa Rica,Neutral,3.0,0.0,,,,,0,,0,0
-2026-06-17,England,W,hr Croatia,Neutral,4.0,2.0,22.0,11.0,,,0,10.0,0,0
+2026-06-17,England,W,Croatia,Home,4.0,2.0,0.0,0.0,,,0,0.0,0,0
 2025-09-05,France,W,ua Ukraine,Away,2.0,0.0,16.0,6.0,,,0,8.0,0,0
 2025-09-09,France,W,is Iceland,Home,2.0,1.0,20.0,8.0,,,0,12.0,3,1
 2025-10-10,France,W,az Azerbaijan,Home,3.0,0.0,33.0,9.0,,,0,8.0,1,0
@@ -293,7 +305,7 @@ Date,Team,Result,Opponent,Venue,GF,GA,Sh,SoT,xG,xGA,Poss,Fls,CrdY,CrdR
 2026-03-29,France,W,co Colombia,Neutral,3.0,1.0,,,,,0,,3,0
 2026-06-04,France,L,ci Côte d'Ivoire,Home,1.0,2.0,,,,,0,,0,0
 2026-06-08,France,W,nir Northern Ireland,Home,3.0,1.0,,,,,0,,0,0
-2026-06-16,France,W,sn Senegal,Neutral,3.0,1.0,11.0,8.0,,,0,5.0,0,0
+2026-06-16,France,W,Senegal,Home,3.0,1.0,0.0,0.0,,,0,0.0,0,0
 2025-09-04,Germany,L,sk Slovakia,Away,0.0,2.0,14.0,4.0,,,0,18.0,2,0
 2025-09-07,Germany,W,nir Northern Ireland,Home,3.0,1.0,11.0,6.0,,,0,9.0,1,0
 2025-10-10,Germany,W,lu Luxembourg,Home,4.0,0.0,31.0,8.0,,,0,10.0,0,0
@@ -304,7 +316,8 @@ Date,Team,Result,Opponent,Venue,GF,GA,Sh,SoT,xG,xGA,Poss,Fls,CrdY,CrdR
 2026-03-30,Germany,W,gh Ghana,Home,2.0,1.0,,,,,0,,1,0
 2026-05-31,Germany,W,fi Finland,Home,4.0,0.0,,,,,0,,0,0
 2026-06-06,Germany,W,us United States,Away,2.0,1.0,,,,,0,,3,0
-2026-06-14,Germany,W,cw Curaçao,Neutral,7.0,1.0,26.0,12.0,,,0,18.0,0,0
+2026-06-14,Germany,W,Curaçao,Home,7.0,1.0,0.0,0.0,,,0,0.0,0,0
+2026-06-20,Germany,W,Ivory Coast,Home,2.0,1.0,0.0,0.0,,,0,0.0,0,0
 2023-11-17,Ghana,W,mg Madagascar,Home,1.0,0.0,,,,,0,,1,0
 2023-11-21,Ghana,L,km Comoros,Away,0.0,1.0,,,,,0,,0,0
 2024-06-06,Ghana,W,ml Mali,Away,2.0,1.0,,,,,0,,1,0
@@ -319,7 +332,7 @@ Date,Team,Result,Opponent,Venue,GF,GA,Sh,SoT,xG,xGA,Poss,Fls,CrdY,CrdR
 2026-03-30,Ghana,L,de Germany,Away,1.0,2.0,,,,,0,,3,0
 2026-05-22,Ghana,L,mx Mexico,Away,0.0,2.0,,,,,0,,1,0
 2026-06-02,Ghana,D,wls Wales,Away,1.0,1.0,,,,,0,,2,0
-2026-06-17,Ghana,W,pa Panama,Neutral,1.0,0.0,8.0,2.0,,,0,9.0,1,0
+2026-06-17,Ghana,W,Panama,Home,1.0,0.0,0.0,0.0,,,0,0.0,0,0
 2024-06-06,Haiti,W,lc St. Lucia,Home,2.0,1.0,,,,,0,,2,0
 2024-06-09,Haiti,W,bb Barbados,Away,3.0,1.0,,,,,0,,1,0
 2025-06-07,Haiti,W,aw Aruba,Away,5.0,0.0,,,,,0,,0,0
@@ -335,7 +348,9 @@ Date,Team,Result,Opponent,Venue,GF,GA,Sh,SoT,xG,xGA,Poss,Fls,CrdY,CrdR
 2026-06-02,Haiti,W,nz New Zealand,Neutral,4.0,0.0,,,,,0,,0,0
 2026-06-05,Haiti,L,pe Peru,Neutral,1.0,2.0,,,,,0,,1,0
 2026-06-13,Haiti,L,sct Scotland,Neutral,0.0,1.0,15.0,2.0,,,0,23.0,1,0
+2026-06-14,Haiti,L,Scotland,Home,0.0,1.0,0.0,0.0,,,0,0.0,0,0
 2026-06-19,Haiti,L,br Brazil,Neutral,0.0,3.0,7.0,3.0,,,0,14.0,3,0
+2026-06-20,Haiti,L,Brazil,Away,0.0,3.0,0.0,0.0,,,0,0.0,0,0
 2023-11-16,IR Iran,W,hk Hong Kong,Home,4.0,0.0,,,,,0,,1,0
 2023-11-21,IR Iran,D,uz Uzbekistan,Away,2.0,2.0,,,,,0,,2,0
 2024-03-21,IR Iran,W,tm Turkmenistan,Home,5.0,0.0,,,,,0,,1,0
@@ -354,6 +369,8 @@ Date,Team,Result,Opponent,Venue,GF,GA,Sh,SoT,xG,xGA,Poss,Fls,CrdY,CrdR
 2025-06-10,IR Iran,W,kp Korea DPR,Home,3.0,0.0,25.0,8.0,,,0,8.0,1,0
 2026-05-29,IR Iran,W,gm Gambia,Neutral,3.0,1.0,,,,,0,,1,0
 2026-06-15,IR Iran,D,nz New Zealand,Neutral,2.0,2.0,17.0,4.0,,,0,10.0,1,0
+2026-06-16,IR Iran,D,New Zealand,Home,2.0,2.0,0.0,0.0,,,0,0.0,0,0
+2026-06-21,IR Iran,D,Belgium,Away,0.0,0.0,0.0,0.0,,,0,0.0,0,0
 2023-11-16,Iraq,W,id Indonesia,Home,5.0,1.0,,,,,0,,0,0
 2023-11-21,Iraq,W,vn Vietnam,Away,1.0,0.0,,,,,0,,1,0
 2024-03-21,Iraq,W,ph Philippines,Home,1.0,0.0,,,,,0,,1,0
@@ -378,7 +395,7 @@ Date,Team,Result,Opponent,Venue,GF,GA,Sh,SoT,xG,xGA,Poss,Fls,CrdY,CrdR
 2026-05-29,Iraq,W,ad Andorra,Neutral,1.0,0.0,,,,,0,,0,0
 2026-06-04,Iraq,D,es Spain,Away,1.0,1.0,,,,,0,,2,0
 2026-06-09,Iraq,L,ve Venezuela,Neutral,0.0,2.0,,,,,0,,1,1
-2026-06-16,Iraq,L,no Norway,Neutral,1.0,4.0,11.0,1.0,,,0,12.0,1,0
+2026-06-16,Iraq,L,Norway,Home,1.0,4.0,0.0,0.0,,,0,0.0,0,0
 2023-11-16,Japan,W,mm Myanmar,Home,5.0,0.0,,,,,0,,0,0
 2023-11-21,Japan,W,sy Syria,Away,5.0,0.0,,,,,0,,0,0
 2024-03-21,Japan,W,kp Korea DPR,Home,1.0,0.0,,,,,0,,1,0
@@ -397,7 +414,8 @@ Date,Team,Result,Opponent,Venue,GF,GA,Sh,SoT,xG,xGA,Poss,Fls,CrdY,CrdR
 2026-03-28,Japan,W,sct Scotland,Away,1.0,0.0,,,,,0,,2,0
 2026-03-31,Japan,W,eng England,Away,1.0,0.0,,,,,0,,2,0
 2026-05-31,Japan,W,is Iceland,Home,1.0,0.0,,,,,0,,0,0
-2026-06-14,Japan,D,nl Netherlands,Neutral,2.0,2.0,10.0,3.0,,,0,7.0,0,0
+2026-06-14,Japan,D,Netherlands,Away,2.0,2.0,0.0,0.0,,,0,0.0,0,0
+2026-06-21,Japan,W,Tunisia,Away,4.0,0.0,0.0,0.0,,,0,0.0,0,0
 2023-11-16,Jordan,D,tj Tajikistan,Away,1.0,1.0,,,,,0,,2,0
 2023-11-21,Jordan,L,sa Saudi Arabia,Home,0.0,2.0,,,,,0,,3,0
 2024-03-21,Jordan,W,pk Pakistan,Away,3.0,0.0,,,,,0,,1,0
@@ -417,6 +435,7 @@ Date,Team,Result,Opponent,Venue,GF,GA,Sh,SoT,xG,xGA,Poss,Fls,CrdY,CrdR
 2026-05-31,Jordan,L,ch Switzerland,Away,1.0,4.0,,,,,0,,0,0
 2026-06-07,Jordan,L,co Colombia,Neutral,0.0,2.0,,,,,0,,2,1
 2026-06-16,Jordan,L,at Austria,Neutral,1.0,3.0,11.0,4.0,,,0,7.0,0,0
+2026-06-17,Jordan,L,Austria,Away,1.0,3.0,0.0,0.0,,,0,0.0,0,0
 2023-11-16,Korea Republic,W,sg Singapore,Home,5.0,0.0,,,,,0,,1,0
 2023-11-21,Korea Republic,W,cn China PR,Away,3.0,0.0,,,,,0,,1,0
 2024-03-21,Korea Republic,D,th Thailand,Home,1.0,1.0,,,,,0,,0,0
@@ -438,14 +457,17 @@ Date,Team,Result,Opponent,Venue,GF,GA,Sh,SoT,xG,xGA,Poss,Fls,CrdY,CrdR
 2026-05-30,Korea Republic,W,tt Trin & Tobago,Neutral,5.0,0.0,,,,,0,,1,0
 2026-06-03,Korea Republic,W,sv El Salvador,Neutral,1.0,0.0,,,,,0,,4,0
 2026-06-11,Korea Republic,W,cz Czechia,Neutral,2.0,1.0,15.0,6.0,,,0,9.0,1,0
+2026-06-12,Korea Republic,W,Czechia,Home,2.0,1.0,0.0,0.0,,,0,0.0,0,0
 2026-06-18,Korea Republic,L,mx Mexico,Neutral,0.0,1.0,9.0,2.0,,,0,7.0,2,0
+2026-06-19,Korea Republic,L,Mexico,Away,0.0,1.0,0.0,0.0,,,0,0.0,0,0
 2026-03-28,Mexico,D,pt Portugal,Home,0.0,0.0,,,,,0,,1,0
 2026-03-31,Mexico,D,be Belgium,Neutral,1.0,1.0,,,,,0,,2,0
 2026-05-22,Mexico,W,gh Ghana,Home,2.0,0.0,,,,,0,,1,0
 2026-05-30,Mexico,W,au Australia,Neutral,1.0,0.0,,,,,0,,1,0
 2026-06-04,Mexico,W,rs Serbia,Home,5.0,1.0,,,,,0,,2,0
-2026-06-11,Mexico,W,za South Africa,Neutral,2.0,0.0,16.0,4.0,,,0,12.0,1,1
+2026-06-11,Mexico,W,South Africa,Home,2.0,0.0,0.0,0.0,,,0,0.0,0,0
 2026-06-18,Mexico,W,kr Korea Republic,Neutral,1.0,0.0,8.0,4.0,,,0,9.0,0,0
+2026-06-19,Mexico,W,South Korea,Home,1.0,0.0,0.0,0.0,,,0,0.0,0,0
 2023-11-21,Morocco,W,tz Tanzania,Away,2.0,0.0,,,,,0,,4,0
 2024-06-07,Morocco,W,zm Zambia,Home,2.0,1.0,,,,,0,,0,0
 2024-06-11,Morocco,W,cg Congo,Neutral,6.0,0.0,,,,,0,,0,0
@@ -458,8 +480,8 @@ Date,Team,Result,Opponent,Venue,GF,GA,Sh,SoT,xG,xGA,Poss,Fls,CrdY,CrdR
 2026-03-31,Morocco,W,py Paraguay,Neutral,2.0,1.0,,,,,0,,3,0
 2026-06-02,Morocco,W,mg Madagascar,Home,4.0,0.0,,,,,0,,2,0
 2026-06-07,Morocco,D,no Norway,Neutral,1.0,1.0,,,,,0,,1,0
-2026-06-13,Morocco,D,br Brazil,Neutral,1.0,1.0,14.0,3.0,,,0,14.0,0,0
-2026-06-19,Morocco,W,sct Scotland,Neutral,1.0,0.0,12.0,2.0,,,0,8.0,1,0
+2026-06-13,Morocco,D,Brazil,Away,1.0,1.0,0.0,0.0,,,0,0.0,0,0
+2026-06-19,Morocco,W,Scotland,Away,1.0,0.0,0.0,0.0,,,0,0.0,0,0
 2025-06-07,Netherlands,W,fi Finland,Away,2.0,0.0,17.0,6.0,,,0,9.0,2,0
 2025-06-10,Netherlands,W,mt Malta,Home,8.0,0.0,27.0,9.0,,,0,12.0,1,0
 2025-09-04,Netherlands,D,pl Poland,Home,1.0,1.0,14.0,5.0,,,0,11.0,0,0
@@ -472,7 +494,8 @@ Date,Team,Result,Opponent,Venue,GF,GA,Sh,SoT,xG,xGA,Poss,Fls,CrdY,CrdR
 2026-03-31,Netherlands,D,ec Ecuador,Home,1.0,1.0,,,,,0,,0,1
 2026-06-03,Netherlands,L,dz Algeria,Home,0.0,1.0,,,,,0,,0,0
 2026-06-08,Netherlands,W,uz Uzbekistan,Neutral,2.0,1.0,,,,,0,,1,1
-2026-06-14,Netherlands,D,jp Japan,Neutral,2.0,2.0,10.0,6.0,,,0,7.0,3,0
+2026-06-14,Netherlands,D,Japan,Home,2.0,2.0,0.0,0.0,,,0,0.0,0,0
+2026-06-20,Netherlands,W,Sweden,Home,5.0,1.0,0.0,0.0,,,0,0.0,0,0
 2024-10-11,New Zealand,W,pf Tahiti,Neutral,3.0,0.0,,,,,0,,1,0
 2024-11-15,New Zealand,W,vu Vanuatu,Neutral,8.0,1.0,,,,,0,,0,0
 2024-11-18,New Zealand,W,ws Samoa,Neutral,8.0,0.0,,,,,0,,0,0
@@ -481,6 +504,8 @@ Date,Team,Result,Opponent,Venue,GF,GA,Sh,SoT,xG,xGA,Poss,Fls,CrdY,CrdR
 2026-06-02,New Zealand,L,ht Haiti,Neutral,0.0,4.0,,,,,0,,1,0
 2026-06-06,New Zealand,L,eng England,Neutral,0.0,1.0,,,,,0,,0,0
 2026-06-15,New Zealand,D,ir IR Iran,Neutral,2.0,2.0,14.0,8.0,,,0,8.0,0,0
+2026-06-16,New Zealand,D,Iran,Away,2.0,2.0,0.0,0.0,,,0,0.0,0,0
+2026-06-22,New Zealand,L,Egypt,Home,1.0,3.0,0.0,0.0,,,0,0.0,0,0
 2025-03-22,Norway,W,md Moldova,Away,5.0,0.0,24.0,8.0,,,0,9.0,1,0
 2025-03-25,Norway,W,il Israel,Away,4.0,2.0,23.0,12.0,,,0,9.0,2,0
 2025-06-06,Norway,W,it Italy,Home,3.0,0.0,8.0,4.0,,,0,11.0,2,0
@@ -493,7 +518,7 @@ Date,Team,Result,Opponent,Venue,GF,GA,Sh,SoT,xG,xGA,Poss,Fls,CrdY,CrdR
 2026-03-31,Norway,D,ch Switzerland,Home,0.0,0.0,,,,,0,,0,0
 2026-06-01,Norway,W,se Sweden,Home,3.0,1.0,,,,,0,,0,0
 2026-06-07,Norway,D,ma Morocco,Neutral,1.0,1.0,,,,,0,,1,0
-2026-06-16,Norway,W,iq Iraq,Neutral,4.0,1.0,12.0,5.0,,,0,13.0,0,0
+2026-06-16,Norway,W,Iraq,Away,4.0,1.0,0.0,0.0,,,0,0.0,0,0
 2024-06-06,Panama,W,gy Guyana,Home,2.0,0.0,,,,,0,,3,0
 2024-06-09,Panama,W,ms Montserrat,Away,3.0,1.0,,,,,0,,0,0
 2025-06-07,Panama,W,bz Belize,Away,2.0,0.0,,,,,0,,3,0
@@ -509,7 +534,7 @@ Date,Team,Result,Opponent,Venue,GF,GA,Sh,SoT,xG,xGA,Poss,Fls,CrdY,CrdR
 2026-05-31,Panama,L,br Brazil,Away,2.0,6.0,,,,,0,,1,0
 2026-06-03,Panama,W,do Dominican Rep.,Home,4.0,2.0,,,,,0,,1,0
 2026-06-06,Panama,D,ba Bosnia & Herz.,Neutral,1.0,1.0,,,,,0,,1,0
-2026-06-17,Panama,L,gh Ghana,Neutral,0.0,1.0,11.0,4.0,,,0,11.0,2,0
+2026-06-17,Panama,L,Ghana,Away,0.0,1.0,0.0,0.0,,,0,0.0,0,0
 2023-09-07,Paraguay,D,pe Peru,Home,0.0,0.0,19.0,6.0,,,0,19.0,0,0
 2023-09-12,Paraguay,L,ve Venezuela,Away,0.0,1.0,18.0,5.0,,,0,14.0,4,0
 2023-10-12,Paraguay,L,ar Argentina,Away,0.0,1.0,4.0,1.0,,,0,19.0,2,0
@@ -532,7 +557,9 @@ Date,Team,Result,Opponent,Venue,GF,GA,Sh,SoT,xG,xGA,Poss,Fls,CrdY,CrdR
 2026-03-31,Paraguay,L,ma Morocco,Neutral,1.0,2.0,,,,,0,,6,0
 2026-06-05,Paraguay,W,ni Nicaragua,Home,4.0,0.0,,,,,0,,0,0
 2026-06-12,Paraguay,L,us United States,Neutral,1.0,4.0,9.0,1.0,,,0,17.0,5,0
+2026-06-13,Paraguay,L,United States,Away,1.0,4.0,0.0,0.0,,,0,0.0,0,0
 2026-06-19,Paraguay,W,tr Türkiye,Neutral,1.0,0.0,7.0,2.0,,,0,15.0,1,1
+2026-06-20,Paraguay,W,Turkey,Away,1.0,0.0,0.0,0.0,,,0,0.0,0,0
 2025-09-06,Portugal,W,am Armenia,Away,5.0,0.0,24.0,9.0,,,0,7.0,0,0
 2025-09-09,Portugal,W,hu Hungary,Away,3.0,2.0,15.0,7.0,,,0,9.0,2,0
 2025-10-11,Portugal,W,ie Rep. of Ireland,Home,1.0,0.0,30.0,6.0,,,0,6.0,2,0
@@ -543,7 +570,7 @@ Date,Team,Result,Opponent,Venue,GF,GA,Sh,SoT,xG,xGA,Poss,Fls,CrdY,CrdR
 2026-03-31,Portugal,W,us United States,Away,2.0,0.0,,,,,0,,1,0
 2026-06-06,Portugal,W,cl Chile,Home,2.0,1.0,,,,,0,,0,1
 2026-06-10,Portugal,W,ng Nigeria,Home,2.0,1.0,,,,,0,,2,0
-2026-06-17,Portugal,D,cd Congo DR,Neutral,1.0,1.0,7.0,1.0,,,0,9.0,3,0
+2026-06-17,Portugal,D,Congo DR,Home,1.0,1.0,0.0,0.0,,,0,0.0,0,0
 2023-11-16,Qatar,W,af Afghanistan,Home,8.0,1.0,,,,,0,,0,0
 2023-11-21,Qatar,W,in India,Away,3.0,0.0,,,,,0,,0,0
 2024-03-21,Qatar,W,kw Kuwait,Home,3.0,0.0,,,,,0,,0,0
@@ -564,8 +591,8 @@ Date,Team,Result,Opponent,Venue,GF,GA,Sh,SoT,xG,xGA,Poss,Fls,CrdY,CrdR
 2025-10-14,Qatar,W,ae UAE,Home,2.0,1.0,7.0,3.0,,,0,7.0,2,1
 2026-05-28,Qatar,L,ie Rep. of Ireland,Away,0.0,1.0,,,,,0,,0,1
 2026-06-06,Qatar,D,sv El Salvador,Neutral,0.0,0.0,,,,,0,,1,0
-2026-06-13,Qatar,D,ch Switzerland,Neutral,1.0,1.0,7.0,4.0,,,0,12.0,2,0
-2026-06-18,Qatar,L,ca Canada,Neutral,0.0,6.0,2.0,0.0,,,0,10.0,1,2
+2026-06-13,Qatar,D,Switzerland,Home,1.0,1.0,0.0,0.0,,,0,0.0,0,0
+2026-06-18,Qatar,L,Canada,Away,0.0,6.0,0.0,0.0,,,0,0.0,0,0
 2023-11-16,Saudi Arabia,W,pk Pakistan,Home,4.0,0.0,,,,,0,,1,0
 2023-11-21,Saudi Arabia,W,jo Jordan,Away,2.0,0.0,,,,,0,,1,0
 2024-03-21,Saudi Arabia,W,tj Tajikistan,Home,1.0,0.0,,,,,0,,2,0
@@ -589,8 +616,8 @@ Date,Team,Result,Opponent,Venue,GF,GA,Sh,SoT,xG,xGA,Poss,Fls,CrdY,CrdR
 2026-05-30,Saudi Arabia,L,ec Ecuador,Neutral,1.0,2.0,,,,,0,,1,0
 2026-06-05,Saudi Arabia,W,pr Puerto Rico,Neutral,3.0,0.0,,,,,0,,0,0
 2026-06-09,Saudi Arabia,D,sn Senegal,Neutral,0.0,0.0,,,,,0,,3,0
-2026-06-15,Saudi Arabia,D,uy Uruguay,Neutral,1.0,1.0,7.0,3.0,,,0,11.0,1,0
-2026-06-21,Saudi Arabia,L,es Spain,Neutral,0.0,4.0,3.0,1.0,,,0,2.0,2,0
+2026-06-15,Saudi Arabia,D,Uruguay,Home,1.0,1.0,0.0,0.0,,,0,0.0,0,0
+2026-06-21,Saudi Arabia,L,Spain,Away,0.0,4.0,0.0,0.0,,,0,0.0,0,0
 2025-09-05,Scotland,D,dk Denmark,Away,0.0,0.0,11.0,1.0,,,0,15.0,5,0
 2025-09-08,Scotland,W,by Belarus,Away,2.0,0.0,14.0,8.0,,,0,10.0,1,0
 2025-10-09,Scotland,W,gr Greece,Home,3.0,1.0,8.0,3.0,,,0,12.0,2,0
@@ -602,7 +629,8 @@ Date,Team,Result,Opponent,Venue,GF,GA,Sh,SoT,xG,xGA,Poss,Fls,CrdY,CrdR
 2026-05-30,Scotland,W,cw Curaçao,Home,4.0,1.0,,,,,0,,2,0
 2026-06-06,Scotland,W,bo Bolivia,Neutral,4.0,0.0,,,,,0,,1,0
 2026-06-13,Scotland,W,ht Haiti,Neutral,1.0,0.0,9.0,2.0,,,0,21.0,3,0
-2026-06-19,Scotland,L,ma Morocco,Neutral,0.0,1.0,6.0,0.0,,,0,11.0,1,0
+2026-06-14,Scotland,W,Haiti,Away,1.0,0.0,0.0,0.0,,,0,0.0,0,0
+2026-06-19,Scotland,L,Morocco,Home,0.0,1.0,0.0,0.0,,,0,0.0,0,0
 2023-11-18,Senegal,W,ss South Sudan,Home,4.0,0.0,,,,,0,,0,0
 2023-11-21,Senegal,D,tg Togo,Away,0.0,0.0,,,,,0,,2,0
 2024-06-06,Senegal,D,cd Congo DR,Home,1.0,1.0,,,,,0,,2,0
@@ -617,7 +645,7 @@ Date,Team,Result,Opponent,Venue,GF,GA,Sh,SoT,xG,xGA,Poss,Fls,CrdY,CrdR
 2026-03-31,Senegal,W,gm Gambia,Home,3.0,1.0,,,,,0,,1,0
 2026-05-31,Senegal,L,us United States,Away,2.0,3.0,,,,,0,,0,0
 2026-06-09,Senegal,D,sa Saudi Arabia,Neutral,0.0,0.0,,,,,0,,3,1
-2026-06-16,Senegal,L,fr France,Neutral,1.0,3.0,6.0,2.0,,,0,9.0,0,0
+2026-06-16,Senegal,L,France,Away,1.0,3.0,0.0,0.0,,,0,0.0,0,0
 2023-11-18,South Africa,W,bj Benin,Home,2.0,1.0,,,,,0,,1,0
 2023-11-21,South Africa,L,rw Rwanda,Away,0.0,2.0,,,,,0,,0,0
 2024-06-07,South Africa,D,ng Nigeria,Away,1.0,1.0,,,,,0,,3,0
@@ -631,8 +659,8 @@ Date,Team,Result,Opponent,Venue,GF,GA,Sh,SoT,xG,xGA,Poss,Fls,CrdY,CrdR
 2026-03-27,South Africa,D,pa Panama,Home,1.0,1.0,,,,,0,,1,0
 2026-03-31,South Africa,L,pa Panama,Home,1.0,2.0,,,,,0,,3,0
 2026-05-29,South Africa,D,ni Nicaragua,Home,0.0,0.0,,,,,0,,0,0
-2026-06-11,South Africa,L,mx Mexico,Neutral,0.0,2.0,3.0,2.0,,,0,11.0,2,2
-2026-06-18,South Africa,D,cz Czechia,Neutral,1.0,1.0,17.0,4.0,,,0,10.0,2,0
+2026-06-11,South Africa,L,Mexico,Away,0.0,2.0,0.0,0.0,,,0,0.0,0,0
+2026-06-18,South Africa,D,Czechia,Away,1.0,1.0,0.0,0.0,,,0,0.0,0,0
 2025-09-04,Spain,W,bg Bulgaria,Away,3.0,0.0,24.0,12.0,,,0,17.0,1,0
 2025-09-07,Spain,W,tr Türkiye,Away,6.0,0.0,21.0,12.0,,,0,9.0,0,0
 2025-10-11,Spain,W,ge Georgia,Home,2.0,0.0,24.0,7.0,,,0,12.0,1,0
@@ -643,8 +671,8 @@ Date,Team,Result,Opponent,Venue,GF,GA,Sh,SoT,xG,xGA,Poss,Fls,CrdY,CrdR
 2026-03-31,Spain,D,eg Egypt,Home,0.0,0.0,,,,,0,,0,0
 2026-06-04,Spain,D,iq Iraq,Home,1.0,1.0,,,,,0,,2,0
 2026-06-08,Spain,W,pe Peru,Neutral,3.0,1.0,,,,,0,,0,0
-2026-06-15,Spain,D,cv Cabo Verde,Neutral,0.0,0.0,27.0,7.0,,,0,10.0,1,0
-2026-06-21,Spain,W,sa Saudi Arabia,Neutral,4.0,0.0,22.0,8.0,,,0,10.0,0,0
+2026-06-15,Spain,D,Cape Verde Islands,Home,0.0,0.0,0.0,0.0,,,0,0.0,0,0
+2026-06-21,Spain,W,Saudi Arabia,Home,4.0,0.0,0.0,0.0,,,0,0.0,0,0
 2025-09-05,Sweden,D,si Slovenia,Away,2.0,2.0,6.0,2.0,,,0,21.0,2,0
 2025-09-08,Sweden,L,xk Kosovo,Away,0.0,2.0,13.0,4.0,,,0,12.0,4,0
 2025-10-10,Sweden,L,ch Switzerland,Home,0.0,2.0,7.0,0.0,,,0,13.0,1,0
@@ -656,6 +684,8 @@ Date,Team,Result,Opponent,Venue,GF,GA,Sh,SoT,xG,xGA,Poss,Fls,CrdY,CrdR
 2026-06-01,Sweden,L,no Norway,Away,1.0,3.0,,,,,0,,1,0
 2026-06-04,Sweden,D,gr Greece,Home,2.0,2.0,,,,,0,,0,0
 2026-06-14,Sweden,W,tn Tunisia,Neutral,5.0,1.0,13.0,7.0,,,0,10.0,0,0
+2026-06-15,Sweden,W,Tunisia,Home,5.0,1.0,0.0,0.0,,,0,0.0,0,0
+2026-06-20,Sweden,L,Netherlands,Away,1.0,5.0,0.0,0.0,,,0,0.0,0,0
 2025-09-05,Switzerland,W,xk Kosovo,Home,4.0,0.0,10.0,5.0,,,0,11.0,2,0
 2025-09-08,Switzerland,W,si Slovenia,Home,3.0,0.0,12.0,6.0,,,0,10.0,0,0
 2025-10-10,Switzerland,W,se Sweden,Away,2.0,0.0,17.0,8.0,,,0,10.0,1,0
@@ -666,8 +696,8 @@ Date,Team,Result,Opponent,Venue,GF,GA,Sh,SoT,xG,xGA,Poss,Fls,CrdY,CrdR
 2026-03-31,Switzerland,D,no Norway,Away,0.0,0.0,,,,,0,,0,0
 2026-05-31,Switzerland,W,jo Jordan,Home,4.0,1.0,,,,,0,,0,0
 2026-06-06,Switzerland,D,au Australia,Neutral,1.0,1.0,,,,,0,,3,0
-2026-06-13,Switzerland,D,qa Qatar,Neutral,1.0,1.0,26.0,7.0,,,0,11.0,1,0
-2026-06-18,Switzerland,W,ba Bosnia & Herz.,Neutral,4.0,1.0,13.0,7.0,,,0,7.0,1,0
+2026-06-13,Switzerland,D,Qatar,Away,1.0,1.0,0.0,0.0,,,0,0.0,0,0
+2026-06-18,Switzerland,W,Bosnia-Herzegovina,Home,4.0,1.0,0.0,0.0,,,0,0.0,0,0
 2023-11-17,Tunisia,W,st São Tomé,Home,4.0,0.0,,,,,0,,2,0
 2023-11-21,Tunisia,W,mw Malawi,Away,1.0,0.0,,,,,0,,1,0
 2024-06-05,Tunisia,W,gq Equ. Guinea,Home,1.0,0.0,,,,,0,,5,0
@@ -683,6 +713,8 @@ Date,Team,Result,Opponent,Venue,GF,GA,Sh,SoT,xG,xGA,Poss,Fls,CrdY,CrdR
 2026-06-01,Tunisia,L,at Austria,Away,0.0,1.0,,,,,0,,1,0
 2026-06-06,Tunisia,L,be Belgium,Away,0.0,5.0,,,,,0,,2,1
 2026-06-14,Tunisia,L,se Sweden,Neutral,1.0,5.0,6.0,2.0,,,0,8.0,1,0
+2026-06-15,Tunisia,L,Sweden,Away,1.0,5.0,0.0,0.0,,,0,0.0,0,0
+2026-06-21,Tunisia,L,Japan,Home,0.0,4.0,0.0,0.0,,,0,0.0,0,0
 2025-09-04,Türkiye,W,ge Georgia,Away,3.0,2.0,6.0,3.0,,,0,14.0,3,1
 2025-09-07,Türkiye,L,es Spain,Home,0.0,6.0,11.0,2.0,,,0,6.0,0,0
 2025-10-11,Türkiye,W,bg Bulgaria,Away,6.0,1.0,18.0,8.0,,,0,4.0,1,0
@@ -694,13 +726,16 @@ Date,Team,Result,Opponent,Venue,GF,GA,Sh,SoT,xG,xGA,Poss,Fls,CrdY,CrdR
 2026-06-01,Türkiye,W,mk N. Macedonia,Home,4.0,0.0,,,,,0,,0,0
 2026-06-06,Türkiye,W,ve Venezuela,Neutral,2.0,1.0,,,,,0,,1,0
 2026-06-13,Türkiye,L,au Australia,Neutral,0.0,2.0,30.0,8.0,,,0,4.0,1,0
+2026-06-14,Türkiye,L,Australia,Away,0.0,2.0,0.0,0.0,,,0,0.0,0,0
 2026-06-19,Türkiye,L,py Paraguay,Neutral,0.0,1.0,32.0,5.0,,,0,14.0,2,0
+2026-06-20,Türkiye,L,Paraguay,Home,0.0,1.0,0.0,0.0,,,0,0.0,0,0
 2026-03-28,United States,L,be Belgium,Home,2.0,5.0,,,,,0,,2,0
 2026-03-31,United States,L,pt Portugal,Home,0.0,2.0,,,,,0,,1,0
 2026-05-31,United States,W,sn Senegal,Home,3.0,2.0,,,,,0,,1,0
 2026-06-06,United States,L,de Germany,Home,1.0,2.0,,,,,0,,1,0
 2026-06-12,United States,W,py Paraguay,Neutral,4.0,1.0,16.0,6.0,,,0,13.0,1,0
-2026-06-19,United States,W,au Australia,Neutral,2.0,0.0,10.0,2.0,,,0,12.0,3,0
+2026-06-13,United States,W,Paraguay,Home,4.0,1.0,0.0,0.0,,,0,0.0,0,0
+2026-06-19,United States,W,Australia,Home,2.0,0.0,0.0,0.0,,,0,0.0,0,0
 2023-09-08,Uruguay,W,cl Chile,Home,3.0,1.0,18.0,7.0,,,0,17.0,4,0
 2023-09-12,Uruguay,L,ec Ecuador,Away,1.0,2.0,5.0,2.0,,,0,18.0,3,0
 2023-10-12,Uruguay,D,co Colombia,Away,2.0,2.0,15.0,6.0,,,0,10.0,0,0
@@ -721,7 +756,8 @@ Date,Team,Result,Opponent,Venue,GF,GA,Sh,SoT,xG,xGA,Poss,Fls,CrdY,CrdR
 2025-09-09,Uruguay,D,cl Chile,Away,0.0,0.0,6.0,3.0,,,0,14.0,1,0
 2026-03-27,Uruguay,D,eng England,Away,1.0,1.0,,,,,0,,2,0
 2026-03-31,Uruguay,D,dz Algeria,Neutral,0.0,0.0,,,,,0,,3,0
-2026-06-15,Uruguay,D,sa Saudi Arabia,Neutral,1.0,1.0,27.0,10.0,,,0,6.0,0,0
+2026-06-15,Uruguay,D,Saudi Arabia,Away,1.0,1.0,0.0,0.0,,,0,0.0,0,0
+2026-06-21,Uruguay,D,Cape Verde Islands,Home,2.0,2.0,0.0,0.0,,,0,0.0,0,0
 2023-11-16,Uzbekistan,W,tm Turkmenistan,Away,3.0,1.0,,,,,0,,1,0
 2023-11-21,Uzbekistan,D,ir IR Iran,Home,2.0,2.0,,,,,0,,3,0
 2024-03-21,Uzbekistan,W,hk Hong Kong,Away,2.0,0.0,,,,,0,,0,0
@@ -741,3 +777,4 @@ Date,Team,Result,Opponent,Venue,GF,GA,Sh,SoT,xG,xGA,Poss,Fls,CrdY,CrdR
 2026-06-01,Uzbekistan,L,ca Canada,Away,0.0,2.0,,,,,0,,2,0
 2026-06-08,Uzbekistan,L,nl Netherlands,Neutral,1.0,2.0,,,,,0,,1,0
 2026-06-17,Uzbekistan,L,co Colombia,Neutral,1.0,3.0,8.0,2.0,,,0,14.0,1,0
+2026-06-18,Uzbekistan,L,Colombia,Home,1.0,3.0,0.0,0.0,,,0,0.0,0,0

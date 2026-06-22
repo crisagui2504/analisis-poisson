@@ -17,7 +17,7 @@ from ligas_config import (
     LIGAS, TEMPORADAS, EQUIPOS_MUNDIAL_ES, NOMBRE_DISPLAY, EQUIPOS_MUNDIAL
 )
 from predecir_partido import predecir_partido, cargar_equipos
-from ingest_fbref import actualizar_mundial
+import proveedores
 from tema_oscuro import aplicar_tema
 from paleta import (
     BG, PANEL, CARD, CARD2, BORDE, TEXTO, TEXTO_SEC,
@@ -363,21 +363,24 @@ class PredictorApp(tk.Tk):
         def tarea():
             try:
                 # Actualización incremental opcional (solo aplica al Mundial).
-                # Solo bajamos los 2 equipos del partido, no las 48 → segundos.
+                # Solo los 2 equipos del partido y solo fuentes rápidas (API REST,
+                # p. ej. football-data.org) → segundos, no minutos.
                 if actualizar and liga_id == "INT-World Cup":
                     def avance(i, total, equipo):
                         estado(f"Actualizando datos ({i}/{total}): {equipo}…")
                     try:
-                        resumen = actualizar_mundial(
-                            temporada, equipos=[eq1_fbref, eq2_fbref], callback=avance)
+                        resumen = proveedores.actualizar_csv(
+                            equipos=[eq1_fbref, eq2_fbref],
+                            solo_rapidas=True, callback=avance)
+                        fuentes = ", ".join(resumen.get("fuentes", [])) or "ninguna"
                         estado(f"Datos al día (+{resumen['partidos_nuevos']} "
-                               f"partidos nuevos). Calculando…")
+                               f"partidos · {fuentes}). Calculando…")
                     except Exception as e:
                         err = str(e)
                         estado("No se pudo actualizar; uso los datos locales.")
                         self.after(0, lambda: messagebox.showwarning(
                             "Actualización fallida",
-                            "No se pudieron traer partidos nuevos de FBref "
+                            "No se pudieron traer partidos nuevos "
                             f"(se usarán los datos locales):\n\n{err}"))
 
                 resultado = predecir_partido(

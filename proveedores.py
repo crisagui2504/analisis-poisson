@@ -48,6 +48,7 @@ class ProveedorDatos:
     nombre = "base"
     prioridad = 0          # mayor = más confiable (gana al fusionar)
     requiere_clave = False
+    rapida = False         # True si responde rápido (API REST) vs scraping lento
 
     def disponible(self) -> bool:
         raise NotImplementedError
@@ -63,6 +64,7 @@ class FBrefProvider(ProveedorDatos):
     nombre = "FBref"
     prioridad = 10  # fuente más rica (xG, tiros) -> prevalece
     requiere_clave = False
+    rapida = False   # scraping con rate-limit: lento
 
     def disponible(self) -> bool:
         return sd is not None
@@ -77,10 +79,24 @@ class FBrefProvider(ProveedorDatos):
 
 # ── football-data.org ────────────────────────────────────────────────────────
 
-def _parsear_fdorg(data: dict, equipo: str) -> pd.DataFrame:
+# Nombres de selección que football-data.org escribe distinto a FBref/el modelo.
+ALIAS_FDORG = {
+    "Bosnia & Herz.": "Bosnia-Herzegovina",
+    "Cabo Verde": "Cape Verde Islands",
+    "Côte d'Ivoire": "Ivory Coast",
+    "IR Iran": "Iran",
+    "Korea Republic": "South Korea",
+    "Türkiye": "Turkey",
+}
+
+
+def _parsear_fdorg(data: dict, equipo: str, nombre_busqueda: str = None) -> pd.DataFrame:
     """Convierte la respuesta de /competitions/WC/matches al esquema normalizado
-    desde la perspectiva de `equipo`. Función pura (testeable sin red)."""
-    eq = equipo.lower()
+    desde la perspectiva de `equipo`. `nombre_busqueda` es el nombre tal como lo
+    escribe football-data.org (puede diferir del nombre del modelo); por defecto
+    se usa `equipo`. La columna Team siempre guarda `equipo` (nombre del modelo).
+    Función pura (testeable sin red)."""
+    busca = (nombre_busqueda or equipo).lower()
     filas = []
     for m in data.get("matches", []):
         if m.get("status") != "FINISHED":
@@ -91,9 +107,9 @@ def _parsear_fdorg(data: dict, equipo: str) -> pd.DataFrame:
         gh, ga = ft.get("home"), ft.get("away")
         if gh is None or ga is None:
             continue
-        if eq in home.lower():
+        if busca == home.lower():
             rival, gf, gc, venue = away, gh, ga, "Home"
-        elif eq in away.lower():
+        elif busca == away.lower():
             rival, gf, gc, venue = home, ga, gh, "Away"
         else:
             continue
@@ -114,6 +130,7 @@ class FootballDataOrgProvider(ProveedorDatos):
     nombre = "football-data.org"
     prioridad = 5  # solo goles/resultados -> cede ante FBref
     requiere_clave = True
+    rapida = True   # API REST: responde en segundos
     BASE = "https://api.football-data.org/v4"
 
     def __init__(self):
@@ -133,7 +150,8 @@ class FootballDataOrgProvider(ProveedorDatos):
         return self._cache_matches
 
     def historial_equipo(self, equipo, temporada="2026"):
-        return _parsear_fdorg(self._matches_mundial(), equipo)
+        fd_nombre = ALIAS_FDORG.get(equipo, equipo)
+        return _parsear_fdorg(self._matches_mundial(), equipo, nombre_busqueda=fd_nombre)
 
 
 # ── Registro de proveedores (agrega aquí nuevas APIs) ────────────────────────
@@ -181,15 +199,17 @@ def historial_equipo(equipo, temporada="2026", proveedor=None):
     raise RuntimeError(f"Ningún proveedor devolvió datos para '{equipo}'. {errores}")
 
 
-def historial_combinado(equipo, temporada="2026") -> pd.DataFrame:
+def historial_combinado(equipo, temporada="2026", provs=None) -> pd.DataFrame:
     """
-    Fusiona el historial de TODOS los proveedores disponibles (cruza fuentes
-    para más cobertura/precisión). Se aplican de menor a mayor prioridad, así
-    la fuente más confiable (FBref) prevalece. Aislado: un proveedor que falle
-    no rompe a los demás. Deduplica por Team+Date (clave estable entre fuentes).
+    Fusiona el historial de los proveedores indicados (o todos los disponibles).
+    Cruza fuentes para más cobertura/precisión: se aplican de menor a mayor
+    prioridad, así la fuente más confiable (FBref) prevalece. Aislado: un
+    proveedor que falle no rompe a los demás. Deduplica por Team+Date.
     """
+    if provs is None:
+        provs = proveedores_disponibles()
     combinado = pd.DataFrame()
-    for p in sorted(proveedores_disponibles(), key=lambda x: x.prioridad):
+    for p in sorted(provs, key=lambda x: x.prioridad):
         try:
             df = p.historial_equipo(equipo, temporada)
             if df is not None and not df.empty:
@@ -200,15 +220,26 @@ def historial_combinado(equipo, temporada="2026") -> pd.DataFrame:
 
 
 def actualizar_csv(equipos=None, temporada="2026", ruta=CSV_MAESTRO_MUNDIAL,
-                   verbose=False, callback=None) -> dict:
+                   verbose=False, callback=None, solo_rapidas=False) -> dict:
     """
-    Actualiza el CSV maestro combinando TODOS los proveedores disponibles, sin
-    borrarlo (fusión incremental). Si solo hay FBref, equivale al updater normal;
-    si además hay football-data.org, cruza ambas fuentes.
+    Actualiza el CSV maestro combinando proveedores, sin borrarlo (fusión
+    incremental). Si solo hay FBref, equivale al updater normal; si además hay
+    football-data.org, cruza ambas fuentes.
+
+    solo_rapidas=True usa solo fuentes rápidas (API REST, p. ej. football-data.org)
+    y evita el scraping lento de FBref — ideal para actualizar justo antes de
+    predecir. Si no hay ninguna fuente rápida, cae a usar todas las disponibles.
     """
     if equipos is None:
         from ligas_config import EQUIPOS_MUNDIAL
         equipos = EQUIPOS_MUNDIAL
+
+    disponibles = proveedores_disponibles()
+    if solo_rapidas:
+        rapidas = [p for p in disponibles if p.rapida]
+        usar = rapidas if rapidas else disponibles
+    else:
+        usar = disponibles
 
     existente = cargar_historial_csv(ruta) if existe_csv_maestro(ruta) else pd.DataFrame()
     antes = len(existente)
@@ -221,7 +252,7 @@ def actualizar_csv(equipos=None, temporada="2026", ruta=CSV_MAESTRO_MUNDIAL,
         if verbose:
             print(f"[{i}/{total}] {eq}...")
         try:
-            df = historial_combinado(eq, temporada)
+            df = historial_combinado(eq, temporada, provs=usar)
             if not df.empty:
                 nuevos.append(df)
         except Exception as e:
@@ -233,7 +264,7 @@ def actualizar_csv(equipos=None, temporada="2026", ruta=CSV_MAESTRO_MUNDIAL,
     resumen = {"filas_antes": antes, "filas_despues": len(maestro),
                "partidos_nuevos": len(maestro) - antes,
                "equipos": int(maestro["Team"].nunique()) if "Team" in maestro else 0,
-               "fuentes": [p.nombre for p in proveedores_disponibles()]}
+               "fuentes": [p.nombre for p in usar]}
     print(f"Actualizado '{ruta}': +{resumen['partidos_nuevos']} partidos "
           f"(fuentes: {', '.join(resumen['fuentes']) or 'ninguna'}).")
     return resumen

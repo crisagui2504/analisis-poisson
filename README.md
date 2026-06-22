@@ -70,10 +70,11 @@ Panel izquierdo:
     de volver a pedirlos a FBref. **Déjalo activado** salvo que quieras forzar
     una descarga nueva.
   - **Actualizar datos antes de predecir** (desactivado): si lo marcas, al pulsar
-    *Predecir partido* el programa primero trae de FBref los partidos nuevos de
-    **solo los 2 equipos del partido** (fusión incremental, sin borrar el CSV) y
-    **luego** predice — son unos segundos, no minutos. Si la red falla, avisa y
-    predice igual con los datos locales.
+    *Predecir partido* el programa primero trae los partidos nuevos de **solo los
+    2 equipos del partido** (fusión incremental, sin borrar el CSV) y **luego**
+    predice. Usa **fuentes rápidas** (API REST como football-data.org) → segundos,
+    no minutos. Si no hay API configurada o la red falla, avisa y predice con los
+    datos locales.
 
 Panel derecho (tras pulsar *Predecir partido*):
 
