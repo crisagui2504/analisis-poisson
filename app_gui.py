@@ -363,10 +363,13 @@ class PredictorApp(tk.Tk):
         def tarea():
             try:
                 # Actualización incremental opcional (solo aplica al Mundial).
+                # Solo bajamos los 2 equipos del partido, no las 48 → segundos.
                 if actualizar and liga_id == "INT-World Cup":
-                    estado("Actualizando datos desde FBref… (puede tardar unos minutos)")
+                    def avance(i, total, equipo):
+                        estado(f"Actualizando datos ({i}/{total}): {equipo}…")
                     try:
-                        resumen = actualizar_mundial(temporada)
+                        resumen = actualizar_mundial(
+                            temporada, equipos=[eq1_fbref, eq2_fbref], callback=avance)
                         estado(f"Datos al día (+{resumen['partidos_nuevos']} "
                                f"partidos nuevos). Calculando…")
                     except Exception as e:

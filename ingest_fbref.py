@@ -139,13 +139,15 @@ def fusionar_historiales(df_existente: pd.DataFrame, df_nuevo: pd.DataFrame,
 
 def actualizar_csv_maestro(fbref, equipos: Sequence[str],
                            ruta: str = CSV_MAESTRO_MUNDIAL,
-                           pausa: float = 0.0, verbose: bool = False) -> dict:
+                           pausa: float = 0.0, verbose: bool = False,
+                           callback=None) -> dict:
     """
     Actualiza el CSV maestro incrementalmente: descarga el historial actual de
     cada equipo, lo fusiona con el CSV existente y guarda solo el resultado. No
     borra nada; solo agrega los partidos nuevos. Devuelve un resumen.
 
-    pausa: segundos a esperar entre equipos (anti-bloqueo de FBref).
+    pausa:    segundos a esperar entre equipos (anti-bloqueo de FBref).
+    callback: funcion opcional callback(i, total, equipo) para reportar avance.
     """
     import time
 
@@ -157,6 +159,8 @@ def actualizar_csv_maestro(fbref, equipos: Sequence[str],
     for i, equipo in enumerate(equipos, 1):
         if verbose:
             print(f"[{i}/{total}] {equipo}...")
+        if callback is not None:
+            callback(i, total, equipo)
         try:
             df = construir_historial_equipo_directo(fbref, equipo)
             df["Team"] = equipo
@@ -273,16 +277,24 @@ def descargar_stats_equipo(liga, temporada, equipo, no_cache=False):
     return construir_historial_equipo_directo(fbref, equipo)
 
 
-def actualizar_mundial(temporada: str = "2026", pausa: float = 0.0,
-                       verbose: bool = False) -> dict:
+def actualizar_mundial(temporada: str = "2026", equipos: Sequence[str] = None,
+                       pausa: float = 0.0, verbose: bool = False,
+                       callback=None) -> dict:
     """
     Atajo: actualiza incrementalmente el CSV maestro del Mundial trayendo los
     partidos recientes de FBref. Lo usa tanto la GUI como actualizar_datos.py.
+
+    equipos: lista de selecciones a actualizar. Si es None, actualiza las 48
+    (lento). Para actualizar solo las que vas a predecir, pasa esos 2-3 nombres
+    y la descarga baja de ~96 peticiones a unas pocas.
     """
     _chequear_dependencia()
     from ligas_config import EQUIPOS_MUNDIAL
+    if equipos is None:
+        equipos = EQUIPOS_MUNDIAL
     fbref = sd.FBref(leagues="INT-World Cup", seasons=temporada, no_cache=True)
-    return actualizar_csv_maestro(fbref, EQUIPOS_MUNDIAL, pausa=pausa, verbose=verbose)
+    return actualizar_csv_maestro(fbref, equipos, pausa=pausa, verbose=verbose,
+                                  callback=callback)
 
 
 def construir_historial_equipo(df_liga, nombre_equipo):

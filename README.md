@@ -70,10 +70,10 @@ Panel izquierdo:
     de volver a pedirlos a FBref. **Déjalo activado** salvo que quieras forzar
     una descarga nueva.
   - **Actualizar datos antes de predecir** (desactivado): si lo marcas, al pulsar
-    *Predecir partido* el programa primero trae de FBref los partidos nuevos
-    (fusión incremental, sin borrar el CSV) y **luego** predice. Si la red falla,
-    avisa y predice igual con los datos locales. Tarda un par de minutos, así que
-    actívalo solo cuando se hayan jugado partidos nuevos.
+    *Predecir partido* el programa primero trae de FBref los partidos nuevos de
+    **solo los 2 equipos del partido** (fusión incremental, sin borrar el CSV) y
+    **luego** predice — son unos segundos, no minutos. Si la red falla, avisa y
+    predice igual con los datos locales.
 
 Panel derecho (tras pulsar *Predecir partido*):
 
@@ -179,12 +179,19 @@ FBref. Tarda varios minutos. **Al terminar regenera automáticamente
 ### Mantener los datos al día (incremental, recomendado)
 Conforme se juegan partidos, en vez de descargar todo otra vez:
 ```powershell
-py -3.11 actualizar_datos.py
+py -3.11 actualizar_datos.py                       # las 48 selecciones (lento)
+py -3.11 actualizar_datos.py Spain Brazil Mexico   # solo esas (rápido)
 ```
-Trae de FBref solo lo reciente y **fusiona los partidos nuevos** en
+Trae de FBref lo reciente y **fusiona los partidos nuevos** en
 `base_mundial_2026.csv` sin borrar lo anterior (deduplica por
 `Team + Date + Opponent`; si un partido ya existía, prevalece el dato nuevo).
-Puedes correrlo cuantas veces quieras.
+
+> ⏱️ **Por qué tarda y cómo acelerarlo:** FBref no permite pedir "solo lo nuevo";
+> cada equipo descarga su temporada completa y FBref limita a los scrapers
+> (soccerdata espacia las peticiones). Por eso actualizar las **48 selecciones**
+> tarda varios minutos. Si solo jugaron unos pocos equipos, **pásalos como
+> argumento** y baja a segundos. En la app, la casilla *"Actualizar datos antes
+> de predecir"* hace justo esto: actualiza **solo los 2 equipos del partido**.
 
 ### Recalcular los promedios del torneo
 Tras una descarga nueva, regenera `promedios_liga.json` (lee solo el caché

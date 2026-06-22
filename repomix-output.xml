@@ -41,6 +41,7 @@ The content is organized as follows:
 </file_summary>
 
 <directory_structure>
+.gitignore
 Abrir Predictor.bat
 actualizar_datos.py
 app_gui.py
@@ -48,7 +49,6 @@ backtest.py
 calcular_lambdas.py
 calcular_promedios_liga.py
 descargar_datos.py
-downloaded_files/driver_fixing.lock
 feature_engineering.py
 ingest_fbref.py
 ligas_config.py
@@ -64,6 +64,24 @@ tema_oscuro.py
 
 <files>
 This section contains the contents of the repository's files.
+
+<file path=".gitignore">
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Salidas regenerables
+montecarlo_resultados.csv
+
+# Cache / temporales
+downloaded_files/
+*.log
+.DS_Store
+Thumbs.db
+</file>
 
 <file path="Abrir Predictor.bat">
 @echo off
@@ -98,34 +116,49 @@ if errorlevel 1 (
 """
 Actualizacion INCREMENTAL de la base del Mundial.
 
-A diferencia de descargar_datos.py (que descarga todo de cero con pausas largas),
-este script solo trae los partidos recientes de FBref y los fusiona con
-base_mundial_2026.csv SIN borrarlo: agrega unicamente los partidos nuevos.
+A diferencia de descargar_datos.py (que descarga todo de cero), este script trae
+los partidos recientes de FBref y los fusiona con base_mundial_2026.csv SIN
+borrarlo: agrega unicamente los partidos nuevos.
 
-Uso:
-    py -3.11 actualizar_datos.py
+IMPORTANTE sobre el tiempo: FBref no permite pedir "solo lo nuevo"; cada equipo
+baja su temporada completa, y FBref limita a los scrapers (soccerdata espacia las
+peticiones). Por eso actualizar las 48 selecciones tarda varios minutos. Si solo
+jugaron unos pocos equipos, actualiza SOLO esos pasandolos como argumento:
 
-Pensado para correrlo periodicamente segun se van jugando partidos.
+    py -3.11 actualizar_datos.py                       # las 48 (lento)
+    py -3.11 actualizar_datos.py Spain Brazil Mexico   # solo esos (rapido)
 """
+import sys
+
 import soccerdata as sd
 
 from ingest_fbref import actualizar_csv_maestro, CSV_MAESTRO_MUNDIAL
 from ligas_config import EQUIPOS_MUNDIAL
 
-PAUSA = 6  # segundos entre equipos (suave; ya tenemos la mayoria en cache)
+# Equipos a actualizar: los pasados por argumento, o las 48 si no se pasa ninguno.
+equipos = sys.argv[1:] if len(sys.argv) > 1 else EQUIPOS_MUNDIAL
+
+desconocidos = [e for e in equipos if e not in EQUIPOS_MUNDIAL]
+if desconocidos:
+    print(f"Aviso: estos nombres no estan en la lista del Mundial (revisa "
+          f"el nombre exacto de FBref): {desconocidos}")
+
+# Sin equipos pasados -> actualizacion completa, con pausa anti-bloqueo.
+# Con pocos equipos -> sin pausa, es rapido.
+pausa = 6 if equipos is EQUIPOS_MUNDIAL else 0
 
 print("Actualizacion incremental del Mundial 2026")
-print(f"Equipos a revisar: {len(EQUIPOS_MUNDIAL)}")
+print(f"Equipos a actualizar: {len(equipos)}"
+      + (" (TODOS, puede tardar varios minutos)" if pausa else ""))
 
 # no_cache=True para que FBref traiga los partidos mas recientes, no la copia vieja.
 fbref = sd.FBref(leagues="INT-World Cup", seasons="2026", no_cache=True)
-
-resumen = actualizar_csv_maestro(fbref, EQUIPOS_MUNDIAL, pausa=PAUSA, verbose=True)
+resumen = actualizar_csv_maestro(fbref, equipos, pausa=pausa, verbose=True)
 
 print("\nResumen:")
 print(f"  Partidos nuevos agregados: {resumen['partidos_nuevos']}")
 print(f"  Total de partidos ahora:   {resumen['filas_despues']}")
-print(f"  Equipos:                   {resumen['equipos']}")
+print(f"  Equipos en la base:        {resumen['equipos']}")
 print(f"\nListo. '{CSV_MAESTRO_MUNDIAL}' actualizado. Abre la app normalmente.")
 input("Presiona Enter para cerrar...")
 </file>
@@ -496,10 +529,13 @@ class PredictorApp(tk.Tk):
         def tarea():
             try:
                 # Actualización incremental opcional (solo aplica al Mundial).
+                # Solo bajamos los 2 equipos del partido, no las 48 → segundos.
                 if actualizar and liga_id == "INT-World Cup":
-                    estado("Actualizando datos desde FBref… (puede tardar unos minutos)")
+                    def avance(i, total, equipo):
+                        estado(f"Actualizando datos ({i}/{total}): {equipo}…")
                     try:
-                        resumen = actualizar_mundial(temporada)
+                        resumen = actualizar_mundial(
+                            temporada, equipos=[eq1_fbref, eq2_fbref], callback=avance)
                         estado(f"Datos al día (+{resumen['partidos_nuevos']} "
                                f"partidos nuevos). Calculando…")
                     except Exception as e:
@@ -1079,10 +1115,6 @@ print("Ahora abre app_gui.py normalmente.")
 input("Presiona Enter para cerrar...")
 </file>
 
-<file path="downloaded_files/driver_fixing.lock">
-
-</file>
-
 <file path="feature_engineering.py">
 """
 Fases 1-3: ingeniería de características, ponderación por fuerza del rival
@@ -1357,13 +1389,15 @@ def fusionar_historiales(df_existente: pd.DataFrame, df_nuevo: pd.DataFrame,
 
 def actualizar_csv_maestro(fbref, equipos: Sequence[str],
                            ruta: str = CSV_MAESTRO_MUNDIAL,
-                           pausa: float = 0.0, verbose: bool = False) -> dict:
+                           pausa: float = 0.0, verbose: bool = False,
+                           callback=None) -> dict:
     """
     Actualiza el CSV maestro incrementalmente: descarga el historial actual de
     cada equipo, lo fusiona con el CSV existente y guarda solo el resultado. No
     borra nada; solo agrega los partidos nuevos. Devuelve un resumen.
 
-    pausa: segundos a esperar entre equipos (anti-bloqueo de FBref).
+    pausa:    segundos a esperar entre equipos (anti-bloqueo de FBref).
+    callback: funcion opcional callback(i, total, equipo) para reportar avance.
     """
     import time
 
@@ -1375,6 +1409,8 @@ def actualizar_csv_maestro(fbref, equipos: Sequence[str],
     for i, equipo in enumerate(equipos, 1):
         if verbose:
             print(f"[{i}/{total}] {equipo}...")
+        if callback is not None:
+            callback(i, total, equipo)
         try:
             df = construir_historial_equipo_directo(fbref, equipo)
             df["Team"] = equipo
@@ -1491,16 +1527,24 @@ def descargar_stats_equipo(liga, temporada, equipo, no_cache=False):
     return construir_historial_equipo_directo(fbref, equipo)
 
 
-def actualizar_mundial(temporada: str = "2026", pausa: float = 0.0,
-                       verbose: bool = False) -> dict:
+def actualizar_mundial(temporada: str = "2026", equipos: Sequence[str] = None,
+                       pausa: float = 0.0, verbose: bool = False,
+                       callback=None) -> dict:
     """
     Atajo: actualiza incrementalmente el CSV maestro del Mundial trayendo los
     partidos recientes de FBref. Lo usa tanto la GUI como actualizar_datos.py.
+
+    equipos: lista de selecciones a actualizar. Si es None, actualiza las 48
+    (lento). Para actualizar solo las que vas a predecir, pasa esos 2-3 nombres
+    y la descarga baja de ~96 peticiones a unas pocas.
     """
     _chequear_dependencia()
     from ligas_config import EQUIPOS_MUNDIAL
+    if equipos is None:
+        equipos = EQUIPOS_MUNDIAL
     fbref = sd.FBref(leagues="INT-World Cup", seasons=temporada, no_cache=True)
-    return actualizar_csv_maestro(fbref, EQUIPOS_MUNDIAL, pausa=pausa, verbose=verbose)
+    return actualizar_csv_maestro(fbref, equipos, pausa=pausa, verbose=verbose,
+                                  callback=callback)
 
 
 def construir_historial_equipo(df_liga, nombre_equipo):
@@ -2340,10 +2384,10 @@ Panel izquierdo:
     de volver a pedirlos a FBref. **Déjalo activado** salvo que quieras forzar
     una descarga nueva.
   - **Actualizar datos antes de predecir** (desactivado): si lo marcas, al pulsar
-    *Predecir partido* el programa primero trae de FBref los partidos nuevos
-    (fusión incremental, sin borrar el CSV) y **luego** predice. Si la red falla,
-    avisa y predice igual con los datos locales. Tarda un par de minutos, así que
-    actívalo solo cuando se hayan jugado partidos nuevos.
+    *Predecir partido* el programa primero trae de FBref los partidos nuevos de
+    **solo los 2 equipos del partido** (fusión incremental, sin borrar el CSV) y
+    **luego** predice — son unos segundos, no minutos. Si la red falla, avisa y
+    predice igual con los datos locales.
 
 Panel derecho (tras pulsar *Predecir partido*):
 
@@ -2449,12 +2493,19 @@ FBref. Tarda varios minutos. **Al terminar regenera automáticamente
 ### Mantener los datos al día (incremental, recomendado)
 Conforme se juegan partidos, en vez de descargar todo otra vez:
 ```powershell
-py -3.11 actualizar_datos.py
+py -3.11 actualizar_datos.py                       # las 48 selecciones (lento)
+py -3.11 actualizar_datos.py Spain Brazil Mexico   # solo esas (rápido)
 ```
-Trae de FBref solo lo reciente y **fusiona los partidos nuevos** en
+Trae de FBref lo reciente y **fusiona los partidos nuevos** en
 `base_mundial_2026.csv` sin borrar lo anterior (deduplica por
 `Team + Date + Opponent`; si un partido ya existía, prevalece el dato nuevo).
-Puedes correrlo cuantas veces quieras.
+
+> ⏱️ **Por qué tarda y cómo acelerarlo:** FBref no permite pedir "solo lo nuevo";
+> cada equipo descarga su temporada completa y FBref limita a los scrapers
+> (soccerdata espacia las peticiones). Por eso actualizar las **48 selecciones**
+> tarda varios minutos. Si solo jugaron unos pocos equipos, **pásalos como
+> argumento** y baja a segundos. En la app, la casilla *"Actualizar datos antes
+> de predecir"* hace justo esto: actualiza **solo los 2 equipos del partido**.
 
 ### Recalcular los promedios del torneo
 Tras una descarga nueva, regenera `promedios_liga.json` (lee solo el caché
