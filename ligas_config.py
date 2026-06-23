@@ -25,11 +25,22 @@ PESOS_MODELO = {
     "bonus_posesion": 1.02,
     "umbral_posesion": 55,
 
-    # Tiros a puerta: un equipo que remata mas al arco que la media del torneo
-    # tiene algo mas de peligro ofensivo (usa tiros_puerta_adj).
-    "bonus_tiros": 1.02,
-    "umbral_tiros": 9.0,
+    # Tiros a puerta: ajuste CONTINUO (no escalon). lambda *= 1 + (ratio-1)*peso,
+    # donde ratio = tiros_puerta_adj / default_tiros (acotado).
     "default_tiros": 8.5,
+    "peso_tiros": 0.10,
+
+    # Fuerza del Calendario (SoS): si el equipo viene de rivales fuertes (alto
+    # sos_prom vs ELO_REFERENCIA) sus stats valen mas; si de rivales debiles, menos.
+    "peso_sos": 0.06,          # se acota a +/-3%
+
+    # Tasa de conversion (goles por tiro a puerta): premia/penaliza eficiencia.
+    "default_conversion": 0.32,
+    "umbral_conversion": 1.15,  # >115% de la media = hiper-efectivo
+    "bonus_conversion": 1.02,
+
+    # Diferencial de xG (xGD = ataque - defensa): bono de "dominio".
+    "peso_xgd": 0.03,          # se acota a +/-3%
 
     # Disciplina: un equipo indisciplinado concede algo mas al rival
     "bonus_disciplina": 1.02,

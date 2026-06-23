@@ -17,9 +17,38 @@ from ingest_fbref import (
     sd,
 )
 from feature_engineering import procesar_equipo, ultima_fila_valida
-from calcular_lambdas import calcular_lambdas
+from calcular_lambdas import calcular_lambdas, _acota
 from matriz_poisson import generar_matriz_poisson
-from ligas_config import elo_de
+from ligas_config import elo_de, _limpiar_nombre_rival
+
+
+def _factor_h2h(df, local, visit, peso=0.04, min_partidos=3):
+    """
+    Historial directo (head-to-head). Busca en la base los cruces entre los dos
+    equipos y devuelve (factor_local, factor_visitante) acotado a +/-peso. Si hay
+    'paternidad' clara (un equipo gana la mayoria), inclina sutilmente los lambdas.
+    """
+    if df is None or getattr(df, "empty", True) or "Opponent" not in df.columns:
+        return 1.0, 1.0
+
+    def _norm(s):
+        return _limpiar_nombre_rival(str(s)).lower()
+
+    nl, nv = _norm(local), _norm(visit)
+    opp = df["Opponent"].map(_norm)
+    loc_rows = df[(df["Team"] == local) & (opp == nv)]
+    vis_rows = df[(df["Team"] == visit) & (opp == nl)]
+
+    # Resultados desde la optica del local (invertimos los del visitante).
+    res = list(loc_rows["Result"])
+    res += ["W" if r == "L" else "L" if r == "W" else "D" for r in vis_rows["Result"]]
+    n = len(res)
+    if n < min_partidos:
+        return 1.0, 1.0
+
+    tasa_local = sum(1 for r in res if r == "W") / n   # 1 = domina el local
+    aj = _acota(peso * (tasa_local - 0.5) * 2, -peso, peso)
+    return 1 + aj, 1 - aj
 
 
 PROMEDIOS_LIGA_PATH = "promedios_liga.json"
@@ -49,11 +78,13 @@ def predecir_partido(
     n_window: int = 6,
     neutral: bool | None = None,
 ) -> dict:
+    df_h2h = None  # base para el historial directo (solo Mundial vía CSV)
     if liga == "INT-World Cup":
         # Ruta preferente: CSV maestro local (100% offline y rapido). Si no
         # existe o se forzo no_cache, caemos a la descarga directa de FBref.
         if existe_csv_maestro() and not no_cache:
             df_maestro = cargar_historial_csv()
+            df_h2h = df_maestro
             df_local = construir_historial_equipo(df_maestro, equipo_local)
             df_visitante = construir_historial_equipo(df_maestro, equipo_visitante)
         else:
@@ -111,6 +142,12 @@ def predecir_partido(
         elo_local=elo_de(equipo_local),
         elo_visitante=elo_de(equipo_visitante),
     )
+
+    # Historial directo (head-to-head): inclina sutilmente si hay paternidad.
+    f_loc, f_vis = _factor_h2h(df_h2h, equipo_local, equipo_visitante)
+    lambda_local *= f_loc
+    lambda_visitante *= f_vis
+
     matriz = generar_matriz_poisson(lambda_local, lambda_visitante, rho=rho)
 
     prob_local = float(np.sum(np.tril(matriz, -1)))

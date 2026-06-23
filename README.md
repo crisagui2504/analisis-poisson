@@ -95,7 +95,11 @@ Panel derecho (tras pulsar *Predecir partido*):
    posesión, faltas, tarjetas) y normaliza los nombres de columna.
 
 2. **Ingeniería de características** (`feature_engineering.py`)
-   - Calcula promedios móviles de las últimas *N* partidos (ventana = 6).
+   - Promedios con **decaimiento exponencial (EWM, span=10)**: pesa más los
+     partidos recientes (estado de forma) que los antiguos. El span se calibró
+     contra el mercado (ver backtest); EWM con span largo superó a la media móvil
+     simple. Además calcula **xGD** (diferencial de xG, "dominio"), **tasa de
+     conversión** (goles/tiro a puerta) y la **Fuerza del Calendario** (`sos_prom`).
    - Aplica **shrinkage**: mezcla el promedio del equipo con el promedio del
      torneo, ponderando por cuántos partidos tiene el equipo. Así un equipo con
      2 partidos no se sobre-interpreta.
@@ -337,8 +341,17 @@ correr_backtest(partidos, df_liga, verbose=True)
 7. **Matriz normalizada con `rho=0`**: la rama sin Dixon-Coles no reescalaba la
    Poisson truncada (las probabilidades sumaban ~0.98). Ahora siempre suma 1.
 8. **Tiros a puerta ahora activos**: `tiros_puerta_adj` se calculaba pero
-   `calcular_lambdas` lo ignoraba. Ahora aplica un bonus ofensivo cuando un
-   equipo remata más al arco que la media (variable que estaba "muerta").
+   `calcular_lambdas` lo ignoraba. Ahora aplica un ajuste ofensivo **continuo**
+   (no escalón) según cuánto remata por encima de la media.
+9. **Variables conectadas y nuevas** (medidas con `backtest_cuotas.py`):
+   - **EWM** en vez de media móvil (span=10, calibrado): pesa más lo reciente.
+   - **Fuerza del Calendario** (`sos_prom`) ahora se lee en los lambdas (±3%).
+   - **xGD** (diferencial de xG): bono de dominio (±3%).
+   - **Tasa de conversión** (goles/tiro a puerta): premia/penaliza eficiencia.
+   - **Head-to-Head**: paternidad histórica entre dos selecciones (±4%).
+   - Efecto medido en clubes: log_loss **1.0251 → 1.0196** y acierto
+     **49.1% → 50.6%** (la mejora se logró calibrando el span del EWM; un span
+     corto empeoraba el modelo — por eso se mide cada cambio).
 
 ## 🧼 Mejoras de calidad de código (refactor)
 

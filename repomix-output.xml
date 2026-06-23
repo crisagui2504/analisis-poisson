@@ -106,214 +106,6 @@ if errorlevel 1 (
 }
 </file>
 
-<file path="backtest_cuotas.py">
-"""
-Backtest del modelo contra las CUOTAS REALES del mercado (Football-Data.co.uk).
-
-Mide si el modelo Poisson/Dixon-Coles le gana o iguala a las casas de apuestas:
-  - Compara su log-loss / Brier / acierto contra las cuotas de cierre de Pinnacle
-    (la casa más "sharp"), que son el patrón a vencer.
-  - Simula el ROI de apostar solo cuando el modelo detecta "valor".
-
-Clave: el CSV de Football-Data ya trae los goles de cada partido, así que el
-historial de cada equipo se construye del MISMO archivo. 100% offline tras la
-descarga, sin FBref ni mapeo de nombres. Backtest SIN fuga de datos: cada partido
-se predice usando solo los partidos anteriores.
-
-Uso:
-    py -3.11 backtest_cuotas.py            # Premier League 2024-25
-    py -3.11 backtest_cuotas.py SP1 2425   # La Liga 2024-25
-"""
-import sys
-
-import numpy as np
-import pandas as pd
-from sklearn.metrics import log_loss
-
-from feature_engineering import procesar_equipo, ultima_fila_valida
-from calcular_lambdas import calcular_lambdas
-from matriz_poisson import generar_matriz_poisson
-
-# Códigos de liga de Football-Data.co.uk
-LIGAS_FD = {
-    "E0": "Premier League (Inglaterra)", "SP1": "La Liga (España)",
-    "I1": "Serie A (Italia)", "D1": "Bundesliga (Alemania)", "F1": "Ligue 1 (Francia)",
-}
-BASE_URL = "https://www.football-data.co.uk/mmz4281"
-
-
-def descargar_cuotas(codigo: str = "E0", temporada: str = "2425") -> pd.DataFrame:
-    """Descarga el CSV de resultados + cuotas de una liga/temporada."""
-    url = f"{BASE_URL}/{temporada}/{codigo}.csv"
-    df = pd.read_csv(url)
-    df["Date"] = pd.to_datetime(df["Date"], dayfirst=True, errors="coerce")
-    return df.dropna(subset=["Date", "HomeTeam", "AwayTeam", "FTHG", "FTAG", "FTR"])
-
-
-def historial_desde_cuotas(df: pd.DataFrame) -> pd.DataFrame:
-    """Construye el historial por equipo (esquema del modelo) desde el CSV."""
-    filas = []
-    for _, m in df.iterrows():
-        gh, ga = int(m["FTHG"]), int(m["FTAG"])
-        base = {"Poss": np.nan, "Sh": np.nan, "SoT": np.nan, "xG": np.nan,
-                "xGA": np.nan, "Fls": np.nan, "CrdY": 0, "CrdR": 0}
-        filas.append({"Date": m["Date"], "Team": m["HomeTeam"], "Opponent": m["AwayTeam"],
-                      "Venue": "Home", "Result": "W" if gh > ga else "D" if gh == ga else "L",
-                      "GF": gh, "GA": ga, **base})
-        filas.append({"Date": m["Date"], "Team": m["AwayTeam"], "Opponent": m["HomeTeam"],
-                      "Venue": "Away", "Result": "W" if ga > gh else "D" if gh == ga else "L",
-                      "GF": ga, "GA": gh, **base})
-    return pd.DataFrame(filas).sort_values("Date").reset_index(drop=True)
-
-
-def _devig(oh, od, oa):
-    """Cuotas decimales -> probabilidades sin margen de la casa (de-vig)."""
-    if any(pd.isna(x) or x <= 1 for x in (oh, od, oa)):
-        return None
-    imp = np.array([1 / oh, 1 / od, 1 / oa])
-    return imp / imp.sum()
-
-
-def _cuotas_cierre(m):
-    """Cuotas de cierre por prioridad: Pinnacle -> Bet365 -> promedio."""
-    for h, d, a in [("PSCH", "PSCD", "PSCA"), ("B365CH", "B365CD", "B365CA"),
-                    ("AvgCH", "AvgCD", "AvgCA"), ("B365H", "B365D", "B365A")]:
-        if all(c in m and not pd.isna(m[c]) for c in (h, d, a)):
-            return float(m[h]), float(m[d]), float(m[a])
-    return None
-
-
-def correr(df_cuotas, rho=-0.10, k=3, min_previos=5):
-    """
-    Predice cada partido sin fuga de datos y devuelve arrays alineados:
-    probs_modelo, probs_mercado, cuotas, y (0=local,1=empate,2=visitante).
-    """
-    hist = historial_desde_cuotas(df_cuotas)
-    df = df_cuotas.sort_values("Date").reset_index(drop=True)
-
-    pm_modelo, pm_mercado, cuotas, ys = [], [], [], []
-    for _, m in df.iterrows():
-        oc = _cuotas_cierre(m)
-        merc = _devig(*oc) if oc else None
-        if merc is None:
-            continue
-
-        local, visit, fecha = m["HomeTeam"], m["AwayTeam"], m["Date"]
-        h_loc = hist[(hist["Team"] == local) & (hist["Date"] < fecha)]
-        h_vis = hist[(hist["Team"] == visit) & (hist["Date"] < fecha)]
-        if len(h_loc) < min_previos or len(h_vis) < min_previos:
-            continue
-
-        prom_gf = hist[hist["Date"] < fecha]["GF"].mean()  # ~media de goles de local
-        f_loc = ultima_fila_valida(procesar_equipo(h_loc, prom_gf, prom_gf, 4.5, k_shrinkage=k))
-        f_vis = ultima_fila_valida(procesar_equipo(h_vis, prom_gf, prom_gf, 4.5, k_shrinkage=k))
-        if f_loc is None or f_vis is None:
-            continue
-
-        # Clubes: SÍ aplica ventaja de localía (neutral=False), sin Elo.
-        lam_l, lam_v = calcular_lambdas(f_loc, f_vis, neutral=False)
-        mat = generar_matriz_poisson(lam_l, lam_v, rho=rho)
-        probs = [float(np.sum(np.tril(mat, -1))), float(np.sum(np.diag(mat))),
-                 float(np.sum(np.triu(mat, 1)))]
-
-        y = 0 if m["FTR"] == "H" else 1 if m["FTR"] == "D" else 2
-        pm_modelo.append(probs)
-        pm_mercado.append(list(merc))
-        cuotas.append(oc)
-        ys.append(y)
-
-    return (np.array(pm_modelo), np.array(pm_mercado),
-            np.array(cuotas), np.array(ys))
-
-
-def calibrar(dfs, rhos=(-0.20, -0.15, -0.13, -0.10, -0.05, 0.0),
-             ks=(3, 5, 8, 12), min_previos=5):
-    """
-    Barrido de rho y k sobre uno o varios DataFrames de cuotas (varias ligas
-    para no sobreajustar). Minimiza el log_loss contra los RESULTADOS reales,
-    sin fuga de datos. Las lambdas dependen de k, así que se calculan una sola
-    vez por k y luego se reusa al barrer rho (barato). Devuelve un DataFrame
-    ordenado por log_loss.
-    """
-    datos = {k: [] for k in ks}  # k -> [(lam_l, lam_v, y)]
-    for df in dfs:
-        hist = historial_desde_cuotas(df)
-        dfo = df.sort_values("Date").reset_index(drop=True)
-        for _, m in dfo.iterrows():
-            local, visit, fecha = m["HomeTeam"], m["AwayTeam"], m["Date"]
-            h_loc = hist[(hist["Team"] == local) & (hist["Date"] < fecha)]
-            h_vis = hist[(hist["Team"] == visit) & (hist["Date"] < fecha)]
-            if len(h_loc) < min_previos or len(h_vis) < min_previos:
-                continue
-            prom = hist[hist["Date"] < fecha]["GF"].mean()
-            y = 0 if m["FTR"] == "H" else 1 if m["FTR"] == "D" else 2
-            for k in ks:
-                f_loc = ultima_fila_valida(procesar_equipo(h_loc, prom, prom, 4.5, k_shrinkage=k))
-                f_vis = ultima_fila_valida(procesar_equipo(h_vis, prom, prom, 4.5, k_shrinkage=k))
-                if f_loc is None or f_vis is None:
-                    continue
-                lam_l, lam_v = calcular_lambdas(f_loc, f_vis, neutral=False)
-                datos[k].append((lam_l, lam_v, y))
-
-    filas = []
-    for rho in rhos:
-        for k in ks:
-            probs, ys = [], []
-            for lam_l, lam_v, y in datos[k]:
-                mat = generar_matriz_poisson(lam_l, lam_v, rho=rho)
-                probs.append([float(np.sum(np.tril(mat, -1))), float(np.sum(np.diag(mat))),
-                              float(np.sum(np.triu(mat, 1)))])
-                ys.append(y)
-            if probs:
-                filas.append({"rho": rho, "k": k, "n": len(ys),
-                              "log_loss": log_loss(ys, probs, labels=[0, 1, 2])})
-    return pd.DataFrame(filas).sort_values("log_loss").reset_index(drop=True)
-
-
-def metricas(probs, y):
-    onehot = np.eye(3)[y]
-    return {"log_loss": log_loss(y, probs, labels=[0, 1, 2]),
-            "brier": float(np.mean(np.sum((probs - onehot) ** 2, axis=1))),
-            "acierto": float(np.mean(np.argmax(probs, axis=1) == y))}
-
-
-def simular_roi(probs, cuotas, y, umbral=0.05, stake=1.0):
-    """Apuesta 1 unidad a cada resultado donde prob_modelo*cuota > 1+umbral."""
-    ganancia, n = 0.0, 0
-    for p, o, real in zip(probs, cuotas, y):
-        for k in range(3):
-            if p[k] * o[k] > 1 + umbral:  # valor esperado positivo
-                n += 1
-                ganancia += (o[k] - 1) * stake if real == k else -stake
-    roi = (ganancia / (n * stake)) if n else 0.0
-    return {"apuestas": n, "ganancia": ganancia, "roi": roi}
-
-
-if __name__ == "__main__":
-    codigo = sys.argv[1] if len(sys.argv) > 1 else "E0"
-    temporada = sys.argv[2] if len(sys.argv) > 2 else "2425"
-    print(f"Liga: {LIGAS_FD.get(codigo, codigo)} · temporada {temporada}")
-
-    df = descargar_cuotas(codigo, temporada)
-    print(f"Partidos descargados: {len(df)}")
-
-    pm, mk, od, y = correr(df)
-    print(f"Partidos evaluados (con historial suficiente): {len(y)}\n")
-
-    mo, me = metricas(pm, y), metricas(mk, y)
-    print(f"{'':12}{'log_loss':>10}{'brier':>9}{'acierto':>9}")
-    print(f"{'MERCADO':12}{me['log_loss']:>10.4f}{me['brier']:>9.4f}{me['acierto']*100:>8.1f}%")
-    print(f"{'MODELO':12}{mo['log_loss']:>10.4f}{mo['brier']:>9.4f}{mo['acierto']*100:>8.1f}%")
-    print("  (menor log_loss/brier = mejor; el mercado es muy dificil de batir)\n")
-
-    roi = simular_roi(pm, od, y)
-    print(f"Simulador de ROI (apostando al 'valor' del modelo):")
-    print(f"  apuestas con valor: {roi['apuestas']}")
-    print(f"  ganancia neta: {roi['ganancia']:+.2f} unidades")
-    print(f"  ROI: {roi['roi']*100:+.1f}%")
-    print("  (ROI>0 sería ganarle al mercado; lo normal es negativo por el margen)")
-</file>
-
 <file path="backtest.py">
 """
 Fase 6: Backtest / calibración de rho (Dixon-Coles) y k (shrinkage).
@@ -680,12 +472,22 @@ def aplicar_shrinkage(promedio_equipo, promedio_liga, n_partidos, k=5):
 
 def procesar_equipo(df_partidos, promedio_liga_xg_favor, promedio_liga_xg_contra,
                     promedio_liga_tiros, n_window=6, k_shrinkage=5,
-                    ponderar_por_elo=True):
+                    ponderar_por_elo=True, suavizado="ewm", ewm_span=10):
     df_partidos = df_partidos.copy()
     df_partidos['Date'] = pd.to_datetime(df_partidos['Date'])
     df_partidos = df_partidos.sort_values(by='Date').reset_index(drop=True)
 
     min_p = max(1, n_window // 2)
+
+    # Suavizado de los promedios. El shift(1) excluye el partido actual (sin fuga
+    # de datos). "ewm" (decaimiento exponencial) da mas peso a lo reciente
+    # reflejando el "estado de forma"; "sma" es media movil simple. El span del
+    # EWM se calibro contra el mercado (ver backtest_cuotas).
+    def prom(serie):
+        s = serie.shift(1)
+        if suavizado == "sma":
+            return s.rolling(window=n_window, min_periods=min_p).mean()
+        return s.ewm(span=ewm_span, min_periods=min_p).mean()
 
     # ── Fuerza del rival (Elo) ──────────────────────────────────────────────
     # elo_rival por partido y "Fuerza del Calendario" (SoS): Elo promedio de los
@@ -697,9 +499,7 @@ def procesar_equipo(df_partidos, promedio_liga_xg_favor, promedio_liga_xg_contra
     else:
         df_partidos['elo_rival'] = np.nan
     df_partidos['elo_rival'] = df_partidos['elo_rival'].fillna(ELO_REFERENCIA)
-    df_partidos['sos_prom'] = (
-        df_partidos['elo_rival'].shift(1).rolling(window=n_window, min_periods=min_p).mean()
-    )
+    df_partidos['sos_prom'] = prom(df_partidos['elo_rival'])
 
     if ponderar_por_elo:
         factor_ataque = df_partidos['elo_rival'] / ELO_REFERENCIA
@@ -716,39 +516,34 @@ def procesar_equipo(df_partidos, promedio_liga_xg_favor, promedio_liga_xg_contra
     else:
         # FBref no publica xG para partidos de selecciones/Mundial: usamos GF.
         base_favor = gf_pond
-    df_partidos['xg_favor_prom'] = (
-        base_favor.shift(1).rolling(window=n_window, min_periods=min_p).mean()
-    )
+    df_partidos['xg_favor_prom'] = prom(base_favor)
 
     if 'xGA' in df_partidos.columns and df_partidos['xGA'].notna().any():
         base_contra = df_partidos['xGA'] * factor_defensa
     else:
         base_contra = ga_pond
-    df_partidos['xg_contra_prom'] = (
-        base_contra.shift(1).rolling(window=n_window, min_periods=min_p).mean()
-    )
+    df_partidos['xg_contra_prom'] = prom(base_contra)
 
-    df_partidos['goles_favor_prom'] = (
-        df_partidos['GF'].shift(1).rolling(window=n_window, min_periods=min_p).mean()
-    )
-    df_partidos['goles_contra_prom'] = (
-        df_partidos['GA'].shift(1).rolling(window=n_window, min_periods=min_p).mean()
-    )
-    df_partidos['tiros_puerta_prom'] = (
-        df_partidos['SoT'].shift(1).rolling(window=n_window, min_periods=min_p).mean()
-    )
-    df_partidos['posesion_prom'] = (
-        df_partidos['Poss'].shift(1).rolling(window=n_window, min_periods=min_p).mean()
-    )
+    # Diferencial de xG (xGD): metrica de dominio. Positivo y amplio = el equipo
+    # domina la cancha, independientemente del marcador.
+    df_partidos['xgd_prom'] = df_partidos['xg_favor_prom'] - df_partidos['xg_contra_prom']
+
+    df_partidos['goles_favor_prom'] = prom(df_partidos['GF'])
+    df_partidos['goles_contra_prom'] = prom(df_partidos['GA'])
+    df_partidos['tiros_puerta_prom'] = prom(df_partidos['SoT'])
+    df_partidos['posesion_prom'] = prom(df_partidos['Poss'])
+
+    # Tasa de conversion (goles por tiro a puerta), suavizada. Mide eficiencia.
+    gf_ewm = prom(df_partidos['GF'])
+    sot_ewm = prom(df_partidos['SoT'])
+    df_partidos['conversion_prom'] = (gf_ewm / sot_ewm).replace([np.inf, -np.inf], np.nan)
 
     df_partidos['disciplina'] = (
         df_partidos['Fls']
         + df_partidos.get('CrdR', pd.Series(0, index=df_partidos.index)) * 3
         + df_partidos.get('CrdY', pd.Series(0, index=df_partidos.index)) * 1
     )
-    df_partidos['disciplina_prom'] = (
-        df_partidos['disciplina'].shift(1).rolling(window=n_window, min_periods=min_p).mean()
-    )
+    df_partidos['disciplina_prom'] = prom(df_partidos['disciplina'])
 
     def puntos(res):
         if res == 'W':
@@ -758,9 +553,7 @@ def procesar_equipo(df_partidos, promedio_liga_xg_favor, promedio_liga_xg_contra
         return 0
 
     df_partidos['puntos'] = df_partidos['Result'].apply(puntos)
-    df_partidos['racha_puntos_prom'] = (
-        df_partidos['puntos'].shift(1).rolling(window=n_window, min_periods=min_p).mean()
-    )
+    df_partidos['racha_puntos_prom'] = prom(df_partidos['puntos'])
 
     df_partidos['dias_descanso'] = (
         df_partidos['Date'] - df_partidos['Date'].shift(1)
@@ -793,34 +586,6 @@ def ultima_fila_valida(df_features, columnas_requeridas=None):
     if validas.empty:
         return None
     return validas.iloc[-1]
-</file>
-
-<file path="matriz_poisson.py">
-import numpy as np
-from scipy.stats import poisson
-
-
-def correccion_dixon_coles(probabilidades, lambda_l, lambda_v, rho=-0.10):
-    probabilidades[0, 0] *= max(0, 1 - lambda_l * lambda_v * rho)
-    probabilidades[1, 0] *= max(0, 1 + lambda_v * rho)
-    probabilidades[0, 1] *= max(0, 1 + lambda_l * rho)
-    probabilidades[1, 1] *= max(0, 1 - rho)
-    probabilidades /= probabilidades.sum()
-    return probabilidades
-
-
-def generar_matriz_poisson(lambda_local, lambda_visitante, max_goles=5, rho=-0.10):
-    goles = np.arange(0, max_goles + 1)
-    prob_local = poisson.pmf(goles, lambda_local)
-    prob_visitante = poisson.pmf(goles, lambda_visitante)
-    matriz_probs = np.outer(prob_local, prob_visitante)
-    if rho != 0:
-        matriz_corregida = correccion_dixon_coles(matriz_probs, lambda_local, lambda_visitante, rho=rho)
-    else:
-        # Normalizamos tambien sin Dixon-Coles: como la Poisson se trunca en
-        # max_goles, el producto exterior suma <1 y habia que reescalarlo.
-        matriz_corregida = matriz_probs / matriz_probs.sum()
-    return matriz_corregida
 </file>
 
 <file path="montecarlo_mundial.py">
@@ -1059,177 +824,6 @@ ROJO     = "#fb7185"   # derrota (rose)
 
 # Tipografia
 FUENTE = "Segoe UI"     # fuente moderna nativa de Windows
-</file>
-
-<file path="predecir_partido.py">
-"""
-Logica de prediccion sin interfaz. La GUI llama a predecir_partido().
-"""
-import json
-import os
-import numpy as np
-import pandas as pd
-
-from ingest_fbref import (
-    descargar_liga,
-    construir_historial_equipo,
-    obtener_equipos_liga,
-    construir_historial_equipo_directo,
-    cargar_historial_csv,
-    existe_csv_maestro,
-    _chequear_dependencia,
-    sd,
-)
-from feature_engineering import procesar_equipo, ultima_fila_valida
-from calcular_lambdas import calcular_lambdas
-from matriz_poisson import generar_matriz_poisson
-from ligas_config import elo_de
-
-
-PROMEDIOS_LIGA_PATH = "promedios_liga.json"
-PROMEDIOS_DEFAULT = {"xg_favor": 1.3, "xg_contra": 1.3, "sot": 4.5}
-
-
-def _cargar_promedios_liga():
-    if os.path.exists(PROMEDIOS_LIGA_PATH):
-        with open(PROMEDIOS_LIGA_PATH, "r", encoding="utf-8") as f:
-            return json.load(f)
-
-    print(
-        f"Aviso: no se encontro {PROMEDIOS_LIGA_PATH}. Usando promedios por defecto. "
-        "Ejecuta calcular_promedios_liga.py una vez para generarlo desde el cache local."
-    )
-    return PROMEDIOS_DEFAULT
-
-
-def predecir_partido(
-    equipo_local: str,
-    equipo_visitante: str,
-    liga: str,
-    temporada: str,
-    rho: float = -0.10,
-    k_shrinkage: int = 5,
-    no_cache: bool = False,
-    n_window: int = 6,
-    neutral: bool | None = None,
-) -> dict:
-    if liga == "INT-World Cup":
-        # Ruta preferente: CSV maestro local (100% offline y rapido). Si no
-        # existe o se forzo no_cache, caemos a la descarga directa de FBref.
-        if existe_csv_maestro() and not no_cache:
-            df_maestro = cargar_historial_csv()
-            df_local = construir_historial_equipo(df_maestro, equipo_local)
-            df_visitante = construir_historial_equipo(df_maestro, equipo_visitante)
-        else:
-            _chequear_dependencia()
-            fbref = sd.FBref(leagues=liga, seasons=temporada, no_cache=no_cache)
-            df_local = construir_historial_equipo_directo(fbref, equipo_local)
-            df_visitante = construir_historial_equipo_directo(fbref, equipo_visitante)
-
-        promedios = _cargar_promedios_liga()
-        prom_xg_fav = promedios.get("xg_favor", PROMEDIOS_DEFAULT["xg_favor"])
-        prom_xg_con = promedios.get("xg_contra", PROMEDIOS_DEFAULT["xg_contra"])
-        prom_tiros = promedios.get("sot", PROMEDIOS_DEFAULT["sot"])
-        if neutral is None:
-            neutral = True
-    else:
-        df_liga = descargar_liga(liga, temporada, no_cache=no_cache)
-        prom_xg_fav = df_liga["xG"].mean() if "xG" in df_liga.columns else 1.2
-        prom_xg_con = df_liga["xGA"].mean() if "xGA" in df_liga.columns else 1.2
-        prom_tiros = df_liga["SoT"].mean() if "SoT" in df_liga.columns else 4.5
-        df_local = construir_historial_equipo(df_liga, equipo_local)
-        df_visitante = construir_historial_equipo(df_liga, equipo_visitante)
-        if neutral is None:
-            neutral = False
-
-    feats_local = procesar_equipo(
-        df_local,
-        prom_xg_fav,
-        prom_xg_con,
-        prom_tiros,
-        n_window=n_window,
-        k_shrinkage=k_shrinkage,
-    )
-    feats_visitante = procesar_equipo(
-        df_visitante,
-        prom_xg_fav,
-        prom_xg_con,
-        prom_tiros,
-        n_window=n_window,
-        k_shrinkage=k_shrinkage,
-    )
-
-    fila_local = ultima_fila_valida(feats_local)
-    fila_visitante = ultima_fila_valida(feats_visitante)
-
-    if fila_local is None or fila_visitante is None:
-        raise ValueError(
-            f"No hay suficientes partidos completos para calcular ({equipo_local}: "
-            f"{len(df_local)} partidos, {equipo_visitante}: {len(df_visitante)} partidos)."
-        )
-
-    lambda_local, lambda_visitante = calcular_lambdas(
-        fila_local,
-        fila_visitante,
-        neutral=neutral,
-        elo_local=elo_de(equipo_local),
-        elo_visitante=elo_de(equipo_visitante),
-    )
-    matriz = generar_matriz_poisson(lambda_local, lambda_visitante, rho=rho)
-
-    prob_local = float(np.sum(np.tril(matriz, -1)))
-    prob_empate = float(np.sum(np.diag(matriz)))
-    prob_visitante = float(np.sum(np.triu(matriz, 1)))
-
-    mercados = calcular_mercados(matriz)
-
-    return {
-        "lambda_local": lambda_local,
-        "lambda_visitante": lambda_visitante,
-        "prob_local": prob_local,
-        "prob_empate": prob_empate,
-        "prob_visitante": prob_visitante,
-        "matriz": matriz,
-        "df_liga": pd.DataFrame(),
-        **mercados,
-    }
-
-
-def calcular_mercados(matriz: np.ndarray) -> dict:
-    """
-    Deriva metricas tipo casa de apuestas de la matriz de Poisson, sin tocar la
-    matematica base. Filas = goles del local (i), columnas = goles del
-    visitante (j).
-    """
-    n = matriz.shape[0]
-    idx_i, idx_j = np.indices((n, n))
-
-    # Ambos anotan (BTTS): ambos marcan >= 1 gol -> excluye fila 0 y columna 0.
-    prob_btts = float(matriz[1:, 1:].sum())
-
-    # Over/Under 2.5: suma de goles (i + j) mayor que 2.
-    prob_over25 = float(matriz[(idx_i + idx_j) > 2].sum())
-    prob_under25 = float(matriz[(idx_i + idx_j) <= 2].sum())
-
-    # Porteria a cero (clean sheet): el rival no anota.
-    # Local deja la porteria a cero -> visitante marca 0 -> columna 0.
-    prob_cs_local = float(matriz[:, 0].sum())
-    # Visitante deja la porteria a cero -> local marca 0 -> fila 0.
-    prob_cs_visitante = float(matriz[0, :].sum())
-
-    return {
-        "prob_btts": prob_btts,
-        "prob_over25": prob_over25,
-        "prob_under25": prob_under25,
-        "prob_cs_local": prob_cs_local,
-        "prob_cs_visitante": prob_cs_visitante,
-    }
-
-
-def cargar_equipos(liga: str, temporada: str):
-    """Descarga la liga y devuelve la lista de equipos para los desplegables."""
-    df_liga = descargar_liga(liga, temporada)
-    return obtener_equipos_liga(df_liga), df_liga
 </file>
 
 <file path="promedios_liga.json">
@@ -2086,6 +1680,216 @@ print(f"\nListo. '{CSV_MAESTRO_MUNDIAL}' actualizado. Abre la app normalmente.")
 input("Presiona Enter para cerrar...")
 </file>
 
+<file path="backtest_cuotas.py">
+"""
+Backtest del modelo contra las CUOTAS REALES del mercado (Football-Data.co.uk).
+
+Mide si el modelo Poisson/Dixon-Coles le gana o iguala a las casas de apuestas:
+  - Compara su log-loss / Brier / acierto contra las cuotas de cierre de Pinnacle
+    (la casa más "sharp"), que son el patrón a vencer.
+  - Simula el ROI de apostar solo cuando el modelo detecta "valor".
+
+Clave: el CSV de Football-Data ya trae los goles de cada partido, así que el
+historial de cada equipo se construye del MISMO archivo. 100% offline tras la
+descarga, sin FBref ni mapeo de nombres. Backtest SIN fuga de datos: cada partido
+se predice usando solo los partidos anteriores.
+
+Uso:
+    py -3.11 backtest_cuotas.py            # Premier League 2024-25
+    py -3.11 backtest_cuotas.py SP1 2425   # La Liga 2024-25
+"""
+import sys
+
+import numpy as np
+import pandas as pd
+from sklearn.metrics import log_loss
+
+from feature_engineering import procesar_equipo, ultima_fila_valida
+from calcular_lambdas import calcular_lambdas
+from matriz_poisson import generar_matriz_poisson
+
+# Códigos de liga de Football-Data.co.uk
+LIGAS_FD = {
+    "E0": "Premier League (Inglaterra)", "SP1": "La Liga (España)",
+    "I1": "Serie A (Italia)", "D1": "Bundesliga (Alemania)", "F1": "Ligue 1 (Francia)",
+}
+BASE_URL = "https://www.football-data.co.uk/mmz4281"
+
+
+def descargar_cuotas(codigo: str = "E0", temporada: str = "2425") -> pd.DataFrame:
+    """Descarga el CSV de resultados + cuotas de una liga/temporada."""
+    url = f"{BASE_URL}/{temporada}/{codigo}.csv"
+    df = pd.read_csv(url)
+    df["Date"] = pd.to_datetime(df["Date"], dayfirst=True, errors="coerce")
+    return df.dropna(subset=["Date", "HomeTeam", "AwayTeam", "FTHG", "FTAG", "FTR"])
+
+
+def historial_desde_cuotas(df: pd.DataFrame) -> pd.DataFrame:
+    """Construye el historial por equipo (esquema del modelo) desde el CSV."""
+    filas = []
+    for _, m in df.iterrows():
+        gh, ga = int(m["FTHG"]), int(m["FTAG"])
+        base = {"Poss": np.nan, "Sh": np.nan, "SoT": np.nan, "xG": np.nan,
+                "xGA": np.nan, "Fls": np.nan, "CrdY": 0, "CrdR": 0}
+        filas.append({"Date": m["Date"], "Team": m["HomeTeam"], "Opponent": m["AwayTeam"],
+                      "Venue": "Home", "Result": "W" if gh > ga else "D" if gh == ga else "L",
+                      "GF": gh, "GA": ga, **base})
+        filas.append({"Date": m["Date"], "Team": m["AwayTeam"], "Opponent": m["HomeTeam"],
+                      "Venue": "Away", "Result": "W" if ga > gh else "D" if gh == ga else "L",
+                      "GF": ga, "GA": gh, **base})
+    return pd.DataFrame(filas).sort_values("Date").reset_index(drop=True)
+
+
+def _devig(oh, od, oa):
+    """Cuotas decimales -> probabilidades sin margen de la casa (de-vig)."""
+    if any(pd.isna(x) or x <= 1 for x in (oh, od, oa)):
+        return None
+    imp = np.array([1 / oh, 1 / od, 1 / oa])
+    return imp / imp.sum()
+
+
+def _cuotas_cierre(m):
+    """Cuotas de cierre por prioridad: Pinnacle -> Bet365 -> promedio."""
+    for h, d, a in [("PSCH", "PSCD", "PSCA"), ("B365CH", "B365CD", "B365CA"),
+                    ("AvgCH", "AvgCD", "AvgCA"), ("B365H", "B365D", "B365A")]:
+        if all(c in m and not pd.isna(m[c]) for c in (h, d, a)):
+            return float(m[h]), float(m[d]), float(m[a])
+    return None
+
+
+def correr(df_cuotas, rho=-0.10, k=3, min_previos=5, suavizado="ewm", ewm_span=10):
+    """
+    Predice cada partido sin fuga de datos y devuelve arrays alineados:
+    probs_modelo, probs_mercado, cuotas, y (0=local,1=empate,2=visitante).
+    """
+    hist = historial_desde_cuotas(df_cuotas)
+    df = df_cuotas.sort_values("Date").reset_index(drop=True)
+
+    pm_modelo, pm_mercado, cuotas, ys = [], [], [], []
+    for _, m in df.iterrows():
+        oc = _cuotas_cierre(m)
+        merc = _devig(*oc) if oc else None
+        if merc is None:
+            continue
+
+        local, visit, fecha = m["HomeTeam"], m["AwayTeam"], m["Date"]
+        h_loc = hist[(hist["Team"] == local) & (hist["Date"] < fecha)]
+        h_vis = hist[(hist["Team"] == visit) & (hist["Date"] < fecha)]
+        if len(h_loc) < min_previos or len(h_vis) < min_previos:
+            continue
+
+        prom_gf = hist[hist["Date"] < fecha]["GF"].mean()  # ~media de goles de local
+        f_loc = ultima_fila_valida(procesar_equipo(
+            h_loc, prom_gf, prom_gf, 4.5, k_shrinkage=k, suavizado=suavizado, ewm_span=ewm_span))
+        f_vis = ultima_fila_valida(procesar_equipo(
+            h_vis, prom_gf, prom_gf, 4.5, k_shrinkage=k, suavizado=suavizado, ewm_span=ewm_span))
+        if f_loc is None or f_vis is None:
+            continue
+
+        # Clubes: SÍ aplica ventaja de localía (neutral=False), sin Elo.
+        lam_l, lam_v = calcular_lambdas(f_loc, f_vis, neutral=False)
+        mat = generar_matriz_poisson(lam_l, lam_v, rho=rho)
+        probs = [float(np.sum(np.tril(mat, -1))), float(np.sum(np.diag(mat))),
+                 float(np.sum(np.triu(mat, 1)))]
+
+        y = 0 if m["FTR"] == "H" else 1 if m["FTR"] == "D" else 2
+        pm_modelo.append(probs)
+        pm_mercado.append(list(merc))
+        cuotas.append(oc)
+        ys.append(y)
+
+    return (np.array(pm_modelo), np.array(pm_mercado),
+            np.array(cuotas), np.array(ys))
+
+
+def calibrar(dfs, rhos=(-0.20, -0.15, -0.13, -0.10, -0.05, 0.0),
+             ks=(3, 5, 8, 12), min_previos=5):
+    """
+    Barrido de rho y k sobre uno o varios DataFrames de cuotas (varias ligas
+    para no sobreajustar). Minimiza el log_loss contra los RESULTADOS reales,
+    sin fuga de datos. Las lambdas dependen de k, así que se calculan una sola
+    vez por k y luego se reusa al barrer rho (barato). Devuelve un DataFrame
+    ordenado por log_loss.
+    """
+    datos = {k: [] for k in ks}  # k -> [(lam_l, lam_v, y)]
+    for df in dfs:
+        hist = historial_desde_cuotas(df)
+        dfo = df.sort_values("Date").reset_index(drop=True)
+        for _, m in dfo.iterrows():
+            local, visit, fecha = m["HomeTeam"], m["AwayTeam"], m["Date"]
+            h_loc = hist[(hist["Team"] == local) & (hist["Date"] < fecha)]
+            h_vis = hist[(hist["Team"] == visit) & (hist["Date"] < fecha)]
+            if len(h_loc) < min_previos or len(h_vis) < min_previos:
+                continue
+            prom = hist[hist["Date"] < fecha]["GF"].mean()
+            y = 0 if m["FTR"] == "H" else 1 if m["FTR"] == "D" else 2
+            for k in ks:
+                f_loc = ultima_fila_valida(procesar_equipo(h_loc, prom, prom, 4.5, k_shrinkage=k))
+                f_vis = ultima_fila_valida(procesar_equipo(h_vis, prom, prom, 4.5, k_shrinkage=k))
+                if f_loc is None or f_vis is None:
+                    continue
+                lam_l, lam_v = calcular_lambdas(f_loc, f_vis, neutral=False)
+                datos[k].append((lam_l, lam_v, y))
+
+    filas = []
+    for rho in rhos:
+        for k in ks:
+            probs, ys = [], []
+            for lam_l, lam_v, y in datos[k]:
+                mat = generar_matriz_poisson(lam_l, lam_v, rho=rho)
+                probs.append([float(np.sum(np.tril(mat, -1))), float(np.sum(np.diag(mat))),
+                              float(np.sum(np.triu(mat, 1)))])
+                ys.append(y)
+            if probs:
+                filas.append({"rho": rho, "k": k, "n": len(ys),
+                              "log_loss": log_loss(ys, probs, labels=[0, 1, 2])})
+    return pd.DataFrame(filas).sort_values("log_loss").reset_index(drop=True)
+
+
+def metricas(probs, y):
+    onehot = np.eye(3)[y]
+    return {"log_loss": log_loss(y, probs, labels=[0, 1, 2]),
+            "brier": float(np.mean(np.sum((probs - onehot) ** 2, axis=1))),
+            "acierto": float(np.mean(np.argmax(probs, axis=1) == y))}
+
+
+def simular_roi(probs, cuotas, y, umbral=0.05, stake=1.0):
+    """Apuesta 1 unidad a cada resultado donde prob_modelo*cuota > 1+umbral."""
+    ganancia, n = 0.0, 0
+    for p, o, real in zip(probs, cuotas, y):
+        for k in range(3):
+            if p[k] * o[k] > 1 + umbral:  # valor esperado positivo
+                n += 1
+                ganancia += (o[k] - 1) * stake if real == k else -stake
+    roi = (ganancia / (n * stake)) if n else 0.0
+    return {"apuestas": n, "ganancia": ganancia, "roi": roi}
+
+
+if __name__ == "__main__":
+    codigo = sys.argv[1] if len(sys.argv) > 1 else "E0"
+    temporada = sys.argv[2] if len(sys.argv) > 2 else "2425"
+    print(f"Liga: {LIGAS_FD.get(codigo, codigo)} · temporada {temporada}")
+
+    df = descargar_cuotas(codigo, temporada)
+    print(f"Partidos descargados: {len(df)}")
+
+    pm, mk, od, y = correr(df)
+    print(f"Partidos evaluados (con historial suficiente): {len(y)}\n")
+
+    mo, me = metricas(pm, y), metricas(mk, y)
+    print(f"{'':12}{'log_loss':>10}{'brier':>9}{'acierto':>9}")
+    print(f"{'MERCADO':12}{me['log_loss']:>10.4f}{me['brier']:>9.4f}{me['acierto']*100:>8.1f}%")
+    print(f"{'MODELO':12}{mo['log_loss']:>10.4f}{mo['brier']:>9.4f}{mo['acierto']*100:>8.1f}%")
+    print("  (menor log_loss/brier = mejor; el mercado es muy dificil de batir)\n")
+
+    roi = simular_roi(pm, od, y)
+    print(f"Simulador de ROI (apostando al 'valor' del modelo):")
+    print(f"  apuestas con valor: {roi['apuestas']}")
+    print(f"  ganancia neta: {roi['ganancia']:+.2f} unidades")
+    print(f"  ROI: {roi['roi']*100:+.1f}%")
+    print("  (ROI>0 sería ganarle al mercado; lo normal es negativo por el margen)")
+</file>
+
 <file path="calcular_lambdas.py">
 """
 Convierte las caracteristicas de cada equipo en los goles esperados (lambda).
@@ -2097,7 +1901,11 @@ from typing import Any, Mapping, Tuple
 
 import pandas as pd
 
-from ligas_config import PESOS_MODELO
+from ligas_config import PESOS_MODELO, ELO_REFERENCIA
+
+
+def _acota(x, lo, hi):
+    return max(lo, min(hi, x))
 
 
 def calcular_lambdas(
@@ -2160,12 +1968,54 @@ def calcular_lambdas(
     if features_visitante.get("posesion_prom", pesos["default_posesion"]) > pesos["umbral_posesion"]:
         lambda_visitante *= pesos["bonus_posesion"]
 
-    # Tiros a puerta: bonus ofensivo si remata mas al arco que la media. (Antes
-    # se calculaba tiros_puerta_adj pero no se usaba; aqui queda activo.)
-    if features_local.get("tiros_puerta_adj", pesos["default_tiros"]) > pesos["umbral_tiros"]:
-        lambda_local *= pesos["bonus_tiros"]
-    if features_visitante.get("tiros_puerta_adj", pesos["default_tiros"]) > pesos["umbral_tiros"]:
-        lambda_visitante *= pesos["bonus_tiros"]
+    # Tiros a puerta: ajuste CONTINUO (no escalon). Un equipo que remata mas que
+    # la media gana algo de lambda, proporcional a cuanto supera la media.
+    def _ajuste_tiros(feats, lam):
+        t = feats.get("tiros_puerta_adj")
+        if t is None or pd.isna(t) or t <= 0:
+            return lam
+        ratio = _acota(t / pesos["default_tiros"], 0.5, 1.5)
+        return lam * (1 + (ratio - 1) * pesos["peso_tiros"])
+
+    lambda_local = _ajuste_tiros(features_local, lambda_local)
+    lambda_visitante = _ajuste_tiros(features_visitante, lambda_visitante)
+
+    # Fuerza del Calendario (SoS): stats logradas contra rivales fuertes valen
+    # mas; contra debiles, menos. Acotado a +/-3%.
+    def _ajuste_sos(feats, lam):
+        sos = feats.get("sos_prom")
+        if sos is None or pd.isna(sos):
+            return lam
+        aj = _acota(pesos["peso_sos"] * (sos - ELO_REFERENCIA) / 100.0, -0.03, 0.03)
+        return lam * (1 + aj)
+
+    lambda_local = _ajuste_sos(features_local, lambda_local)
+    lambda_visitante = _ajuste_sos(features_visitante, lambda_visitante)
+
+    # Tasa de conversion: premia al hiper-efectivo, penaliza al inofensivo.
+    def _ajuste_conversion(feats, lam):
+        c = feats.get("conversion_prom")
+        if c is None or pd.isna(c) or c <= 0:
+            return lam
+        ratio = c / pesos["default_conversion"]
+        if ratio > pesos["umbral_conversion"]:
+            return lam * pesos["bonus_conversion"]
+        if ratio < (2 - pesos["umbral_conversion"]):
+            return lam * (2 - pesos["bonus_conversion"])
+        return lam
+
+    lambda_local = _ajuste_conversion(features_local, lambda_local)
+    lambda_visitante = _ajuste_conversion(features_visitante, lambda_visitante)
+
+    # Diferencial de xG (xGD): bono de dominio, acotado a +/-3%.
+    def _ajuste_xgd(feats, lam):
+        x = feats.get("xgd_prom")
+        if x is None or pd.isna(x):
+            return lam
+        return lam * (1 + _acota(pesos["peso_xgd"] * x, -0.03, 0.03))
+
+    lambda_local = _ajuste_xgd(features_local, lambda_local)
+    lambda_visitante = _ajuste_xgd(features_visitante, lambda_visitante)
 
     # Disciplina (un equipo indisciplinado concede algo mas al rival)
     if features_local.get("disciplina_prom", pesos["default_disciplina"]) > pesos["umbral_disciplina"]:
@@ -2575,11 +2425,22 @@ PESOS_MODELO = {
     "bonus_posesion": 1.02,
     "umbral_posesion": 55,
 
-    # Tiros a puerta: un equipo que remata mas al arco que la media del torneo
-    # tiene algo mas de peligro ofensivo (usa tiros_puerta_adj).
-    "bonus_tiros": 1.02,
-    "umbral_tiros": 9.0,
+    # Tiros a puerta: ajuste CONTINUO (no escalon). lambda *= 1 + (ratio-1)*peso,
+    # donde ratio = tiros_puerta_adj / default_tiros (acotado).
     "default_tiros": 8.5,
+    "peso_tiros": 0.10,
+
+    # Fuerza del Calendario (SoS): si el equipo viene de rivales fuertes (alto
+    # sos_prom vs ELO_REFERENCIA) sus stats valen mas; si de rivales debiles, menos.
+    "peso_sos": 0.06,          # se acota a +/-3%
+
+    # Tasa de conversion (goles por tiro a puerta): premia/penaliza eficiencia.
+    "default_conversion": 0.32,
+    "umbral_conversion": 1.15,  # >115% de la media = hiper-efectivo
+    "bonus_conversion": 1.02,
+
+    # Diferencial de xG (xGD = ataque - defensa): bono de "dominio".
+    "peso_xgd": 0.03,          # se acota a +/-3%
 
     # Disciplina: un equipo indisciplinado concede algo mas al rival
     "bonus_disciplina": 1.02,
@@ -2808,6 +2669,242 @@ NOMBRE_DISPLAY = {
 }
 
 EQUIPOS_MUNDIAL_ES = sorted(NOMBRE_DISPLAY.keys())
+</file>
+
+<file path="matriz_poisson.py">
+import numpy as np
+from scipy.stats import poisson
+
+
+def correccion_dixon_coles(probabilidades, lambda_l, lambda_v, rho=-0.10):
+    probabilidades[0, 0] *= max(0, 1 - lambda_l * lambda_v * rho)
+    probabilidades[1, 0] *= max(0, 1 + lambda_v * rho)
+    probabilidades[0, 1] *= max(0, 1 + lambda_l * rho)
+    probabilidades[1, 1] *= max(0, 1 - rho)
+    probabilidades /= probabilidades.sum()
+    return probabilidades
+
+
+def generar_matriz_poisson(lambda_local, lambda_visitante, max_goles=5, rho=-0.10):
+    goles = np.arange(0, max_goles + 1)
+    prob_local = poisson.pmf(goles, lambda_local)
+    prob_visitante = poisson.pmf(goles, lambda_visitante)
+    matriz_probs = np.outer(prob_local, prob_visitante)
+    if rho != 0:
+        matriz_corregida = correccion_dixon_coles(matriz_probs, lambda_local, lambda_visitante, rho=rho)
+    else:
+        # Normalizamos tambien sin Dixon-Coles: como la Poisson se trunca en
+        # max_goles, el producto exterior suma <1 y habia que reescalarlo.
+        matriz_corregida = matriz_probs / matriz_probs.sum()
+    return matriz_corregida
+</file>
+
+<file path="predecir_partido.py">
+"""
+Logica de prediccion sin interfaz. La GUI llama a predecir_partido().
+"""
+import json
+import os
+import numpy as np
+import pandas as pd
+
+from ingest_fbref import (
+    descargar_liga,
+    construir_historial_equipo,
+    obtener_equipos_liga,
+    construir_historial_equipo_directo,
+    cargar_historial_csv,
+    existe_csv_maestro,
+    _chequear_dependencia,
+    sd,
+)
+from feature_engineering import procesar_equipo, ultima_fila_valida
+from calcular_lambdas import calcular_lambdas, _acota
+from matriz_poisson import generar_matriz_poisson
+from ligas_config import elo_de, _limpiar_nombre_rival
+
+
+def _factor_h2h(df, local, visit, peso=0.04, min_partidos=3):
+    """
+    Historial directo (head-to-head). Busca en la base los cruces entre los dos
+    equipos y devuelve (factor_local, factor_visitante) acotado a +/-peso. Si hay
+    'paternidad' clara (un equipo gana la mayoria), inclina sutilmente los lambdas.
+    """
+    if df is None or getattr(df, "empty", True) or "Opponent" not in df.columns:
+        return 1.0, 1.0
+
+    def _norm(s):
+        return _limpiar_nombre_rival(str(s)).lower()
+
+    nl, nv = _norm(local), _norm(visit)
+    opp = df["Opponent"].map(_norm)
+    loc_rows = df[(df["Team"] == local) & (opp == nv)]
+    vis_rows = df[(df["Team"] == visit) & (opp == nl)]
+
+    # Resultados desde la optica del local (invertimos los del visitante).
+    res = list(loc_rows["Result"])
+    res += ["W" if r == "L" else "L" if r == "W" else "D" for r in vis_rows["Result"]]
+    n = len(res)
+    if n < min_partidos:
+        return 1.0, 1.0
+
+    tasa_local = sum(1 for r in res if r == "W") / n   # 1 = domina el local
+    aj = _acota(peso * (tasa_local - 0.5) * 2, -peso, peso)
+    return 1 + aj, 1 - aj
+
+
+PROMEDIOS_LIGA_PATH = "promedios_liga.json"
+PROMEDIOS_DEFAULT = {"xg_favor": 1.3, "xg_contra": 1.3, "sot": 4.5}
+
+
+def _cargar_promedios_liga():
+    if os.path.exists(PROMEDIOS_LIGA_PATH):
+        with open(PROMEDIOS_LIGA_PATH, "r", encoding="utf-8") as f:
+            return json.load(f)
+
+    print(
+        f"Aviso: no se encontro {PROMEDIOS_LIGA_PATH}. Usando promedios por defecto. "
+        "Ejecuta calcular_promedios_liga.py una vez para generarlo desde el cache local."
+    )
+    return PROMEDIOS_DEFAULT
+
+
+def predecir_partido(
+    equipo_local: str,
+    equipo_visitante: str,
+    liga: str,
+    temporada: str,
+    rho: float = -0.10,
+    k_shrinkage: int = 5,
+    no_cache: bool = False,
+    n_window: int = 6,
+    neutral: bool | None = None,
+) -> dict:
+    df_h2h = None  # base para el historial directo (solo Mundial vía CSV)
+    if liga == "INT-World Cup":
+        # Ruta preferente: CSV maestro local (100% offline y rapido). Si no
+        # existe o se forzo no_cache, caemos a la descarga directa de FBref.
+        if existe_csv_maestro() and not no_cache:
+            df_maestro = cargar_historial_csv()
+            df_h2h = df_maestro
+            df_local = construir_historial_equipo(df_maestro, equipo_local)
+            df_visitante = construir_historial_equipo(df_maestro, equipo_visitante)
+        else:
+            _chequear_dependencia()
+            fbref = sd.FBref(leagues=liga, seasons=temporada, no_cache=no_cache)
+            df_local = construir_historial_equipo_directo(fbref, equipo_local)
+            df_visitante = construir_historial_equipo_directo(fbref, equipo_visitante)
+
+        promedios = _cargar_promedios_liga()
+        prom_xg_fav = promedios.get("xg_favor", PROMEDIOS_DEFAULT["xg_favor"])
+        prom_xg_con = promedios.get("xg_contra", PROMEDIOS_DEFAULT["xg_contra"])
+        prom_tiros = promedios.get("sot", PROMEDIOS_DEFAULT["sot"])
+        if neutral is None:
+            neutral = True
+    else:
+        df_liga = descargar_liga(liga, temporada, no_cache=no_cache)
+        prom_xg_fav = df_liga["xG"].mean() if "xG" in df_liga.columns else 1.2
+        prom_xg_con = df_liga["xGA"].mean() if "xGA" in df_liga.columns else 1.2
+        prom_tiros = df_liga["SoT"].mean() if "SoT" in df_liga.columns else 4.5
+        df_local = construir_historial_equipo(df_liga, equipo_local)
+        df_visitante = construir_historial_equipo(df_liga, equipo_visitante)
+        if neutral is None:
+            neutral = False
+
+    feats_local = procesar_equipo(
+        df_local,
+        prom_xg_fav,
+        prom_xg_con,
+        prom_tiros,
+        n_window=n_window,
+        k_shrinkage=k_shrinkage,
+    )
+    feats_visitante = procesar_equipo(
+        df_visitante,
+        prom_xg_fav,
+        prom_xg_con,
+        prom_tiros,
+        n_window=n_window,
+        k_shrinkage=k_shrinkage,
+    )
+
+    fila_local = ultima_fila_valida(feats_local)
+    fila_visitante = ultima_fila_valida(feats_visitante)
+
+    if fila_local is None or fila_visitante is None:
+        raise ValueError(
+            f"No hay suficientes partidos completos para calcular ({equipo_local}: "
+            f"{len(df_local)} partidos, {equipo_visitante}: {len(df_visitante)} partidos)."
+        )
+
+    lambda_local, lambda_visitante = calcular_lambdas(
+        fila_local,
+        fila_visitante,
+        neutral=neutral,
+        elo_local=elo_de(equipo_local),
+        elo_visitante=elo_de(equipo_visitante),
+    )
+
+    # Historial directo (head-to-head): inclina sutilmente si hay paternidad.
+    f_loc, f_vis = _factor_h2h(df_h2h, equipo_local, equipo_visitante)
+    lambda_local *= f_loc
+    lambda_visitante *= f_vis
+
+    matriz = generar_matriz_poisson(lambda_local, lambda_visitante, rho=rho)
+
+    prob_local = float(np.sum(np.tril(matriz, -1)))
+    prob_empate = float(np.sum(np.diag(matriz)))
+    prob_visitante = float(np.sum(np.triu(matriz, 1)))
+
+    mercados = calcular_mercados(matriz)
+
+    return {
+        "lambda_local": lambda_local,
+        "lambda_visitante": lambda_visitante,
+        "prob_local": prob_local,
+        "prob_empate": prob_empate,
+        "prob_visitante": prob_visitante,
+        "matriz": matriz,
+        "df_liga": pd.DataFrame(),
+        **mercados,
+    }
+
+
+def calcular_mercados(matriz: np.ndarray) -> dict:
+    """
+    Deriva metricas tipo casa de apuestas de la matriz de Poisson, sin tocar la
+    matematica base. Filas = goles del local (i), columnas = goles del
+    visitante (j).
+    """
+    n = matriz.shape[0]
+    idx_i, idx_j = np.indices((n, n))
+
+    # Ambos anotan (BTTS): ambos marcan >= 1 gol -> excluye fila 0 y columna 0.
+    prob_btts = float(matriz[1:, 1:].sum())
+
+    # Over/Under 2.5: suma de goles (i + j) mayor que 2.
+    prob_over25 = float(matriz[(idx_i + idx_j) > 2].sum())
+    prob_under25 = float(matriz[(idx_i + idx_j) <= 2].sum())
+
+    # Porteria a cero (clean sheet): el rival no anota.
+    # Local deja la porteria a cero -> visitante marca 0 -> columna 0.
+    prob_cs_local = float(matriz[:, 0].sum())
+    # Visitante deja la porteria a cero -> local marca 0 -> fila 0.
+    prob_cs_visitante = float(matriz[0, :].sum())
+
+    return {
+        "prob_btts": prob_btts,
+        "prob_over25": prob_over25,
+        "prob_under25": prob_under25,
+        "prob_cs_local": prob_cs_local,
+        "prob_cs_visitante": prob_cs_visitante,
+    }
+
+
+def cargar_equipos(liga: str, temporada: str):
+    """Descarga la liga y devuelve la lista de equipos para los desplegables."""
+    df_liga = descargar_liga(liga, temporada)
+    return obtener_equipos_liga(df_liga), df_liga
 </file>
 
 <file path="proveedores.py">
@@ -3710,7 +3807,11 @@ Panel derecho (tras pulsar *Predecir partido*):
    posesión, faltas, tarjetas) y normaliza los nombres de columna.
 
 2. **Ingeniería de características** (`feature_engineering.py`)
-   - Calcula promedios móviles de las últimas *N* partidos (ventana = 6).
+   - Promedios con **decaimiento exponencial (EWM, span=10)**: pesa más los
+     partidos recientes (estado de forma) que los antiguos. El span se calibró
+     contra el mercado (ver backtest); EWM con span largo superó a la media móvil
+     simple. Además calcula **xGD** (diferencial de xG, "dominio"), **tasa de
+     conversión** (goles/tiro a puerta) y la **Fuerza del Calendario** (`sos_prom`).
    - Aplica **shrinkage**: mezcla el promedio del equipo con el promedio del
      torneo, ponderando por cuántos partidos tiene el equipo. Así un equipo con
      2 partidos no se sobre-interpreta.
@@ -3952,8 +4053,17 @@ correr_backtest(partidos, df_liga, verbose=True)
 7. **Matriz normalizada con `rho=0`**: la rama sin Dixon-Coles no reescalaba la
    Poisson truncada (las probabilidades sumaban ~0.98). Ahora siempre suma 1.
 8. **Tiros a puerta ahora activos**: `tiros_puerta_adj` se calculaba pero
-   `calcular_lambdas` lo ignoraba. Ahora aplica un bonus ofensivo cuando un
-   equipo remata más al arco que la media (variable que estaba "muerta").
+   `calcular_lambdas` lo ignoraba. Ahora aplica un ajuste ofensivo **continuo**
+   (no escalón) según cuánto remata por encima de la media.
+9. **Variables conectadas y nuevas** (medidas con `backtest_cuotas.py`):
+   - **EWM** en vez de media móvil (span=10, calibrado): pesa más lo reciente.
+   - **Fuerza del Calendario** (`sos_prom`) ahora se lee en los lambdas (±3%).
+   - **xGD** (diferencial de xG): bono de dominio (±3%).
+   - **Tasa de conversión** (goles/tiro a puerta): premia/penaliza eficiencia.
+   - **Head-to-Head**: paternidad histórica entre dos selecciones (±4%).
+   - Efecto medido en clubes: log_loss **1.0251 → 1.0196** y acierto
+     **49.1% → 50.6%** (la mejora se logró calibrando el span del EWM; un span
+     corto empeoraba el modelo — por eso se mide cada cambio).
 
 ## 🧼 Mejoras de calidad de código (refactor)
 

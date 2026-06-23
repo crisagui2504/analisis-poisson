@@ -14,12 +14,22 @@ def aplicar_shrinkage(promedio_equipo, promedio_liga, n_partidos, k=5):
 
 def procesar_equipo(df_partidos, promedio_liga_xg_favor, promedio_liga_xg_contra,
                     promedio_liga_tiros, n_window=6, k_shrinkage=5,
-                    ponderar_por_elo=True):
+                    ponderar_por_elo=True, suavizado="ewm", ewm_span=10):
     df_partidos = df_partidos.copy()
     df_partidos['Date'] = pd.to_datetime(df_partidos['Date'])
     df_partidos = df_partidos.sort_values(by='Date').reset_index(drop=True)
 
     min_p = max(1, n_window // 2)
+
+    # Suavizado de los promedios. El shift(1) excluye el partido actual (sin fuga
+    # de datos). "ewm" (decaimiento exponencial) da mas peso a lo reciente
+    # reflejando el "estado de forma"; "sma" es media movil simple. El span del
+    # EWM se calibro contra el mercado (ver backtest_cuotas).
+    def prom(serie):
+        s = serie.shift(1)
+        if suavizado == "sma":
+            return s.rolling(window=n_window, min_periods=min_p).mean()
+        return s.ewm(span=ewm_span, min_periods=min_p).mean()
 
     # ── Fuerza del rival (Elo) ──────────────────────────────────────────────
     # elo_rival por partido y "Fuerza del Calendario" (SoS): Elo promedio de los
@@ -31,9 +41,7 @@ def procesar_equipo(df_partidos, promedio_liga_xg_favor, promedio_liga_xg_contra
     else:
         df_partidos['elo_rival'] = np.nan
     df_partidos['elo_rival'] = df_partidos['elo_rival'].fillna(ELO_REFERENCIA)
-    df_partidos['sos_prom'] = (
-        df_partidos['elo_rival'].shift(1).rolling(window=n_window, min_periods=min_p).mean()
-    )
+    df_partidos['sos_prom'] = prom(df_partidos['elo_rival'])
 
     if ponderar_por_elo:
         factor_ataque = df_partidos['elo_rival'] / ELO_REFERENCIA
@@ -50,39 +58,34 @@ def procesar_equipo(df_partidos, promedio_liga_xg_favor, promedio_liga_xg_contra
     else:
         # FBref no publica xG para partidos de selecciones/Mundial: usamos GF.
         base_favor = gf_pond
-    df_partidos['xg_favor_prom'] = (
-        base_favor.shift(1).rolling(window=n_window, min_periods=min_p).mean()
-    )
+    df_partidos['xg_favor_prom'] = prom(base_favor)
 
     if 'xGA' in df_partidos.columns and df_partidos['xGA'].notna().any():
         base_contra = df_partidos['xGA'] * factor_defensa
     else:
         base_contra = ga_pond
-    df_partidos['xg_contra_prom'] = (
-        base_contra.shift(1).rolling(window=n_window, min_periods=min_p).mean()
-    )
+    df_partidos['xg_contra_prom'] = prom(base_contra)
 
-    df_partidos['goles_favor_prom'] = (
-        df_partidos['GF'].shift(1).rolling(window=n_window, min_periods=min_p).mean()
-    )
-    df_partidos['goles_contra_prom'] = (
-        df_partidos['GA'].shift(1).rolling(window=n_window, min_periods=min_p).mean()
-    )
-    df_partidos['tiros_puerta_prom'] = (
-        df_partidos['SoT'].shift(1).rolling(window=n_window, min_periods=min_p).mean()
-    )
-    df_partidos['posesion_prom'] = (
-        df_partidos['Poss'].shift(1).rolling(window=n_window, min_periods=min_p).mean()
-    )
+    # Diferencial de xG (xGD): metrica de dominio. Positivo y amplio = el equipo
+    # domina la cancha, independientemente del marcador.
+    df_partidos['xgd_prom'] = df_partidos['xg_favor_prom'] - df_partidos['xg_contra_prom']
+
+    df_partidos['goles_favor_prom'] = prom(df_partidos['GF'])
+    df_partidos['goles_contra_prom'] = prom(df_partidos['GA'])
+    df_partidos['tiros_puerta_prom'] = prom(df_partidos['SoT'])
+    df_partidos['posesion_prom'] = prom(df_partidos['Poss'])
+
+    # Tasa de conversion (goles por tiro a puerta), suavizada. Mide eficiencia.
+    gf_ewm = prom(df_partidos['GF'])
+    sot_ewm = prom(df_partidos['SoT'])
+    df_partidos['conversion_prom'] = (gf_ewm / sot_ewm).replace([np.inf, -np.inf], np.nan)
 
     df_partidos['disciplina'] = (
         df_partidos['Fls']
         + df_partidos.get('CrdR', pd.Series(0, index=df_partidos.index)) * 3
         + df_partidos.get('CrdY', pd.Series(0, index=df_partidos.index)) * 1
     )
-    df_partidos['disciplina_prom'] = (
-        df_partidos['disciplina'].shift(1).rolling(window=n_window, min_periods=min_p).mean()
-    )
+    df_partidos['disciplina_prom'] = prom(df_partidos['disciplina'])
 
     def puntos(res):
         if res == 'W':
@@ -92,9 +95,7 @@ def procesar_equipo(df_partidos, promedio_liga_xg_favor, promedio_liga_xg_contra
         return 0
 
     df_partidos['puntos'] = df_partidos['Result'].apply(puntos)
-    df_partidos['racha_puntos_prom'] = (
-        df_partidos['puntos'].shift(1).rolling(window=n_window, min_periods=min_p).mean()
-    )
+    df_partidos['racha_puntos_prom'] = prom(df_partidos['puntos'])
 
     df_partidos['dias_descanso'] = (
         df_partidos['Date'] - df_partidos['Date'].shift(1)

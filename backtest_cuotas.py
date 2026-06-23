@@ -74,7 +74,7 @@ def _cuotas_cierre(m):
     return None
 
 
-def correr(df_cuotas, rho=-0.10, k=3, min_previos=5):
+def correr(df_cuotas, rho=-0.10, k=3, min_previos=5, suavizado="ewm", ewm_span=10):
     """
     Predice cada partido sin fuga de datos y devuelve arrays alineados:
     probs_modelo, probs_mercado, cuotas, y (0=local,1=empate,2=visitante).
@@ -96,8 +96,10 @@ def correr(df_cuotas, rho=-0.10, k=3, min_previos=5):
             continue
 
         prom_gf = hist[hist["Date"] < fecha]["GF"].mean()  # ~media de goles de local
-        f_loc = ultima_fila_valida(procesar_equipo(h_loc, prom_gf, prom_gf, 4.5, k_shrinkage=k))
-        f_vis = ultima_fila_valida(procesar_equipo(h_vis, prom_gf, prom_gf, 4.5, k_shrinkage=k))
+        f_loc = ultima_fila_valida(procesar_equipo(
+            h_loc, prom_gf, prom_gf, 4.5, k_shrinkage=k, suavizado=suavizado, ewm_span=ewm_span))
+        f_vis = ultima_fila_valida(procesar_equipo(
+            h_vis, prom_gf, prom_gf, 4.5, k_shrinkage=k, suavizado=suavizado, ewm_span=ewm_span))
         if f_loc is None or f_vis is None:
             continue
 
