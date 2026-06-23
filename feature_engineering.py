@@ -14,12 +14,22 @@ def aplicar_shrinkage(promedio_equipo, promedio_liga, n_partidos, k=5):
 
 def procesar_equipo(df_partidos, promedio_liga_xg_favor, promedio_liga_xg_contra,
                     promedio_liga_tiros, n_window=6, k_shrinkage=5,
-                    ponderar_por_elo=True, suavizado="ewm", ewm_span=10):
+                    ponderar_por_elo=True, suavizado="ewm", ewm_span=10,
+                    venue=None):
     df_partidos = df_partidos.copy()
     df_partidos['Date'] = pd.to_datetime(df_partidos['Date'])
     df_partidos = df_partidos.sort_values(by='Date').reset_index(drop=True)
 
     min_p = max(1, n_window // 2)
+
+    # Splits local/visitante: en ligas de clubes, el rendimiento en casa y fuera
+    # difiere. Si se pide un 'venue' y hay suficientes partidos de esa condicion,
+    # calculamos los promedios usando SOLO esos. Si no alcanzan, usamos todos
+    # (fallback). En sede neutral (Mundial) no se usa (venue=None).
+    if venue is not None and 'Venue' in df_partidos.columns:
+        sub = df_partidos[df_partidos['Venue'] == venue]
+        if len(sub) >= min_p:
+            df_partidos = sub.reset_index(drop=True)
 
     # Suavizado de los promedios. El shift(1) excluye el partido actual (sin fuga
     # de datos). "ewm" (decaimiento exponencial) da mas peso a lo reciente

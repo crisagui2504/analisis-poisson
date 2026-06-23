@@ -352,6 +352,10 @@ correr_backtest(partidos, df_liga, verbose=True)
    - Efecto medido en clubes: log_loss **1.0251 → 1.0196** y acierto
      **49.1% → 50.6%** (la mejora se logró calibrando el span del EWM; un span
      corto empeoraba el modelo — por eso se mide cada cambio).
+   - **Splits local/visitante** (`procesar_equipo(venue=...)`): implementados y
+     medidos, pero **empeoran** el modelo (1.018 → 1.028) porque partir la
+     muestra a la mitad añade ruido; la localía ya la cubre `factor_local`. Quedan
+     como opción **apagada por defecto**.
 
 ## 🧼 Mejoras de calidad de código (refactor)
 
