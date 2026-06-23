@@ -14,7 +14,8 @@ import matplotlib.colors as mcolors
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 from ligas_config import (
-    LIGAS, TEMPORADAS, EQUIPOS_MUNDIAL_ES, NOMBRE_DISPLAY, EQUIPOS_MUNDIAL
+    LIGAS, TEMPORADAS, EQUIPOS_MUNDIAL_ES, NOMBRE_DISPLAY, EQUIPOS_MUNDIAL,
+    cargar_grupos, guardar_grupos,
 )
 from predecir_partido import predecir_partido, cargar_equipos
 import proveedores
@@ -275,6 +276,11 @@ class PredictorApp(tk.Tk):
         self.btn_montecarlo.bind("<Enter>", lambda e: self._hover_mc(True))
         self.btn_montecarlo.bind("<Leave>", lambda e: self._hover_mc(False))
 
+        tk.Button(frame, text="✏️  Editar grupos del Mundial",
+                  font=(FUENTE, 9), bg=PANEL, fg=TEXTO_SEC, activebackground=PANEL,
+                  activeforeground=TEXTO, relief="flat", cursor="hand2", bd=0,
+                  command=self._abrir_editor_grupos).pack(padx=20, pady=(0, 4), anchor="w")
+
     def _hover_btn(self, dentro):
         if str(self.btn_predecir["state"]) != "disabled":
             self.btn_predecir.config(bg=ACENTO_HOVER if dentro else ACENTO)
@@ -522,6 +528,77 @@ class PredictorApp(tk.Tk):
                 fg = color if c <= 1 else TEXTO_SEC
                 tk.Label(tabla, text=txt, font=(FUENTE, 9), fg=fg, bg=CARD,
                          width=w, anchor="w").grid(row=i, column=c, sticky="w", padx=2)
+
+    # ── Editor de grupos del Mundial ──────────────────────────────────────
+
+    def _abrir_editor_grupos(self):
+        es_a_fbref = NOMBRE_DISPLAY
+        fbref_a_es = {v: k for k, v in NOMBRE_DISPLAY.items()}
+        grupos = cargar_grupos()
+
+        win = tk.Toplevel(self)
+        win.title("Editar grupos del Mundial 2026")
+        win.configure(bg=BG)
+        win.geometry("920x620")
+        win.transient(self)
+        win.grab_set()
+
+        tk.Label(win, text="✏️ Edita los 12 grupos y guarda. Cada selección debe "
+                           "aparecer una sola vez.", font=(FUENTE, 10),
+                 fg=TEXTO, bg=BG).pack(anchor="w", padx=16, pady=(12, 8))
+
+        cont = tk.Frame(win, bg=BG)
+        cont.pack(fill="both", expand=True, padx=12)
+
+        editores = {}  # letra -> [combobox, x4]
+        for idx, (letra, equipos) in enumerate(grupos.items()):
+            r, c = divmod(idx, 4)
+            tarjeta = tk.Frame(cont, bg=PANEL, highlightbackground=BORDE, highlightthickness=1)
+            tarjeta.grid(row=r, column=c, padx=6, pady=6, sticky="nsew")
+            cont.columnconfigure(c, weight=1)
+            tk.Label(tarjeta, text=f"Grupo {letra}", font=(FUENTE, 10, "bold"),
+                     fg=ACENTO, bg=PANEL).pack(anchor="w", padx=10, pady=(8, 4))
+            combos = []
+            for eq in equipos:
+                var = tk.StringVar(value=fbref_a_es.get(eq, eq))
+                cb = ttk.Combobox(tarjeta, textvariable=var, values=EQUIPOS_MUNDIAL_ES,
+                                  state="readonly", width=18, style="Moderno.TCombobox",
+                                  font=(FUENTE, 9))
+                cb.pack(padx=10, pady=2)
+                combos.append(cb)
+            editores[letra] = combos
+
+        barra = tk.Frame(win, bg=BG)
+        barra.pack(fill="x", padx=16, pady=12)
+
+        def guardar():
+            nuevos, todos = {}, []
+            for letra, combos in editores.items():
+                fb = [es_a_fbref.get(cb.get(), cb.get()) for cb in combos]
+                nuevos[letra] = fb
+                todos += fb
+            if sorted(todos) != sorted(EQUIPOS_MUNDIAL):
+                rep = sorted({t for t in todos if todos.count(t) > 1})
+                faltan = sorted(set(EQUIPOS_MUNDIAL) - set(todos))
+                messagebox.showwarning(
+                    "Grupos inválidos",
+                    "Cada selección debe aparecer exactamente una vez.\n\n"
+                    f"Repetidas: {', '.join(rep) or '—'}\n"
+                    f"Faltan: {', '.join(faltan) or '—'}",
+                    parent=win)
+                return
+            guardar_grupos(nuevos)
+            messagebox.showinfo("Guardado",
+                                "Grupos actualizados. La próxima simulación los usará.",
+                                parent=win)
+            win.destroy()
+
+        tk.Button(barra, text="Guardar", font=(FUENTE, 11, "bold"), bg=ACENTO,
+                  fg="#ffffff", activebackground=ACENTO_HOVER, relief="flat",
+                  cursor="hand2", bd=0, padx=20, pady=8, command=guardar).pack(side="right")
+        tk.Button(barra, text="Cancelar", font=(FUENTE, 11), bg=PANEL, fg=TEXTO_SEC,
+                  activebackground=PANEL, relief="flat", cursor="hand2", bd=0,
+                  padx=16, pady=8, command=win.destroy).pack(side="right", padx=(0, 8))
 
     # ── Panel de resultados ───────────────────────────────────────────────
 

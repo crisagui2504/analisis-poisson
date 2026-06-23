@@ -18,7 +18,7 @@ import sys
 import numpy as np
 import pandas as pd
 
-from ligas_config import GRUPOS_MUNDIAL, elo_de
+from ligas_config import GRUPOS_MUNDIAL, cargar_grupos, elo_de
 from ingest_fbref import cargar_historial_csv, construir_historial_equipo, existe_csv_maestro
 from feature_engineering import procesar_equipo, ultima_fila_valida
 from calcular_lambdas import calcular_lambdas
@@ -29,7 +29,7 @@ RONDAS = ["16avos", "Octavos", "Cuartos", "Semis", "Final", "Campeon"]
 SALIDA_CSV = "montecarlo_resultados.csv"
 
 
-def construir_modelo(rho: float = -0.05, k_shrinkage: int = 5):
+def construir_modelo(grupos=None, rho: float = -0.05, k_shrinkage: int = 5):
     """Calcula la fila de features y el Elo de cada seleccion UNA sola vez."""
     if not existe_csv_maestro():
         raise SystemExit(
@@ -37,11 +37,13 @@ def construir_modelo(rho: float = -0.05, k_shrinkage: int = 5):
             "(o actualizar_datos.py) para generarlo."
         )
 
+    if grupos is None:
+        grupos = cargar_grupos()
     df = cargar_historial_csv()
     prom = _cargar_promedios_liga()
     feats, elos = {}, {}
     faltantes = []
-    for equipos in GRUPOS_MUNDIAL.values():
+    for equipos in grupos.values():
         for eq in equipos:
             if eq in feats:
                 continue
@@ -103,11 +105,11 @@ def _ganador(rng, dist, a, b):
     return a if rng.random() < 0.5 else b  # penales
 
 
-def simular_torneo(rng, dist):
+def simular_torneo(rng, dist, grupos):
     """Juega un Mundial completo y devuelve dict equipo -> etapa mas avanzada."""
     primeros_segundos, terceros = [], []
 
-    for equipos in GRUPOS_MUNDIAL.values():
+    for equipos in grupos.values():
         pts = {t: 0 for t in equipos}
         gd = {t: 0 for t in equipos}
         gf = {t: 0 for t in equipos}
@@ -152,16 +154,18 @@ def simular_torneo(rng, dist):
     return etapa
 
 
-def correr(n_sim: int = 10000, semilla: int = 42) -> pd.DataFrame:
-    feats, elos, rho = construir_modelo()
+def correr(n_sim: int = 10000, semilla: int = 42, grupos=None) -> pd.DataFrame:
+    if grupos is None:
+        grupos = cargar_grupos()
+    feats, elos, rho = construir_modelo(grupos)
     dist = crear_sampler(feats, elos, rho)
     rng = np.random.default_rng(semilla)
 
-    equipos = [t for g in GRUPOS_MUNDIAL.values() for t in g]
+    equipos = [t for g in grupos.values() for t in g]
     cont = {t: {r: 0 for r in RONDAS} for t in equipos}
 
     for _ in range(n_sim):
-        etapa = simular_torneo(rng, dist)
+        etapa = simular_torneo(rng, dist, grupos)
         for t, e in etapa.items():
             # Llegar a la etapa e implica haber alcanzado todas las rondas
             # previas (un semifinalista tambien jugo cuartos, etc.), pero NO las

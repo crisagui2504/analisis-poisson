@@ -1,6 +1,8 @@
 """
 Configuracion de ligas y equipos precargados para el Mundial 2026.
 """
+import json
+import os
 
 # ── Pesos y umbrales del modelo de lambdas ──────────────────────────────────
 # Centralizados aqui para poder calibrar el modelo sin tocar las formulas
@@ -215,6 +217,29 @@ GRUPOS_MUNDIAL = {
     "K": ["Uruguay", "Austria", "South Africa", "Curaçao"],
     "L": ["Croatia", "Sweden", "Bosnia & Herz.", "Haiti"],
 }
+
+# Los grupos se pueden editar desde la app y se guardan en este JSON, que tiene
+# prioridad sobre el GRUPOS_MUNDIAL de arriba (que queda como respaldo).
+GRUPOS_JSON_PATH = "grupos_mundial.json"
+
+
+def cargar_grupos():
+    """Devuelve los grupos del JSON editable si existe; si no, los de respaldo."""
+    if os.path.exists(GRUPOS_JSON_PATH):
+        try:
+            with open(GRUPOS_JSON_PATH, "r", encoding="utf-8") as f:
+                grupos = json.load(f)
+            if grupos:
+                return grupos
+        except Exception:
+            pass
+    return GRUPOS_MUNDIAL
+
+
+def guardar_grupos(grupos):
+    """Guarda los grupos editados en el JSON (lo usa el editor de la app)."""
+    with open(GRUPOS_JSON_PATH, "w", encoding="utf-8") as f:
+        json.dump(grupos, f, ensure_ascii=False, indent=2)
 
 # Nombres para mostrar en la interfaz (espanol) -> nombre FBref.
 NOMBRE_DISPLAY = {

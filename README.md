@@ -43,7 +43,8 @@ también funciona para clubes de las grandes ligas europeas y la Liga MX.
   **días de descanso** de cada equipo.
 - **🏆 Simular Mundial**: corre el Monte Carlo del torneo completo (selector de
   1.000 / 5.000 / 10.000 simulaciones) y muestra el ranking de candidatos al
-  título con gráfico de barras, sin salir de la app.
+  título con gráfico de barras, sin salir de la app. Con **✏️ Editar grupos** puedes
+  meter el sorteo oficial desde la interfaz (se guarda en `grupos_mundial.json`).
 
 **Panel de resultados (derecha), en dos pestañas:**
 
@@ -184,10 +185,11 @@ favorito automáticamente: **lanza los dados** con `numpy` según las probabilid
 del modelo, permitiendo sorpresas. Guarda `montecarlo_resultados.csv` con el % de
 campeón/final/semis/cuartos y muestra el Top 12.
 
-> El cuadro vive en `GRUPOS_MUNDIAL` (`ligas_config.py`): 12 grupos de 4,
-> **sembrados por Elo de forma provisional** (no es el sorteo oficial). Edita esas
-> listas para reflejar los grupos reales. Las features se calculan una sola vez y
-> los cruces se memorizan → 10.000 torneos corren en segundos.
+> El cuadro está **sembrado por Elo de forma provisional** (no es el sorteo
+> oficial). Edítalo **desde la app** con *✏️ Editar grupos del Mundial* (se guarda
+> en `grupos_mundial.json` y tiene prioridad sobre el `GRUPOS_MUNDIAL` de
+> `ligas_config.py`, que queda como respaldo). Las features se calculan una sola
+> vez y los cruces se memorizan → 10.000 torneos corren en segundos.
 
 **Backtest contra cuotas reales (¿le gana al mercado?).**
 ```powershell
