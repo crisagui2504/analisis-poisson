@@ -34,6 +34,14 @@ def _mezcla(c1, c2, t):
     return "#%02x%02x%02x" % tuple(round(a[k] + (b[k] - a[k]) * t) for k in range(3))
 
 
+def _clamp01(x):
+    return max(0.0, min(1.0, x))
+
+
+def _cuota(p):
+    return f"Cuota {1 / p:.2f}" if p and p > 0 else "—"
+
+
 def _rect_redondo(cv, x1, y1, x2, y2, r, **kw):
     """Dibuja un rectángulo de esquinas redondeadas en un Canvas."""
     r = min(r, (x2 - x1) / 2, (y2 - y1) / 2)
@@ -203,10 +211,14 @@ class PredictorApp(tk.Tk):
                                    font=(FUENTE, 10))
         self.cb_eq2.pack(fill="x", padx=20)
 
+        # ── Forma reciente (se llena tras predecir) ──
+        self.frame_forma = tk.Frame(frame, bg=PANEL)
+        self.frame_forma.pack(fill="x", padx=20, pady=(10, 0))
+
         # ── Parámetros avanzados ──
         seccion("Ajustes avanzados", CIAN)
 
-        self._slider(frame, "Rho (Dixon-Coles)", -0.3, 0.0, -0.10, "rho", "{:.2f}")
+        self._slider(frame, "Rho (Dixon-Coles)", -0.3, 0.0, -0.05, "rho", "{:.2f}")
         self._slider(frame, "Shrinkage k", 1, 15, 5, "k", "{:.0f}")
 
         self.var_cache = tk.BooleanVar(value=True)
@@ -408,67 +420,152 @@ class PredictorApp(tk.Tk):
         for w in self.frame_der.winfo_children():
             w.destroy()
 
-        p1 = resultado['prob_local']
-        px = resultado['prob_empate']
-        p2 = resultado['prob_visitante']
-        ll = resultado['lambda_local']
-        lv = resultado['lambda_visitante']
-        mat = resultado['matriz']
+        # Forma reciente en el panel lateral
+        self._render_forma_sidebar(resultado, nombre_eq1, nombre_eq2)
 
-        cont = tk.Frame(self.frame_der, bg=CARD)
-        cont.pack(fill="both", expand=True, padx=22, pady=18)
+        # Pestañas: Predicción / Análisis
+        nb = ttk.Notebook(self.frame_der, style="Moderno.TNotebook")
+        nb.pack(fill="both", expand=True, padx=12, pady=12)
+        tab_pred = tk.Frame(nb, bg=CARD)
+        tab_anal = tk.Frame(nb, bg=CARD)
+        nb.add(tab_pred, text="  Predicción  ")
+        nb.add(tab_anal, text="  Análisis  ")
+        self._tab_prediccion(tab_pred, resultado, nombre_eq1, nombre_eq2)
+        self._tab_analisis(tab_anal, resultado, nombre_eq1, nombre_eq2)
 
-        # ── Título del enfrentamiento ──
+    def _tab_prediccion(self, parent, r, n1, n2):
+        cont = tk.Frame(parent, bg=CARD)
+        cont.pack(fill="both", expand=True, padx=18, pady=14)
+        p1, px, p2 = r['prob_local'], r['prob_empate'], r['prob_visitante']
+
         titulo = tk.Frame(cont, bg=CARD)
         titulo.pack(fill="x")
-        tk.Label(titulo, text=nombre_eq1, font=(FUENTE, 16, "bold"),
-                 fg=VERDE, bg=CARD).pack(side="left")
-        tk.Label(titulo, text="  vs  ", font=(FUENTE, 13),
-                 fg=TEXTO_SEC, bg=CARD).pack(side="left")
-        tk.Label(titulo, text=nombre_eq2, font=(FUENTE, 16, "bold"),
-                 fg=ROJO, bg=CARD).pack(side="left")
+        tk.Label(titulo, text=n1, font=(FUENTE, 15, "bold"), fg=VERDE, bg=CARD).pack(side="left")
+        tk.Label(titulo, text="  vs  ", font=(FUENTE, 12), fg=TEXTO_SEC, bg=CARD).pack(side="left")
+        tk.Label(titulo, text=n2, font=(FUENTE, 15, "bold"), fg=ROJO, bg=CARD).pack(side="left")
 
-        # ── Tarjetas de probabilidad 1-X-2 ──
+        # 1-X-2 con cuota justa (1/prob)
         fila = tk.Frame(cont, bg=CARD)
-        fila.pack(fill="x", pady=(14, 6))
-        datos = [(f"Victoria {nombre_eq1}", p1, VERDE),
-                 ("Empate", px, AMARILLO),
-                 (f"Victoria {nombre_eq2}", p2, ROJO)]
+        fila.pack(fill="x", pady=(12, 4))
+        datos = [(f"Victoria {n1}", p1, VERDE), ("Empate", px, AMARILLO),
+                 (f"Victoria {n2}", p2, ROJO)]
         for col, (tit, val, color) in enumerate(datos):
             fila.columnconfigure(col, weight=1, uniform="prob")
-            Tarjeta(fila, tit, f"{val * 100:.1f}%", color).grid(
-                row=0, column=col, sticky="nsew", padx=6)
+            Tarjeta(fila, tit, f"{val * 100:.1f}%", color, sub=_cuota(val), alto=126).grid(
+                row=0, column=col, sticky="nsew", padx=5)
 
-        # ── Barra de probabilidad ──
-        BarraProbabilidad(cont, p1, px, p2).pack(fill="x", pady=(6, 4))
+        BarraProbabilidad(cont, p1, px, p2).pack(fill="x", pady=(4, 4))
+        tk.Label(cont, text=f"Goles esperados (λ)  ·  {n1} {r['lambda_local']:.2f}    "
+                            f"{n2} {r['lambda_visitante']:.2f}",
+                 font=(FUENTE, 9), fg=TEXTO_SEC, bg=CARD).pack(pady=(4, 8))
 
-        # ── xG esperados ──
-        tk.Label(cont,
-                 text=f"Goles esperados (λ)   ·   {nombre_eq1}  {ll:.2f}      {nombre_eq2}  {lv:.2f}",
-                 font=(FUENTE, 10), fg=TEXTO_SEC, bg=CARD).pack(pady=(6, 10))
+        g = lambda k: r.get(k, 0.0)
+        # Mercados principales
+        f1 = tk.Frame(cont, bg=CARD)
+        f1.pack(fill="x", pady=(0, 4))
+        m1 = [("Ambos anotan", f"{g('prob_btts') * 100:.0f}%", CIAN, "BTTS"),
+              ("Más de 2.5 goles", f"{g('prob_over25') * 100:.0f}%", AMARILLO, _cuota(g('prob_over25'))),
+              ("Portería a 0", f"{g('prob_cs_local') * 100:.0f}% / {g('prob_cs_visitante') * 100:.0f}%",
+               VERDE, f"{n1[:7]} / {n2[:7]}")]
+        # Mercados asiáticos
+        f2 = tk.Frame(cont, bg=CARD)
+        m2 = [("Más de 1.5 goles", f"{g('prob_over15') * 100:.0f}%", VERDE, _cuota(g('prob_over15'))),
+              ("Más de 3.5 goles", f"{g('prob_over35') * 100:.0f}%", ROJO, _cuota(g('prob_over35'))),
+              ("Menos de 2.5", f"{g('prob_under25') * 100:.0f}%", CIAN, _cuota(g('prob_under25')))]
+        for f, ms, tag in [(f1, m1, "m1"), (f2, m2, "m2")]:
+            for col, (t, v, c, s) in enumerate(ms):
+                f.columnconfigure(col, weight=1, uniform=tag)
+                Tarjeta(f, t, v, c, sub=s, alto=94).grid(row=0, column=col, sticky="nsew", padx=5)
+        f2.pack(fill="x", pady=(0, 4))
 
-        # ── Mercados ──
-        btts = resultado.get('prob_btts', 0.0)
-        over = resultado.get('prob_over25', 0.0)
-        cs_l = resultado.get('prob_cs_local', 0.0)
-        cs_v = resultado.get('prob_cs_visitante', 0.0)
+        self._render_top5(cont, r['matriz'])
 
-        fila2 = tk.Frame(cont, bg=CARD)
-        fila2.pack(fill="x", pady=(0, 4))
-        mercados = [("Ambos anotan", f"{btts * 100:.0f}%", CIAN, "BTTS"),
-                    ("Más de 2.5 goles", f"{over * 100:.0f}%", AMARILLO, "Over 2.5"),
-                    ("Portería a cero", f"{cs_l * 100:.0f}% / {cs_v * 100:.0f}%", VERDE,
-                     f"{nombre_eq1[:8]} / {nombre_eq2[:8]}")]
-        for col, (tit, val, color, sub) in enumerate(mercados):
-            fila2.columnconfigure(col, weight=1, uniform="merc")
-            Tarjeta(fila2, tit, val, color, sub=sub, alto=104).grid(
-                row=0, column=col, sticky="nsew", padx=6)
+    def _render_top5(self, parent, mat):
+        n = mat.shape[0]
+        idx = np.dstack(np.unravel_index(np.argsort(mat.ravel())[::-1], mat.shape))[0][:5]
+        tk.Label(parent, text="MARCADORES MÁS PROBABLES  ·  con cuota justa",
+                 font=(FUENTE, 9, "bold"), fg=TEXTO_SEC, bg=CARD).pack(anchor="w", pady=(10, 4))
+        fila = tk.Frame(parent, bg=CARD)
+        fila.pack(fill="x")
+        for i, j in idx:
+            prob = float(mat[i, j])
+            f = tk.Frame(fila, bg=CARD2, highlightbackground=BORDE, highlightthickness=1)
+            f.pack(side="left", expand=True, fill="both", padx=4)
+            tk.Label(f, text=f"{i}–{j}", font=(FUENTE, 15, "bold"), fg=TEXTO, bg=CARD2).pack(pady=(8, 0))
+            tk.Label(f, text=f"{prob * 100:.1f}%", font=(FUENTE, 10), fg=ACENTO, bg=CARD2).pack()
+            tk.Label(f, text=f"@ {1 / prob:.1f}" if prob > 0 else "—",
+                     font=(FUENTE, 9), fg=TEXTO_SEC, bg=CARD2).pack(pady=(0, 8))
 
-        # ── Mapa de calor ──
-        tk.Label(cont, text="MAPA DE CALOR · marcadores exactos",
-                 font=(FUENTE, 9, "bold"), fg=TEXTO_SEC, bg=CARD).pack(
-            anchor="w", pady=(14, 4))
-        self._dibujar_heatmap(cont, mat, nombre_eq1, nombre_eq2)
+    def _tab_analisis(self, parent, r, n1, n2):
+        cont = tk.Frame(parent, bg=CARD)
+        cont.pack(fill="both", expand=True, padx=14, pady=10)
+        tk.Label(cont, text="RADAR DE DOMINIO", font=(FUENTE, 9, "bold"),
+                 fg=TEXTO_SEC, bg=CARD).pack(anchor="w")
+        self._dibujar_radar(cont, r.get('metricas_local', {}), r.get('metricas_visitante', {}), n1, n2)
+        tk.Label(cont, text="MAPA DE CALOR · marcadores exactos", font=(FUENTE, 9, "bold"),
+                 fg=TEXTO_SEC, bg=CARD).pack(anchor="w", pady=(8, 2))
+        self._dibujar_heatmap(cont, r['matriz'], n1, n2)
+
+    def _dibujar_radar(self, parent, m_loc, m_vis, n1, n2):
+        ejes = ["Ataque", "Posesión", "Tiros", "Defensa", "Disciplina"]
+
+        def norm(m):
+            return [
+                _clamp01(m.get("ataque", 0) / 3.0),
+                _clamp01(m.get("posesion", 0) / 65.0),
+                _clamp01(m.get("tiros", 0) / 12.0),
+                _clamp01(1 - m.get("defensa", 0) / 3.0),     # menos goles en contra = mejor
+                _clamp01(1 - m.get("disciplina", 0) / 30.0),  # menos faltas/tarjetas = mejor
+            ]
+
+        vloc, vvis = norm(m_loc), norm(m_vis)
+        ang = np.linspace(0, 2 * np.pi, len(ejes), endpoint=False).tolist()
+        ang += ang[:1]
+        vloc += vloc[:1]
+        vvis += vvis[:1]
+
+        fig = plt.figure(figsize=(4.4, 3.6))
+        fig.patch.set_facecolor(CARD)
+        ax = fig.add_subplot(111, polar=True)
+        ax.set_facecolor(CARD)
+        ax.plot(ang, vloc, color=VERDE, linewidth=2)
+        ax.fill(ang, vloc, color=VERDE, alpha=0.25)
+        ax.plot(ang, vvis, color=ROJO, linewidth=2)
+        ax.fill(ang, vvis, color=ROJO, alpha=0.25)
+        ax.set_xticks(ang[:-1])
+        ax.set_xticklabels(ejes, color=TEXTO_SEC, fontsize=9)
+        ax.set_yticklabels([])
+        ax.set_ylim(0, 1)
+        ax.spines['polar'].set_color(BORDE)
+        ax.grid(color=BORDE)
+        ax.set_title(f"{n1} (verde)  vs  {n2} (rojo)", color=TEXTO, fontsize=9, pad=14)
+
+        canvas = FigureCanvasTkAgg(fig, master=parent)
+        canvas.draw()
+        canvas.get_tk_widget().pack(fill="both", expand=True)
+        plt.close(fig)
+
+    def _render_forma_sidebar(self, r, n1, n2):
+        for w in self.frame_forma.winfo_children():
+            w.destroy()
+        tk.Label(self.frame_forma, text="FORMA (últimos 5)", font=(FUENTE, 8, "bold"),
+                 fg=TEXTO_SEC, bg=PANEL).pack(anchor="w")
+        self._fila_forma(n1, r.get("forma_local", []), r.get("descanso_local", 0))
+        self._fila_forma(n2, r.get("forma_visitante", []), r.get("descanso_visitante", 0))
+
+    def _fila_forma(self, nombre, forma, descanso):
+        fila = tk.Frame(self.frame_forma, bg=PANEL)
+        fila.pack(fill="x", pady=3)
+        tk.Label(fila, text=nombre[:11], font=(FUENTE, 9), fg=TEXTO, bg=PANEL,
+                 width=11, anchor="w").pack(side="left")
+        cv = tk.Canvas(fila, width=96, height=16, bg=PANEL, highlightthickness=0)
+        cv.pack(side="left")
+        col = {"W": VERDE, "D": TEXTO_SEC, "L": ROJO}
+        for i, res in enumerate(forma[-5:]):
+            x = i * 19 + 2
+            cv.create_oval(x, 2, x + 13, 15, fill=col.get(res, BORDE), outline="")
+        tk.Label(fila, text=f"· {int(descanso)}d", font=(FUENTE, 8),
+                 fg=TEXTO_SEC, bg=PANEL).pack(side="right")
 
     def _dibujar_heatmap(self, parent, mat, nombre_eq1, nombre_eq2):
         fig, ax = plt.subplots(figsize=(6.0, 3.6))

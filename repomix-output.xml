@@ -129,6 +129,46 @@ from calcular_lambdas import calcular_lambdas
 from matriz_poisson import generar_matriz_poisson
 
 
+def auditar_ewm_sin_fuga(n=30, span=10):
+    """
+    Verifica que el suavizado .shift(1).ewm().mean() NO filtre datos del partido
+    actual ni del futuro hacia los promedios del pasado.
+      1) Causalidad: el suavizado en i calculado con toda la serie debe ser igual
+         al calculado solo con los datos [0..i] (no usa el futuro).
+      2) El valor del partido i NO debe afectar su propio promedio (shift(1)),
+         pero SÍ debe afectar el del partido i+1.
+    """
+    rng = np.random.default_rng(0)
+    serie = pd.Series(rng.normal(1.5, 1.0, n))
+
+    def prom(s):
+        return s.shift(1).ewm(span=span, min_periods=1).mean()
+
+    full = prom(serie)
+    max_dif = 0.0
+    for i in range(n):
+        parcial = prom(serie.iloc[:i + 1]).iloc[i]
+        if pd.notna(full.iloc[i]) and pd.notna(parcial):
+            max_dif = max(max_dif, abs(full.iloc[i] - parcial))
+
+    serie2 = serie.copy()
+    serie2.iloc[5] = 999.0
+    full2 = prom(serie2)
+    dif_presente = abs(float(full2.iloc[5] or 0) - float(full.iloc[5] or 0)) if pd.notna(full.iloc[5]) else 0.0
+    dif_futuro = abs(float(full2.iloc[6]) - float(full.iloc[6]))
+
+    ok = (max_dif < 1e-9) and (dif_presente < 1e-9) and (dif_futuro > 0)
+    print("Auditoria EWM (fuga de datos):")
+    print(f"  1) causalidad (toda la serie vs prefijo): max_dif={max_dif:.2e}  "
+          f"{'OK sin fuga' if max_dif < 1e-9 else 'FUGA!'}")
+    print(f"  2) el partido actual NO afecta su propio promedio: dif={dif_presente:.2e}  "
+          f"{'OK' if dif_presente < 1e-9 else 'FUGA!'}")
+    print(f"  3) el partido actual SI afecta el del siguiente:   dif={dif_futuro:.3f}  "
+          f"{'OK' if dif_futuro > 0 else 'ERROR'}")
+    print("  Resultado:", "SIN FUGA DE DATOS" if ok else "REVISAR")
+    return ok
+
+
 def calcular_brier_score(preds, trues):
     """Error cuadrático medio entre probabilidades predichas y resultado real (one-hot)."""
     preds = np.array(preds)
@@ -487,7 +527,7 @@ RONDAS = ["16avos", "Octavos", "Cuartos", "Semis", "Final", "Campeon"]
 SALIDA_CSV = "montecarlo_resultados.csv"
 
 
-def construir_modelo(rho: float = -0.13, k_shrinkage: int = 5):
+def construir_modelo(rho: float = -0.05, k_shrinkage: int = 5):
     """Calcula la fila de features y el Elo de cada seleccion UNA sola vez."""
     if not existe_csv_maestro():
         raise SystemExit(
@@ -1410,7 +1450,7 @@ La paleta vive en app_gui.py (PALETA); aqui la importamos para no duplicar.
 import tkinter.ttk as ttk
 
 from paleta import (
-    BG, PANEL, CARD2, BORDE, TEXTO, TEXTO_SEC, ACENTO, ACENTO_HOVER,
+    BG, PANEL, CARD, CARD2, BORDE, TEXTO, TEXTO_SEC, ACENTO, ACENTO_HOVER,
 )
 
 
@@ -1457,6 +1497,14 @@ def aplicar_tema(root):
         troughcolor=BORDE, background=ACENTO, bordercolor=PANEL,
         lightcolor=ACENTO, darkcolor=ACENTO, thickness=6,
     )
+
+    # Pestañas (Notebook)
+    style.configure("Moderno.TNotebook", background=CARD, borderwidth=0)
+    style.configure("Moderno.TNotebook.Tab", background=CARD, foreground=TEXTO_SEC,
+                    padding=(16, 8), borderwidth=0, font="{Segoe UI} 10 bold")
+    style.map("Moderno.TNotebook.Tab",
+              background=[("selected", CARD2)],
+              foreground=[("selected", TEXTO)])
 
     # Checkbutton
     style.configure(
@@ -1545,149 +1593,6 @@ print(f"  Total de partidos ahora:   {resumen['filas_despues']}")
 print(f"  Equipos en la base:        {resumen['equipos']}")
 print(f"\nListo. '{CSV_MAESTRO_MUNDIAL}' actualizado. Abre la app normalmente.")
 input("Presiona Enter para cerrar...")
-</file>
-
-<file path="feature_engineering.py">
-"""
-Fases 1-3: ingeniería de características, ponderación por fuerza del rival
-(Elo / Strength of Schedule) y shrinkage.
-"""
-import pandas as pd
-import numpy as np
-
-from ligas_config import elo_de, ELO_REFERENCIA
-
-
-def aplicar_shrinkage(promedio_equipo, promedio_liga, n_partidos, k=5):
-    return (n_partidos * promedio_equipo + k * promedio_liga) / (n_partidos + k)
-
-
-def procesar_equipo(df_partidos, promedio_liga_xg_favor, promedio_liga_xg_contra,
-                    promedio_liga_tiros, n_window=6, k_shrinkage=5,
-                    ponderar_por_elo=True, suavizado="ewm", ewm_span=10,
-                    venue=None):
-    df_partidos = df_partidos.copy()
-    df_partidos['Date'] = pd.to_datetime(df_partidos['Date'])
-    df_partidos = df_partidos.sort_values(by='Date').reset_index(drop=True)
-
-    min_p = max(1, n_window // 2)
-
-    # Splits local/visitante: en ligas de clubes, el rendimiento en casa y fuera
-    # difiere. Si se pide un 'venue' y hay suficientes partidos de esa condicion,
-    # calculamos los promedios usando SOLO esos. Si no alcanzan, usamos todos
-    # (fallback). En sede neutral (Mundial) no se usa (venue=None).
-    if venue is not None and 'Venue' in df_partidos.columns:
-        sub = df_partidos[df_partidos['Venue'] == venue]
-        if len(sub) >= min_p:
-            df_partidos = sub.reset_index(drop=True)
-
-    # Suavizado de los promedios. El shift(1) excluye el partido actual (sin fuga
-    # de datos). "ewm" (decaimiento exponencial) da mas peso a lo reciente
-    # reflejando el "estado de forma"; "sma" es media movil simple. El span del
-    # EWM se calibro contra el mercado (ver backtest_cuotas).
-    def prom(serie):
-        s = serie.shift(1)
-        if suavizado == "sma":
-            return s.rolling(window=n_window, min_periods=min_p).mean()
-        return s.ewm(span=ewm_span, min_periods=min_p).mean()
-
-    # ── Fuerza del rival (Elo) ──────────────────────────────────────────────
-    # elo_rival por partido y "Fuerza del Calendario" (SoS): Elo promedio de los
-    # ultimos rivales enfrentados. El factor pondera los goles: anotar a un
-    # gigante infla el valor, anotar a un equipo debil lo desinfla; conceder a un
-    # gigante penaliza menos la defensa, conceder a uno debil penaliza mas.
-    if 'Opponent' in df_partidos.columns:
-        df_partidos['elo_rival'] = df_partidos['Opponent'].map(elo_de)
-    else:
-        df_partidos['elo_rival'] = np.nan
-    df_partidos['elo_rival'] = df_partidos['elo_rival'].fillna(ELO_REFERENCIA)
-    df_partidos['sos_prom'] = prom(df_partidos['elo_rival'])
-
-    if ponderar_por_elo:
-        factor_ataque = df_partidos['elo_rival'] / ELO_REFERENCIA
-        factor_defensa = ELO_REFERENCIA / df_partidos['elo_rival']
-    else:
-        factor_ataque = pd.Series(1.0, index=df_partidos.index)
-        factor_defensa = pd.Series(1.0, index=df_partidos.index)
-
-    gf_pond = df_partidos['GF'] * factor_ataque
-    ga_pond = df_partidos['GA'] * factor_defensa
-
-    if 'xG' in df_partidos.columns and df_partidos['xG'].notna().any():
-        base_favor = df_partidos['xG'] * factor_ataque
-    else:
-        # FBref no publica xG para partidos de selecciones/Mundial: usamos GF.
-        base_favor = gf_pond
-    df_partidos['xg_favor_prom'] = prom(base_favor)
-
-    if 'xGA' in df_partidos.columns and df_partidos['xGA'].notna().any():
-        base_contra = df_partidos['xGA'] * factor_defensa
-    else:
-        base_contra = ga_pond
-    df_partidos['xg_contra_prom'] = prom(base_contra)
-
-    # Diferencial de xG (xGD): metrica de dominio. Positivo y amplio = el equipo
-    # domina la cancha, independientemente del marcador.
-    df_partidos['xgd_prom'] = df_partidos['xg_favor_prom'] - df_partidos['xg_contra_prom']
-
-    df_partidos['goles_favor_prom'] = prom(df_partidos['GF'])
-    df_partidos['goles_contra_prom'] = prom(df_partidos['GA'])
-    df_partidos['tiros_puerta_prom'] = prom(df_partidos['SoT'])
-    df_partidos['posesion_prom'] = prom(df_partidos['Poss'])
-
-    # Tasa de conversion (goles por tiro a puerta), suavizada. Mide eficiencia.
-    gf_ewm = prom(df_partidos['GF'])
-    sot_ewm = prom(df_partidos['SoT'])
-    df_partidos['conversion_prom'] = (gf_ewm / sot_ewm).replace([np.inf, -np.inf], np.nan)
-
-    df_partidos['disciplina'] = (
-        df_partidos['Fls']
-        + df_partidos.get('CrdR', pd.Series(0, index=df_partidos.index)) * 3
-        + df_partidos.get('CrdY', pd.Series(0, index=df_partidos.index)) * 1
-    )
-    df_partidos['disciplina_prom'] = prom(df_partidos['disciplina'])
-
-    def puntos(res):
-        if res == 'W':
-            return 3
-        elif res == 'D':
-            return 1
-        return 0
-
-    df_partidos['puntos'] = df_partidos['Result'].apply(puntos)
-    df_partidos['racha_puntos_prom'] = prom(df_partidos['puntos'])
-
-    df_partidos['dias_descanso'] = (
-        df_partidos['Date'] - df_partidos['Date'].shift(1)
-    ).dt.days.fillna(7)
-
-    # Contamos sobre GF (siempre presente) para que el shrinkage pondere bien
-    # incluso cuando FBref no publica xG (partidos de selecciones).
-    n_real = df_partidos['GF'].shift(1).rolling(window=n_window, min_periods=min_p).count()
-
-    df_partidos['xg_favor_adj'] = aplicar_shrinkage(
-        df_partidos['xg_favor_prom'], promedio_liga_xg_favor, n_real, k=k_shrinkage)
-    df_partidos['xg_contra_adj'] = aplicar_shrinkage(
-        df_partidos['xg_contra_prom'], promedio_liga_xg_contra, n_real, k=k_shrinkage)
-    df_partidos['tiros_puerta_adj'] = aplicar_shrinkage(
-        df_partidos['tiros_puerta_prom'], promedio_liga_tiros, n_real, k=k_shrinkage)
-
-    return df_partidos
-
-
-def ultima_fila_valida(df_features, columnas_requeridas=None):
-    if columnas_requeridas is None:
-        # Solo exigimos lo imprescindible para estimar los goles esperados.
-        # posesion_prom, disciplina_prom y racha_puntos_prom son opcionales:
-        # calcular_lambdas() los lee con .get(valor_por_defecto) y, si faltan
-        # (FBref a veces no publica faltas/tarjetas/posesion para selecciones),
-        # simplemente no se aplica ese ajuste menor. Exigirlos dejaba sin
-        # predecir a equipos con pocos datos disciplinarios (p.ej. Mexico).
-        columnas_requeridas = ['xg_favor_adj', 'xg_contra_adj', 'dias_descanso']
-    validas = df_features.dropna(subset=columnas_requeridas)
-    if validas.empty:
-        return None
-    return validas.iloc[-1]
 </file>
 
 <file path="ingest_fbref.py">
@@ -2057,7 +1962,7 @@ import numpy as np
 from scipy.stats import poisson
 
 
-def correccion_dixon_coles(probabilidades, lambda_l, lambda_v, rho=-0.10):
+def correccion_dixon_coles(probabilidades, lambda_l, lambda_v, rho=-0.05):
     probabilidades[0, 0] *= max(0, 1 - lambda_l * lambda_v * rho)
     probabilidades[1, 0] *= max(0, 1 + lambda_v * rho)
     probabilidades[0, 1] *= max(0, 1 + lambda_l * rho)
@@ -2066,7 +1971,7 @@ def correccion_dixon_coles(probabilidades, lambda_l, lambda_v, rho=-0.10):
     return probabilidades
 
 
-def generar_matriz_poisson(lambda_local, lambda_visitante, max_goles=5, rho=-0.10):
+def generar_matriz_poisson(lambda_local, lambda_visitante, max_goles=5, rho=-0.05):
     goles = np.arange(0, max_goles + 1)
     prob_local = poisson.pmf(goles, lambda_local)
     prob_visitante = poisson.pmf(goles, lambda_visitante)
@@ -2368,220 +2273,6 @@ if __name__ == "__main__":
         print("     py proveedores.py update [Equipo1 Equipo2 ...]  (actualizar)")
 </file>
 
-<file path="backtest_cuotas.py">
-"""
-Backtest del modelo contra las CUOTAS REALES del mercado (Football-Data.co.uk).
-
-Mide si el modelo Poisson/Dixon-Coles le gana o iguala a las casas de apuestas:
-  - Compara su log-loss / Brier / acierto contra las cuotas de cierre de Pinnacle
-    (la casa más "sharp"), que son el patrón a vencer.
-  - Simula el ROI de apostar solo cuando el modelo detecta "valor".
-
-Clave: el CSV de Football-Data ya trae los goles de cada partido, así que el
-historial de cada equipo se construye del MISMO archivo. 100% offline tras la
-descarga, sin FBref ni mapeo de nombres. Backtest SIN fuga de datos: cada partido
-se predice usando solo los partidos anteriores.
-
-Uso:
-    py -3.11 backtest_cuotas.py            # Premier League 2024-25
-    py -3.11 backtest_cuotas.py SP1 2425   # La Liga 2024-25
-"""
-import sys
-
-import numpy as np
-import pandas as pd
-from sklearn.metrics import log_loss
-
-from feature_engineering import procesar_equipo, ultima_fila_valida
-from calcular_lambdas import calcular_lambdas
-from matriz_poisson import generar_matriz_poisson
-
-# Códigos de liga de Football-Data.co.uk
-LIGAS_FD = {
-    "E0": "Premier League (Inglaterra)", "SP1": "La Liga (España)",
-    "I1": "Serie A (Italia)", "D1": "Bundesliga (Alemania)", "F1": "Ligue 1 (Francia)",
-}
-BASE_URL = "https://www.football-data.co.uk/mmz4281"
-
-
-def descargar_cuotas(codigo: str = "E0", temporada: str = "2425") -> pd.DataFrame:
-    """Descarga el CSV de resultados + cuotas de una liga/temporada."""
-    url = f"{BASE_URL}/{temporada}/{codigo}.csv"
-    df = pd.read_csv(url)
-    df["Date"] = pd.to_datetime(df["Date"], dayfirst=True, errors="coerce")
-    return df.dropna(subset=["Date", "HomeTeam", "AwayTeam", "FTHG", "FTAG", "FTR"])
-
-
-def historial_desde_cuotas(df: pd.DataFrame) -> pd.DataFrame:
-    """Construye el historial por equipo (esquema del modelo) desde el CSV."""
-    filas = []
-    for _, m in df.iterrows():
-        gh, ga = int(m["FTHG"]), int(m["FTAG"])
-        base = {"Poss": np.nan, "Sh": np.nan, "SoT": np.nan, "xG": np.nan,
-                "xGA": np.nan, "Fls": np.nan, "CrdY": 0, "CrdR": 0}
-        filas.append({"Date": m["Date"], "Team": m["HomeTeam"], "Opponent": m["AwayTeam"],
-                      "Venue": "Home", "Result": "W" if gh > ga else "D" if gh == ga else "L",
-                      "GF": gh, "GA": ga, **base})
-        filas.append({"Date": m["Date"], "Team": m["AwayTeam"], "Opponent": m["HomeTeam"],
-                      "Venue": "Away", "Result": "W" if ga > gh else "D" if gh == ga else "L",
-                      "GF": ga, "GA": gh, **base})
-    return pd.DataFrame(filas).sort_values("Date").reset_index(drop=True)
-
-
-def _devig(oh, od, oa):
-    """Cuotas decimales -> probabilidades sin margen de la casa (de-vig)."""
-    if any(pd.isna(x) or x <= 1 for x in (oh, od, oa)):
-        return None
-    imp = np.array([1 / oh, 1 / od, 1 / oa])
-    return imp / imp.sum()
-
-
-def _cuotas_cierre(m):
-    """Cuotas de cierre por prioridad: Pinnacle -> Bet365 -> promedio."""
-    for h, d, a in [("PSCH", "PSCD", "PSCA"), ("B365CH", "B365CD", "B365CA"),
-                    ("AvgCH", "AvgCD", "AvgCA"), ("B365H", "B365D", "B365A")]:
-        if all(c in m and not pd.isna(m[c]) for c in (h, d, a)):
-            return float(m[h]), float(m[d]), float(m[a])
-    return None
-
-
-def correr(df_cuotas, rho=-0.10, k=3, min_previos=5, suavizado="ewm", ewm_span=10,
-           splits=False):  # splits local/visitante medidos: empeoran (off por defecto)
-    """
-    Predice cada partido sin fuga de datos y devuelve arrays alineados:
-    probs_modelo, probs_mercado, cuotas, y (0=local,1=empate,2=visitante).
-    """
-    hist = historial_desde_cuotas(df_cuotas)
-    df = df_cuotas.sort_values("Date").reset_index(drop=True)
-
-    pm_modelo, pm_mercado, cuotas, ys = [], [], [], []
-    for _, m in df.iterrows():
-        oc = _cuotas_cierre(m)
-        merc = _devig(*oc) if oc else None
-        if merc is None:
-            continue
-
-        local, visit, fecha = m["HomeTeam"], m["AwayTeam"], m["Date"]
-        h_loc = hist[(hist["Team"] == local) & (hist["Date"] < fecha)]
-        h_vis = hist[(hist["Team"] == visit) & (hist["Date"] < fecha)]
-        if len(h_loc) < min_previos or len(h_vis) < min_previos:
-            continue
-
-        prom_gf = hist[hist["Date"] < fecha]["GF"].mean()  # ~media de goles de local
-        v_loc, v_vis = ("Home", "Away") if splits else (None, None)
-        f_loc = ultima_fila_valida(procesar_equipo(
-            h_loc, prom_gf, prom_gf, 4.5, k_shrinkage=k, suavizado=suavizado,
-            ewm_span=ewm_span, venue=v_loc))
-        f_vis = ultima_fila_valida(procesar_equipo(
-            h_vis, prom_gf, prom_gf, 4.5, k_shrinkage=k, suavizado=suavizado,
-            ewm_span=ewm_span, venue=v_vis))
-        if f_loc is None or f_vis is None:
-            continue
-
-        # Clubes: SÍ aplica ventaja de localía (neutral=False), sin Elo.
-        lam_l, lam_v = calcular_lambdas(f_loc, f_vis, neutral=False)
-        mat = generar_matriz_poisson(lam_l, lam_v, rho=rho)
-        probs = [float(np.sum(np.tril(mat, -1))), float(np.sum(np.diag(mat))),
-                 float(np.sum(np.triu(mat, 1)))]
-
-        y = 0 if m["FTR"] == "H" else 1 if m["FTR"] == "D" else 2
-        pm_modelo.append(probs)
-        pm_mercado.append(list(merc))
-        cuotas.append(oc)
-        ys.append(y)
-
-    return (np.array(pm_modelo), np.array(pm_mercado),
-            np.array(cuotas), np.array(ys))
-
-
-def calibrar(dfs, rhos=(-0.20, -0.15, -0.13, -0.10, -0.05, 0.0),
-             ks=(3, 5, 8, 12), min_previos=5):
-    """
-    Barrido de rho y k sobre uno o varios DataFrames de cuotas (varias ligas
-    para no sobreajustar). Minimiza el log_loss contra los RESULTADOS reales,
-    sin fuga de datos. Las lambdas dependen de k, así que se calculan una sola
-    vez por k y luego se reusa al barrer rho (barato). Devuelve un DataFrame
-    ordenado por log_loss.
-    """
-    datos = {k: [] for k in ks}  # k -> [(lam_l, lam_v, y)]
-    for df in dfs:
-        hist = historial_desde_cuotas(df)
-        dfo = df.sort_values("Date").reset_index(drop=True)
-        for _, m in dfo.iterrows():
-            local, visit, fecha = m["HomeTeam"], m["AwayTeam"], m["Date"]
-            h_loc = hist[(hist["Team"] == local) & (hist["Date"] < fecha)]
-            h_vis = hist[(hist["Team"] == visit) & (hist["Date"] < fecha)]
-            if len(h_loc) < min_previos or len(h_vis) < min_previos:
-                continue
-            prom = hist[hist["Date"] < fecha]["GF"].mean()
-            y = 0 if m["FTR"] == "H" else 1 if m["FTR"] == "D" else 2
-            for k in ks:
-                f_loc = ultima_fila_valida(procesar_equipo(h_loc, prom, prom, 4.5, k_shrinkage=k))
-                f_vis = ultima_fila_valida(procesar_equipo(h_vis, prom, prom, 4.5, k_shrinkage=k))
-                if f_loc is None or f_vis is None:
-                    continue
-                lam_l, lam_v = calcular_lambdas(f_loc, f_vis, neutral=False)
-                datos[k].append((lam_l, lam_v, y))
-
-    filas = []
-    for rho in rhos:
-        for k in ks:
-            probs, ys = [], []
-            for lam_l, lam_v, y in datos[k]:
-                mat = generar_matriz_poisson(lam_l, lam_v, rho=rho)
-                probs.append([float(np.sum(np.tril(mat, -1))), float(np.sum(np.diag(mat))),
-                              float(np.sum(np.triu(mat, 1)))])
-                ys.append(y)
-            if probs:
-                filas.append({"rho": rho, "k": k, "n": len(ys),
-                              "log_loss": log_loss(ys, probs, labels=[0, 1, 2])})
-    return pd.DataFrame(filas).sort_values("log_loss").reset_index(drop=True)
-
-
-def metricas(probs, y):
-    onehot = np.eye(3)[y]
-    return {"log_loss": log_loss(y, probs, labels=[0, 1, 2]),
-            "brier": float(np.mean(np.sum((probs - onehot) ** 2, axis=1))),
-            "acierto": float(np.mean(np.argmax(probs, axis=1) == y))}
-
-
-def simular_roi(probs, cuotas, y, umbral=0.05, stake=1.0):
-    """Apuesta 1 unidad a cada resultado donde prob_modelo*cuota > 1+umbral."""
-    ganancia, n = 0.0, 0
-    for p, o, real in zip(probs, cuotas, y):
-        for k in range(3):
-            if p[k] * o[k] > 1 + umbral:  # valor esperado positivo
-                n += 1
-                ganancia += (o[k] - 1) * stake if real == k else -stake
-    roi = (ganancia / (n * stake)) if n else 0.0
-    return {"apuestas": n, "ganancia": ganancia, "roi": roi}
-
-
-if __name__ == "__main__":
-    codigo = sys.argv[1] if len(sys.argv) > 1 else "E0"
-    temporada = sys.argv[2] if len(sys.argv) > 2 else "2425"
-    print(f"Liga: {LIGAS_FD.get(codigo, codigo)} · temporada {temporada}")
-
-    df = descargar_cuotas(codigo, temporada)
-    print(f"Partidos descargados: {len(df)}")
-
-    pm, mk, od, y = correr(df)
-    print(f"Partidos evaluados (con historial suficiente): {len(y)}\n")
-
-    mo, me = metricas(pm, y), metricas(mk, y)
-    print(f"{'':12}{'log_loss':>10}{'brier':>9}{'acierto':>9}")
-    print(f"{'MERCADO':12}{me['log_loss']:>10.4f}{me['brier']:>9.4f}{me['acierto']*100:>8.1f}%")
-    print(f"{'MODELO':12}{mo['log_loss']:>10.4f}{mo['brier']:>9.4f}{mo['acierto']*100:>8.1f}%")
-    print("  (menor log_loss/brier = mejor; el mercado es muy dificil de batir)\n")
-
-    roi = simular_roi(pm, od, y)
-    print(f"Simulador de ROI (apostando al 'valor' del modelo):")
-    print(f"  apuestas con valor: {roi['apuestas']}")
-    print(f"  ganancia neta: {roi['ganancia']:+.2f} unidades")
-    print(f"  ROI: {roi['roi']*100:+.1f}%")
-    print("  (ROI>0 sería ganarle al mercado; lo normal es negativo por el margen)")
-</file>
-
 <file path="calcular_lambdas.py">
 """
 Convierte las caracteristicas de cada equipo en los goles esperados (lambda).
@@ -2725,6 +2416,149 @@ def calcular_lambdas(
         lambda_visitante *= 1.0 + peso_elo * ((1.0 - e_local) - 0.5)
 
     return float(lambda_local), float(lambda_visitante)
+</file>
+
+<file path="feature_engineering.py">
+"""
+Fases 1-3: ingeniería de características, ponderación por fuerza del rival
+(Elo / Strength of Schedule) y shrinkage.
+"""
+import pandas as pd
+import numpy as np
+
+from ligas_config import elo_de, ELO_REFERENCIA
+
+
+def aplicar_shrinkage(promedio_equipo, promedio_liga, n_partidos, k=5):
+    return (n_partidos * promedio_equipo + k * promedio_liga) / (n_partidos + k)
+
+
+def procesar_equipo(df_partidos, promedio_liga_xg_favor, promedio_liga_xg_contra,
+                    promedio_liga_tiros, n_window=6, k_shrinkage=5,
+                    ponderar_por_elo=True, suavizado="ewm", ewm_span=10,
+                    venue=None):
+    df_partidos = df_partidos.copy()
+    df_partidos['Date'] = pd.to_datetime(df_partidos['Date'])
+    df_partidos = df_partidos.sort_values(by='Date').reset_index(drop=True)
+
+    min_p = max(1, n_window // 2)
+
+    # Splits local/visitante: en ligas de clubes, el rendimiento en casa y fuera
+    # difiere. Si se pide un 'venue' y hay suficientes partidos de esa condicion,
+    # calculamos los promedios usando SOLO esos. Si no alcanzan, usamos todos
+    # (fallback). En sede neutral (Mundial) no se usa (venue=None).
+    if venue is not None and 'Venue' in df_partidos.columns:
+        sub = df_partidos[df_partidos['Venue'] == venue]
+        if len(sub) >= min_p:
+            df_partidos = sub.reset_index(drop=True)
+
+    # Suavizado de los promedios. El shift(1) excluye el partido actual (sin fuga
+    # de datos). "ewm" (decaimiento exponencial) da mas peso a lo reciente
+    # reflejando el "estado de forma"; "sma" es media movil simple. El span del
+    # EWM se calibro contra el mercado (ver backtest_cuotas).
+    def prom(serie):
+        s = serie.shift(1)
+        if suavizado == "sma":
+            return s.rolling(window=n_window, min_periods=min_p).mean()
+        return s.ewm(span=ewm_span, min_periods=min_p).mean()
+
+    # ── Fuerza del rival (Elo) ──────────────────────────────────────────────
+    # elo_rival por partido y "Fuerza del Calendario" (SoS): Elo promedio de los
+    # ultimos rivales enfrentados. El factor pondera los goles: anotar a un
+    # gigante infla el valor, anotar a un equipo debil lo desinfla; conceder a un
+    # gigante penaliza menos la defensa, conceder a uno debil penaliza mas.
+    if 'Opponent' in df_partidos.columns:
+        df_partidos['elo_rival'] = df_partidos['Opponent'].map(elo_de)
+    else:
+        df_partidos['elo_rival'] = np.nan
+    df_partidos['elo_rival'] = df_partidos['elo_rival'].fillna(ELO_REFERENCIA)
+    df_partidos['sos_prom'] = prom(df_partidos['elo_rival'])
+
+    if ponderar_por_elo:
+        factor_ataque = df_partidos['elo_rival'] / ELO_REFERENCIA
+        factor_defensa = ELO_REFERENCIA / df_partidos['elo_rival']
+    else:
+        factor_ataque = pd.Series(1.0, index=df_partidos.index)
+        factor_defensa = pd.Series(1.0, index=df_partidos.index)
+
+    gf_pond = df_partidos['GF'] * factor_ataque
+    ga_pond = df_partidos['GA'] * factor_defensa
+
+    if 'xG' in df_partidos.columns and df_partidos['xG'].notna().any():
+        base_favor = df_partidos['xG'] * factor_ataque
+    else:
+        # FBref no publica xG para partidos de selecciones/Mundial: usamos GF.
+        base_favor = gf_pond
+    df_partidos['xg_favor_prom'] = prom(base_favor)
+
+    if 'xGA' in df_partidos.columns and df_partidos['xGA'].notna().any():
+        base_contra = df_partidos['xGA'] * factor_defensa
+    else:
+        base_contra = ga_pond
+    df_partidos['xg_contra_prom'] = prom(base_contra)
+
+    # Diferencial de xG (xGD): metrica de dominio. Positivo y amplio = el equipo
+    # domina la cancha, independientemente del marcador.
+    df_partidos['xgd_prom'] = df_partidos['xg_favor_prom'] - df_partidos['xg_contra_prom']
+
+    df_partidos['goles_favor_prom'] = prom(df_partidos['GF'])
+    df_partidos['goles_contra_prom'] = prom(df_partidos['GA'])
+    df_partidos['tiros_puerta_prom'] = prom(df_partidos['SoT'])
+    df_partidos['posesion_prom'] = prom(df_partidos['Poss'])
+
+    # Tasa de conversion (goles por tiro a puerta), suavizada. Mide eficiencia.
+    gf_ewm = prom(df_partidos['GF'])
+    sot_ewm = prom(df_partidos['SoT'])
+    df_partidos['conversion_prom'] = (gf_ewm / sot_ewm).replace([np.inf, -np.inf], np.nan)
+
+    df_partidos['disciplina'] = (
+        df_partidos['Fls']
+        + df_partidos.get('CrdR', pd.Series(0, index=df_partidos.index)) * 3
+        + df_partidos.get('CrdY', pd.Series(0, index=df_partidos.index)) * 1
+    )
+    df_partidos['disciplina_prom'] = prom(df_partidos['disciplina'])
+
+    def puntos(res):
+        if res == 'W':
+            return 3
+        elif res == 'D':
+            return 1
+        return 0
+
+    df_partidos['puntos'] = df_partidos['Result'].apply(puntos)
+    df_partidos['racha_puntos_prom'] = prom(df_partidos['puntos'])
+
+    df_partidos['dias_descanso'] = (
+        df_partidos['Date'] - df_partidos['Date'].shift(1)
+    ).dt.days.fillna(7)
+
+    # Contamos sobre GF (siempre presente) para que el shrinkage pondere bien
+    # incluso cuando FBref no publica xG (partidos de selecciones).
+    n_real = df_partidos['GF'].shift(1).rolling(window=n_window, min_periods=min_p).count()
+
+    df_partidos['xg_favor_adj'] = aplicar_shrinkage(
+        df_partidos['xg_favor_prom'], promedio_liga_xg_favor, n_real, k=k_shrinkage)
+    df_partidos['xg_contra_adj'] = aplicar_shrinkage(
+        df_partidos['xg_contra_prom'], promedio_liga_xg_contra, n_real, k=k_shrinkage)
+    df_partidos['tiros_puerta_adj'] = aplicar_shrinkage(
+        df_partidos['tiros_puerta_prom'], promedio_liga_tiros, n_real, k=k_shrinkage)
+
+    return df_partidos
+
+
+def ultima_fila_valida(df_features, columnas_requeridas=None):
+    if columnas_requeridas is None:
+        # Solo exigimos lo imprescindible para estimar los goles esperados.
+        # posesion_prom, disciplina_prom y racha_puntos_prom son opcionales:
+        # calcular_lambdas() los lee con .get(valor_por_defecto) y, si faltan
+        # (FBref a veces no publica faltas/tarjetas/posesion para selecciones),
+        # simplemente no se aplica ese ajuste menor. Exigirlos dejaba sin
+        # predecir a equipos con pocos datos disciplinarios (p.ej. Mexico).
+        columnas_requeridas = ['xg_favor_adj', 'xg_contra_adj', 'dias_descanso']
+    validas = df_features.dropna(subset=columnas_requeridas)
+    if validas.empty:
+        return None
+    return validas.iloc[-1]
 </file>
 
 <file path="ligas_config.py">
@@ -3076,7 +2910,7 @@ def predecir_partido(
     equipo_visitante: str,
     liga: str,
     temporada: str,
-    rho: float = -0.10,
+    rho: float = -0.05,
     k_shrinkage: int = 5,
     no_cache: bool = False,
     n_window: int = 6,
@@ -3160,6 +2994,22 @@ def predecir_partido(
 
     mercados = calcular_mercados(matriz)
 
+    def _forma(df):
+        return list(df.sort_values("Date")["Result"].dropna().tail(5))
+
+    def _num(fila, col):
+        v = fila.get(col)
+        return float(v) if (v is not None and pd.notna(v)) else 0.0
+
+    def _metricas(fila):
+        return {
+            "ataque": _num(fila, "xg_favor_adj"),
+            "defensa": _num(fila, "xg_contra_adj"),
+            "tiros": _num(fila, "tiros_puerta_adj"),
+            "posesion": _num(fila, "posesion_prom"),
+            "disciplina": _num(fila, "disciplina_prom"),
+        }
+
     return {
         "lambda_local": lambda_local,
         "lambda_visitante": lambda_visitante,
@@ -3168,6 +3018,12 @@ def predecir_partido(
         "prob_visitante": prob_visitante,
         "matriz": matriz,
         "df_liga": pd.DataFrame(),
+        "forma_local": _forma(df_local),
+        "forma_visitante": _forma(df_visitante),
+        "descanso_local": _num(fila_local, "dias_descanso"),
+        "descanso_visitante": _num(fila_visitante, "dias_descanso"),
+        "metricas_local": _metricas(fila_local),
+        "metricas_visitante": _metricas(fila_visitante),
         **mercados,
     }
 
@@ -3184,9 +3040,14 @@ def calcular_mercados(matriz: np.ndarray) -> dict:
     # Ambos anotan (BTTS): ambos marcan >= 1 gol -> excluye fila 0 y columna 0.
     prob_btts = float(matriz[1:, 1:].sum())
 
-    # Over/Under 2.5: suma de goles (i + j) mayor que 2.
-    prob_over25 = float(matriz[(idx_i + idx_j) > 2].sum())
-    prob_under25 = float(matriz[(idx_i + idx_j) <= 2].sum())
+    # Over/Under por linea de goles totales (i + j). Mercados "asiaticos".
+    total = idx_i + idx_j
+    prob_over15 = float(matriz[total > 1].sum())
+    prob_under15 = float(matriz[total <= 1].sum())
+    prob_over25 = float(matriz[total > 2].sum())
+    prob_under25 = float(matriz[total <= 2].sum())
+    prob_over35 = float(matriz[total > 3].sum())
+    prob_under35 = float(matriz[total <= 3].sum())
 
     # Porteria a cero (clean sheet): el rival no anota.
     # Local deja la porteria a cero -> visitante marca 0 -> columna 0.
@@ -3196,8 +3057,12 @@ def calcular_mercados(matriz: np.ndarray) -> dict:
 
     return {
         "prob_btts": prob_btts,
+        "prob_over15": prob_over15,
+        "prob_under15": prob_under15,
         "prob_over25": prob_over25,
         "prob_under25": prob_under25,
+        "prob_over35": prob_over35,
+        "prob_under35": prob_under35,
         "prob_cs_local": prob_cs_local,
         "prob_cs_visitante": prob_cs_visitante,
     }
@@ -3244,6 +3109,14 @@ def _mezcla(c1, c2, t):
     a = tuple(int(c1[i:i + 2], 16) for i in (1, 3, 5))
     b = tuple(int(c2[i:i + 2], 16) for i in (1, 3, 5))
     return "#%02x%02x%02x" % tuple(round(a[k] + (b[k] - a[k]) * t) for k in range(3))
+
+
+def _clamp01(x):
+    return max(0.0, min(1.0, x))
+
+
+def _cuota(p):
+    return f"Cuota {1 / p:.2f}" if p and p > 0 else "—"
 
 
 def _rect_redondo(cv, x1, y1, x2, y2, r, **kw):
@@ -3415,10 +3288,14 @@ class PredictorApp(tk.Tk):
                                    font=(FUENTE, 10))
         self.cb_eq2.pack(fill="x", padx=20)
 
+        # ── Forma reciente (se llena tras predecir) ──
+        self.frame_forma = tk.Frame(frame, bg=PANEL)
+        self.frame_forma.pack(fill="x", padx=20, pady=(10, 0))
+
         # ── Parámetros avanzados ──
         seccion("Ajustes avanzados", CIAN)
 
-        self._slider(frame, "Rho (Dixon-Coles)", -0.3, 0.0, -0.10, "rho", "{:.2f}")
+        self._slider(frame, "Rho (Dixon-Coles)", -0.3, 0.0, -0.05, "rho", "{:.2f}")
         self._slider(frame, "Shrinkage k", 1, 15, 5, "k", "{:.0f}")
 
         self.var_cache = tk.BooleanVar(value=True)
@@ -3620,67 +3497,152 @@ class PredictorApp(tk.Tk):
         for w in self.frame_der.winfo_children():
             w.destroy()
 
-        p1 = resultado['prob_local']
-        px = resultado['prob_empate']
-        p2 = resultado['prob_visitante']
-        ll = resultado['lambda_local']
-        lv = resultado['lambda_visitante']
-        mat = resultado['matriz']
+        # Forma reciente en el panel lateral
+        self._render_forma_sidebar(resultado, nombre_eq1, nombre_eq2)
 
-        cont = tk.Frame(self.frame_der, bg=CARD)
-        cont.pack(fill="both", expand=True, padx=22, pady=18)
+        # Pestañas: Predicción / Análisis
+        nb = ttk.Notebook(self.frame_der, style="Moderno.TNotebook")
+        nb.pack(fill="both", expand=True, padx=12, pady=12)
+        tab_pred = tk.Frame(nb, bg=CARD)
+        tab_anal = tk.Frame(nb, bg=CARD)
+        nb.add(tab_pred, text="  Predicción  ")
+        nb.add(tab_anal, text="  Análisis  ")
+        self._tab_prediccion(tab_pred, resultado, nombre_eq1, nombre_eq2)
+        self._tab_analisis(tab_anal, resultado, nombre_eq1, nombre_eq2)
 
-        # ── Título del enfrentamiento ──
+    def _tab_prediccion(self, parent, r, n1, n2):
+        cont = tk.Frame(parent, bg=CARD)
+        cont.pack(fill="both", expand=True, padx=18, pady=14)
+        p1, px, p2 = r['prob_local'], r['prob_empate'], r['prob_visitante']
+
         titulo = tk.Frame(cont, bg=CARD)
         titulo.pack(fill="x")
-        tk.Label(titulo, text=nombre_eq1, font=(FUENTE, 16, "bold"),
-                 fg=VERDE, bg=CARD).pack(side="left")
-        tk.Label(titulo, text="  vs  ", font=(FUENTE, 13),
-                 fg=TEXTO_SEC, bg=CARD).pack(side="left")
-        tk.Label(titulo, text=nombre_eq2, font=(FUENTE, 16, "bold"),
-                 fg=ROJO, bg=CARD).pack(side="left")
+        tk.Label(titulo, text=n1, font=(FUENTE, 15, "bold"), fg=VERDE, bg=CARD).pack(side="left")
+        tk.Label(titulo, text="  vs  ", font=(FUENTE, 12), fg=TEXTO_SEC, bg=CARD).pack(side="left")
+        tk.Label(titulo, text=n2, font=(FUENTE, 15, "bold"), fg=ROJO, bg=CARD).pack(side="left")
 
-        # ── Tarjetas de probabilidad 1-X-2 ──
+        # 1-X-2 con cuota justa (1/prob)
         fila = tk.Frame(cont, bg=CARD)
-        fila.pack(fill="x", pady=(14, 6))
-        datos = [(f"Victoria {nombre_eq1}", p1, VERDE),
-                 ("Empate", px, AMARILLO),
-                 (f"Victoria {nombre_eq2}", p2, ROJO)]
+        fila.pack(fill="x", pady=(12, 4))
+        datos = [(f"Victoria {n1}", p1, VERDE), ("Empate", px, AMARILLO),
+                 (f"Victoria {n2}", p2, ROJO)]
         for col, (tit, val, color) in enumerate(datos):
             fila.columnconfigure(col, weight=1, uniform="prob")
-            Tarjeta(fila, tit, f"{val * 100:.1f}%", color).grid(
-                row=0, column=col, sticky="nsew", padx=6)
+            Tarjeta(fila, tit, f"{val * 100:.1f}%", color, sub=_cuota(val), alto=126).grid(
+                row=0, column=col, sticky="nsew", padx=5)
 
-        # ── Barra de probabilidad ──
-        BarraProbabilidad(cont, p1, px, p2).pack(fill="x", pady=(6, 4))
+        BarraProbabilidad(cont, p1, px, p2).pack(fill="x", pady=(4, 4))
+        tk.Label(cont, text=f"Goles esperados (λ)  ·  {n1} {r['lambda_local']:.2f}    "
+                            f"{n2} {r['lambda_visitante']:.2f}",
+                 font=(FUENTE, 9), fg=TEXTO_SEC, bg=CARD).pack(pady=(4, 8))
 
-        # ── xG esperados ──
-        tk.Label(cont,
-                 text=f"Goles esperados (λ)   ·   {nombre_eq1}  {ll:.2f}      {nombre_eq2}  {lv:.2f}",
-                 font=(FUENTE, 10), fg=TEXTO_SEC, bg=CARD).pack(pady=(6, 10))
+        g = lambda k: r.get(k, 0.0)
+        # Mercados principales
+        f1 = tk.Frame(cont, bg=CARD)
+        f1.pack(fill="x", pady=(0, 4))
+        m1 = [("Ambos anotan", f"{g('prob_btts') * 100:.0f}%", CIAN, "BTTS"),
+              ("Más de 2.5 goles", f"{g('prob_over25') * 100:.0f}%", AMARILLO, _cuota(g('prob_over25'))),
+              ("Portería a 0", f"{g('prob_cs_local') * 100:.0f}% / {g('prob_cs_visitante') * 100:.0f}%",
+               VERDE, f"{n1[:7]} / {n2[:7]}")]
+        # Mercados asiáticos
+        f2 = tk.Frame(cont, bg=CARD)
+        m2 = [("Más de 1.5 goles", f"{g('prob_over15') * 100:.0f}%", VERDE, _cuota(g('prob_over15'))),
+              ("Más de 3.5 goles", f"{g('prob_over35') * 100:.0f}%", ROJO, _cuota(g('prob_over35'))),
+              ("Menos de 2.5", f"{g('prob_under25') * 100:.0f}%", CIAN, _cuota(g('prob_under25')))]
+        for f, ms, tag in [(f1, m1, "m1"), (f2, m2, "m2")]:
+            for col, (t, v, c, s) in enumerate(ms):
+                f.columnconfigure(col, weight=1, uniform=tag)
+                Tarjeta(f, t, v, c, sub=s, alto=94).grid(row=0, column=col, sticky="nsew", padx=5)
+        f2.pack(fill="x", pady=(0, 4))
 
-        # ── Mercados ──
-        btts = resultado.get('prob_btts', 0.0)
-        over = resultado.get('prob_over25', 0.0)
-        cs_l = resultado.get('prob_cs_local', 0.0)
-        cs_v = resultado.get('prob_cs_visitante', 0.0)
+        self._render_top5(cont, r['matriz'])
 
-        fila2 = tk.Frame(cont, bg=CARD)
-        fila2.pack(fill="x", pady=(0, 4))
-        mercados = [("Ambos anotan", f"{btts * 100:.0f}%", CIAN, "BTTS"),
-                    ("Más de 2.5 goles", f"{over * 100:.0f}%", AMARILLO, "Over 2.5"),
-                    ("Portería a cero", f"{cs_l * 100:.0f}% / {cs_v * 100:.0f}%", VERDE,
-                     f"{nombre_eq1[:8]} / {nombre_eq2[:8]}")]
-        for col, (tit, val, color, sub) in enumerate(mercados):
-            fila2.columnconfigure(col, weight=1, uniform="merc")
-            Tarjeta(fila2, tit, val, color, sub=sub, alto=104).grid(
-                row=0, column=col, sticky="nsew", padx=6)
+    def _render_top5(self, parent, mat):
+        n = mat.shape[0]
+        idx = np.dstack(np.unravel_index(np.argsort(mat.ravel())[::-1], mat.shape))[0][:5]
+        tk.Label(parent, text="MARCADORES MÁS PROBABLES  ·  con cuota justa",
+                 font=(FUENTE, 9, "bold"), fg=TEXTO_SEC, bg=CARD).pack(anchor="w", pady=(10, 4))
+        fila = tk.Frame(parent, bg=CARD)
+        fila.pack(fill="x")
+        for i, j in idx:
+            prob = float(mat[i, j])
+            f = tk.Frame(fila, bg=CARD2, highlightbackground=BORDE, highlightthickness=1)
+            f.pack(side="left", expand=True, fill="both", padx=4)
+            tk.Label(f, text=f"{i}–{j}", font=(FUENTE, 15, "bold"), fg=TEXTO, bg=CARD2).pack(pady=(8, 0))
+            tk.Label(f, text=f"{prob * 100:.1f}%", font=(FUENTE, 10), fg=ACENTO, bg=CARD2).pack()
+            tk.Label(f, text=f"@ {1 / prob:.1f}" if prob > 0 else "—",
+                     font=(FUENTE, 9), fg=TEXTO_SEC, bg=CARD2).pack(pady=(0, 8))
 
-        # ── Mapa de calor ──
-        tk.Label(cont, text="MAPA DE CALOR · marcadores exactos",
-                 font=(FUENTE, 9, "bold"), fg=TEXTO_SEC, bg=CARD).pack(
-            anchor="w", pady=(14, 4))
-        self._dibujar_heatmap(cont, mat, nombre_eq1, nombre_eq2)
+    def _tab_analisis(self, parent, r, n1, n2):
+        cont = tk.Frame(parent, bg=CARD)
+        cont.pack(fill="both", expand=True, padx=14, pady=10)
+        tk.Label(cont, text="RADAR DE DOMINIO", font=(FUENTE, 9, "bold"),
+                 fg=TEXTO_SEC, bg=CARD).pack(anchor="w")
+        self._dibujar_radar(cont, r.get('metricas_local', {}), r.get('metricas_visitante', {}), n1, n2)
+        tk.Label(cont, text="MAPA DE CALOR · marcadores exactos", font=(FUENTE, 9, "bold"),
+                 fg=TEXTO_SEC, bg=CARD).pack(anchor="w", pady=(8, 2))
+        self._dibujar_heatmap(cont, r['matriz'], n1, n2)
+
+    def _dibujar_radar(self, parent, m_loc, m_vis, n1, n2):
+        ejes = ["Ataque", "Posesión", "Tiros", "Defensa", "Disciplina"]
+
+        def norm(m):
+            return [
+                _clamp01(m.get("ataque", 0) / 3.0),
+                _clamp01(m.get("posesion", 0) / 65.0),
+                _clamp01(m.get("tiros", 0) / 12.0),
+                _clamp01(1 - m.get("defensa", 0) / 3.0),     # menos goles en contra = mejor
+                _clamp01(1 - m.get("disciplina", 0) / 30.0),  # menos faltas/tarjetas = mejor
+            ]
+
+        vloc, vvis = norm(m_loc), norm(m_vis)
+        ang = np.linspace(0, 2 * np.pi, len(ejes), endpoint=False).tolist()
+        ang += ang[:1]
+        vloc += vloc[:1]
+        vvis += vvis[:1]
+
+        fig = plt.figure(figsize=(4.4, 3.6))
+        fig.patch.set_facecolor(CARD)
+        ax = fig.add_subplot(111, polar=True)
+        ax.set_facecolor(CARD)
+        ax.plot(ang, vloc, color=VERDE, linewidth=2)
+        ax.fill(ang, vloc, color=VERDE, alpha=0.25)
+        ax.plot(ang, vvis, color=ROJO, linewidth=2)
+        ax.fill(ang, vvis, color=ROJO, alpha=0.25)
+        ax.set_xticks(ang[:-1])
+        ax.set_xticklabels(ejes, color=TEXTO_SEC, fontsize=9)
+        ax.set_yticklabels([])
+        ax.set_ylim(0, 1)
+        ax.spines['polar'].set_color(BORDE)
+        ax.grid(color=BORDE)
+        ax.set_title(f"{n1} (verde)  vs  {n2} (rojo)", color=TEXTO, fontsize=9, pad=14)
+
+        canvas = FigureCanvasTkAgg(fig, master=parent)
+        canvas.draw()
+        canvas.get_tk_widget().pack(fill="both", expand=True)
+        plt.close(fig)
+
+    def _render_forma_sidebar(self, r, n1, n2):
+        for w in self.frame_forma.winfo_children():
+            w.destroy()
+        tk.Label(self.frame_forma, text="FORMA (últimos 5)", font=(FUENTE, 8, "bold"),
+                 fg=TEXTO_SEC, bg=PANEL).pack(anchor="w")
+        self._fila_forma(n1, r.get("forma_local", []), r.get("descanso_local", 0))
+        self._fila_forma(n2, r.get("forma_visitante", []), r.get("descanso_visitante", 0))
+
+    def _fila_forma(self, nombre, forma, descanso):
+        fila = tk.Frame(self.frame_forma, bg=PANEL)
+        fila.pack(fill="x", pady=3)
+        tk.Label(fila, text=nombre[:11], font=(FUENTE, 9), fg=TEXTO, bg=PANEL,
+                 width=11, anchor="w").pack(side="left")
+        cv = tk.Canvas(fila, width=96, height=16, bg=PANEL, highlightthickness=0)
+        cv.pack(side="left")
+        col = {"W": VERDE, "D": TEXTO_SEC, "L": ROJO}
+        for i, res in enumerate(forma[-5:]):
+            x = i * 19 + 2
+            cv.create_oval(x, 2, x + 13, 15, fill=col.get(res, BORDE), outline="")
+        tk.Label(fila, text=f"· {int(descanso)}d", font=(FUENTE, 8),
+                 fg=TEXTO_SEC, bg=PANEL).pack(side="right")
 
     def _dibujar_heatmap(self, parent, mat, nombre_eq1, nombre_eq2):
         fig, ax = plt.subplots(figsize=(6.0, 3.6))
@@ -3721,6 +3683,220 @@ class PredictorApp(tk.Tk):
 if __name__ == "__main__":
     app = PredictorApp()
     app.mainloop()
+</file>
+
+<file path="backtest_cuotas.py">
+"""
+Backtest del modelo contra las CUOTAS REALES del mercado (Football-Data.co.uk).
+
+Mide si el modelo Poisson/Dixon-Coles le gana o iguala a las casas de apuestas:
+  - Compara su log-loss / Brier / acierto contra las cuotas de cierre de Pinnacle
+    (la casa más "sharp"), que son el patrón a vencer.
+  - Simula el ROI de apostar solo cuando el modelo detecta "valor".
+
+Clave: el CSV de Football-Data ya trae los goles de cada partido, así que el
+historial de cada equipo se construye del MISMO archivo. 100% offline tras la
+descarga, sin FBref ni mapeo de nombres. Backtest SIN fuga de datos: cada partido
+se predice usando solo los partidos anteriores.
+
+Uso:
+    py -3.11 backtest_cuotas.py            # Premier League 2024-25
+    py -3.11 backtest_cuotas.py SP1 2425   # La Liga 2024-25
+"""
+import sys
+
+import numpy as np
+import pandas as pd
+from sklearn.metrics import log_loss
+
+from feature_engineering import procesar_equipo, ultima_fila_valida
+from calcular_lambdas import calcular_lambdas
+from matriz_poisson import generar_matriz_poisson
+
+# Códigos de liga de Football-Data.co.uk
+LIGAS_FD = {
+    "E0": "Premier League (Inglaterra)", "SP1": "La Liga (España)",
+    "I1": "Serie A (Italia)", "D1": "Bundesliga (Alemania)", "F1": "Ligue 1 (Francia)",
+}
+BASE_URL = "https://www.football-data.co.uk/mmz4281"
+
+
+def descargar_cuotas(codigo: str = "E0", temporada: str = "2425") -> pd.DataFrame:
+    """Descarga el CSV de resultados + cuotas de una liga/temporada."""
+    url = f"{BASE_URL}/{temporada}/{codigo}.csv"
+    df = pd.read_csv(url)
+    df["Date"] = pd.to_datetime(df["Date"], dayfirst=True, errors="coerce")
+    return df.dropna(subset=["Date", "HomeTeam", "AwayTeam", "FTHG", "FTAG", "FTR"])
+
+
+def historial_desde_cuotas(df: pd.DataFrame) -> pd.DataFrame:
+    """Construye el historial por equipo (esquema del modelo) desde el CSV."""
+    filas = []
+    for _, m in df.iterrows():
+        gh, ga = int(m["FTHG"]), int(m["FTAG"])
+        base = {"Poss": np.nan, "Sh": np.nan, "SoT": np.nan, "xG": np.nan,
+                "xGA": np.nan, "Fls": np.nan, "CrdY": 0, "CrdR": 0}
+        filas.append({"Date": m["Date"], "Team": m["HomeTeam"], "Opponent": m["AwayTeam"],
+                      "Venue": "Home", "Result": "W" if gh > ga else "D" if gh == ga else "L",
+                      "GF": gh, "GA": ga, **base})
+        filas.append({"Date": m["Date"], "Team": m["AwayTeam"], "Opponent": m["HomeTeam"],
+                      "Venue": "Away", "Result": "W" if ga > gh else "D" if gh == ga else "L",
+                      "GF": ga, "GA": gh, **base})
+    return pd.DataFrame(filas).sort_values("Date").reset_index(drop=True)
+
+
+def _devig(oh, od, oa):
+    """Cuotas decimales -> probabilidades sin margen de la casa (de-vig)."""
+    if any(pd.isna(x) or x <= 1 for x in (oh, od, oa)):
+        return None
+    imp = np.array([1 / oh, 1 / od, 1 / oa])
+    return imp / imp.sum()
+
+
+def _cuotas_cierre(m):
+    """Cuotas de cierre por prioridad: Pinnacle -> Bet365 -> promedio."""
+    for h, d, a in [("PSCH", "PSCD", "PSCA"), ("B365CH", "B365CD", "B365CA"),
+                    ("AvgCH", "AvgCD", "AvgCA"), ("B365H", "B365D", "B365A")]:
+        if all(c in m and not pd.isna(m[c]) for c in (h, d, a)):
+            return float(m[h]), float(m[d]), float(m[a])
+    return None
+
+
+def correr(df_cuotas, rho=-0.05, k=2, min_previos=5, suavizado="ewm", ewm_span=10,
+           splits=False):  # rho/k calibrados contra el mercado; splits off (empeoran)
+    """
+    Predice cada partido sin fuga de datos y devuelve arrays alineados:
+    probs_modelo, probs_mercado, cuotas, y (0=local,1=empate,2=visitante).
+    """
+    hist = historial_desde_cuotas(df_cuotas)
+    df = df_cuotas.sort_values("Date").reset_index(drop=True)
+
+    pm_modelo, pm_mercado, cuotas, ys = [], [], [], []
+    for _, m in df.iterrows():
+        oc = _cuotas_cierre(m)
+        merc = _devig(*oc) if oc else None
+        if merc is None:
+            continue
+
+        local, visit, fecha = m["HomeTeam"], m["AwayTeam"], m["Date"]
+        h_loc = hist[(hist["Team"] == local) & (hist["Date"] < fecha)]
+        h_vis = hist[(hist["Team"] == visit) & (hist["Date"] < fecha)]
+        if len(h_loc) < min_previos or len(h_vis) < min_previos:
+            continue
+
+        prom_gf = hist[hist["Date"] < fecha]["GF"].mean()  # ~media de goles de local
+        v_loc, v_vis = ("Home", "Away") if splits else (None, None)
+        f_loc = ultima_fila_valida(procesar_equipo(
+            h_loc, prom_gf, prom_gf, 4.5, k_shrinkage=k, suavizado=suavizado,
+            ewm_span=ewm_span, venue=v_loc))
+        f_vis = ultima_fila_valida(procesar_equipo(
+            h_vis, prom_gf, prom_gf, 4.5, k_shrinkage=k, suavizado=suavizado,
+            ewm_span=ewm_span, venue=v_vis))
+        if f_loc is None or f_vis is None:
+            continue
+
+        # Clubes: SÍ aplica ventaja de localía (neutral=False), sin Elo.
+        lam_l, lam_v = calcular_lambdas(f_loc, f_vis, neutral=False)
+        mat = generar_matriz_poisson(lam_l, lam_v, rho=rho)
+        probs = [float(np.sum(np.tril(mat, -1))), float(np.sum(np.diag(mat))),
+                 float(np.sum(np.triu(mat, 1)))]
+
+        y = 0 if m["FTR"] == "H" else 1 if m["FTR"] == "D" else 2
+        pm_modelo.append(probs)
+        pm_mercado.append(list(merc))
+        cuotas.append(oc)
+        ys.append(y)
+
+    return (np.array(pm_modelo), np.array(pm_mercado),
+            np.array(cuotas), np.array(ys))
+
+
+def calibrar(dfs, rhos=(-0.20, -0.15, -0.13, -0.10, -0.05, 0.0),
+             ks=(3, 5, 8, 12), min_previos=5):
+    """
+    Barrido de rho y k sobre uno o varios DataFrames de cuotas (varias ligas
+    para no sobreajustar). Minimiza el log_loss contra los RESULTADOS reales,
+    sin fuga de datos. Las lambdas dependen de k, así que se calculan una sola
+    vez por k y luego se reusa al barrer rho (barato). Devuelve un DataFrame
+    ordenado por log_loss.
+    """
+    datos = {k: [] for k in ks}  # k -> [(lam_l, lam_v, y)]
+    for df in dfs:
+        hist = historial_desde_cuotas(df)
+        dfo = df.sort_values("Date").reset_index(drop=True)
+        for _, m in dfo.iterrows():
+            local, visit, fecha = m["HomeTeam"], m["AwayTeam"], m["Date"]
+            h_loc = hist[(hist["Team"] == local) & (hist["Date"] < fecha)]
+            h_vis = hist[(hist["Team"] == visit) & (hist["Date"] < fecha)]
+            if len(h_loc) < min_previos or len(h_vis) < min_previos:
+                continue
+            prom = hist[hist["Date"] < fecha]["GF"].mean()
+            y = 0 if m["FTR"] == "H" else 1 if m["FTR"] == "D" else 2
+            for k in ks:
+                f_loc = ultima_fila_valida(procesar_equipo(h_loc, prom, prom, 4.5, k_shrinkage=k))
+                f_vis = ultima_fila_valida(procesar_equipo(h_vis, prom, prom, 4.5, k_shrinkage=k))
+                if f_loc is None or f_vis is None:
+                    continue
+                lam_l, lam_v = calcular_lambdas(f_loc, f_vis, neutral=False)
+                datos[k].append((lam_l, lam_v, y))
+
+    filas = []
+    for rho in rhos:
+        for k in ks:
+            probs, ys = [], []
+            for lam_l, lam_v, y in datos[k]:
+                mat = generar_matriz_poisson(lam_l, lam_v, rho=rho)
+                probs.append([float(np.sum(np.tril(mat, -1))), float(np.sum(np.diag(mat))),
+                              float(np.sum(np.triu(mat, 1)))])
+                ys.append(y)
+            if probs:
+                filas.append({"rho": rho, "k": k, "n": len(ys),
+                              "log_loss": log_loss(ys, probs, labels=[0, 1, 2])})
+    return pd.DataFrame(filas).sort_values("log_loss").reset_index(drop=True)
+
+
+def metricas(probs, y):
+    onehot = np.eye(3)[y]
+    return {"log_loss": log_loss(y, probs, labels=[0, 1, 2]),
+            "brier": float(np.mean(np.sum((probs - onehot) ** 2, axis=1))),
+            "acierto": float(np.mean(np.argmax(probs, axis=1) == y))}
+
+
+def simular_roi(probs, cuotas, y, umbral=0.05, stake=1.0):
+    """Apuesta 1 unidad a cada resultado donde prob_modelo*cuota > 1+umbral."""
+    ganancia, n = 0.0, 0
+    for p, o, real in zip(probs, cuotas, y):
+        for k in range(3):
+            if p[k] * o[k] > 1 + umbral:  # valor esperado positivo
+                n += 1
+                ganancia += (o[k] - 1) * stake if real == k else -stake
+    roi = (ganancia / (n * stake)) if n else 0.0
+    return {"apuestas": n, "ganancia": ganancia, "roi": roi}
+
+
+if __name__ == "__main__":
+    codigo = sys.argv[1] if len(sys.argv) > 1 else "E0"
+    temporada = sys.argv[2] if len(sys.argv) > 2 else "2425"
+    print(f"Liga: {LIGAS_FD.get(codigo, codigo)} · temporada {temporada}")
+
+    df = descargar_cuotas(codigo, temporada)
+    print(f"Partidos descargados: {len(df)}")
+
+    pm, mk, od, y = correr(df)
+    print(f"Partidos evaluados (con historial suficiente): {len(y)}\n")
+
+    mo, me = metricas(pm, y), metricas(mk, y)
+    print(f"{'':12}{'log_loss':>10}{'brier':>9}{'acierto':>9}")
+    print(f"{'MERCADO':12}{me['log_loss']:>10.4f}{me['brier']:>9.4f}{me['acierto']*100:>8.1f}%")
+    print(f"{'MODELO':12}{mo['log_loss']:>10.4f}{mo['brier']:>9.4f}{mo['acierto']*100:>8.1f}%")
+    print("  (menor log_loss/brier = mejor; el mercado es muy dificil de batir)\n")
+
+    roi = simular_roi(pm, od, y)
+    print(f"Simulador de ROI (apostando al 'valor' del modelo):")
+    print(f"  apuestas con valor: {roi['apuestas']}")
+    print(f"  ganancia neta: {roi['ganancia']:+.2f} unidades")
+    print(f"  ROI: {roi['roi']*100:+.1f}%")
+    print("  (ROI>0 sería ganarle al mercado; lo normal es negativo por el margen)")
 </file>
 
 <file path="README.md">
@@ -3802,14 +3978,22 @@ Panel izquierdo:
     no minutos. Si no hay API configurada o la red falla, avisa y predice con los
     datos locales.
 
-Panel derecho (tras pulsar *Predecir partido*):
+En el panel lateral, tras predecir, aparece la **forma reciente** (últimos 5:
+🟢W / ⚪D / 🔴L) y los **días de descanso** de cada equipo.
 
-- **3 tarjetas redondeadas**: probabilidad de victoria del Equipo 1, empate, y
-  victoria del Equipo 2.
-- **Barra de probabilidad** 1-X-2: reparto visual de las tres probabilidades.
-- **xG esperados (λ)**: goles esperados de cada equipo según el modelo.
-- **Tarjetas de mercados**: *Ambos anotan (BTTS)*, *Más de 2.5 goles* y
-  *Portería a 0* (local / visitante).
+Panel derecho (tras pulsar *Predecir partido*), organizado en **dos pestañas**:
+
+*Pestaña «Predicción»:*
+- **3 tarjetas 1-X-2** con porcentaje **y cuota justa** (1/probabilidad).
+- **Barra de probabilidad** 1-X-2: reparto visual.
+- **xG esperados (λ)** de cada equipo.
+- **Mercados**: *Ambos anotan (BTTS)*, *Más de 2.5*, *Portería a 0*, y
+  **mercados asiáticos** *Más de 1.5*, *Más de 3.5*, *Menos de 2.5* (con cuota).
+- **Top 5 marcadores** más probables con su cuota justa.
+
+*Pestaña «Análisis»:*
+- **Radar de dominio** (telaraña): compara ataque, posesión, tiros, defensa y
+  disciplina del local (verde) vs visitante (rojo).
 - **Mapa de calor**: probabilidad de cada marcador exacto (0-0, 1-0, 2-1, …).
 
 ---
@@ -4000,13 +4184,21 @@ ventaja durable.
 
 **Calibración de `rho`/`k`** (`backtest_cuotas.calibrar([df1, df2, ...])`): un
 barrido sobre las 5 grandes ligas europeas (≈1500 partidos) mostró que **`k`
-(shrinkage) es la palanca real, no `rho`**. Hallazgos aplicados como defaults:
-- `rho = -0.10` (el óptimo es plano entre 0 y −0.10; antes −0.13).
-- **Clubes**: `k = 3` (tienen muchos partidos → poco shrinkage). Bajó el log_loss
-  del modelo de 1.030 a 1.025.
+(shrinkage) es la palanca real, no `rho`**. Recalibrado tras las nuevas variables:
+- `rho = -0.05` (el óptimo es plano cerca de 0).
+- **Clubes**: `k = 2` (muchos partidos → poco shrinkage).
 - **Mundial**: se mantiene `k = 5`. Las selecciones tienen **pocos partidos**
-  (7–25), así que necesitan MÁS shrinkage; un `k=3` las sobreajustaría. Por eso
-  los defaults son **por contexto**, no un valor único.
+  (7–25) y necesitan MÁS shrinkage; un `k` bajo las sobreajustaría. Los defaults
+  son **por contexto**, no un valor único.
+
+**Auditoría anti-fuga (EWM)** (`backtest.auditar_ewm_sin_fuga()`): confirma que
+el suavizado `.shift(1).ewm().mean()` es causal — no filtra datos del partido
+actual ni del futuro hacia los promedios del pasado. Pasa sin fuga.
+
+**Confirmación con Monte Carlo**: tras los Sprints 1-2, las potencias reales
+suben su % de título (España 3.7→6.0%, Inglaterra 4.2→5.6%, Argentina 9.5→11.3%)
+y bajan los beneficiarios de grupo débil — señal de que el modelo captura mejor
+la calidad subyacente.
 
 ### Calibrar el modelo (avanzado)
 ```python

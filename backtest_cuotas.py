@@ -74,8 +74,8 @@ def _cuotas_cierre(m):
     return None
 
 
-def correr(df_cuotas, rho=-0.10, k=3, min_previos=5, suavizado="ewm", ewm_span=10,
-           splits=False):  # splits local/visitante medidos: empeoran (off por defecto)
+def correr(df_cuotas, rho=-0.05, k=2, min_previos=5, suavizado="ewm", ewm_span=10,
+           splits=False):  # rho/k calibrados contra el mercado; splits off (empeoran)
     """
     Predice cada partido sin fuga de datos y devuelve arrays alineados:
     probs_modelo, probs_mercado, cuotas, y (0=local,1=empate,2=visitante).

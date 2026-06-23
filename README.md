@@ -76,14 +76,22 @@ Panel izquierdo:
     no minutos. Si no hay API configurada o la red falla, avisa y predice con los
     datos locales.
 
-Panel derecho (tras pulsar *Predecir partido*):
+En el panel lateral, tras predecir, aparece la **forma reciente** (últimos 5:
+🟢W / ⚪D / 🔴L) y los **días de descanso** de cada equipo.
 
-- **3 tarjetas redondeadas**: probabilidad de victoria del Equipo 1, empate, y
-  victoria del Equipo 2.
-- **Barra de probabilidad** 1-X-2: reparto visual de las tres probabilidades.
-- **xG esperados (λ)**: goles esperados de cada equipo según el modelo.
-- **Tarjetas de mercados**: *Ambos anotan (BTTS)*, *Más de 2.5 goles* y
-  *Portería a 0* (local / visitante).
+Panel derecho (tras pulsar *Predecir partido*), organizado en **dos pestañas**:
+
+*Pestaña «Predicción»:*
+- **3 tarjetas 1-X-2** con porcentaje **y cuota justa** (1/probabilidad).
+- **Barra de probabilidad** 1-X-2: reparto visual.
+- **xG esperados (λ)** de cada equipo.
+- **Mercados**: *Ambos anotan (BTTS)*, *Más de 2.5*, *Portería a 0*, y
+  **mercados asiáticos** *Más de 1.5*, *Más de 3.5*, *Menos de 2.5* (con cuota).
+- **Top 5 marcadores** más probables con su cuota justa.
+
+*Pestaña «Análisis»:*
+- **Radar de dominio** (telaraña): compara ataque, posesión, tiros, defensa y
+  disciplina del local (verde) vs visitante (rojo).
 - **Mapa de calor**: probabilidad de cada marcador exacto (0-0, 1-0, 2-1, …).
 
 ---
@@ -274,13 +282,21 @@ ventaja durable.
 
 **Calibración de `rho`/`k`** (`backtest_cuotas.calibrar([df1, df2, ...])`): un
 barrido sobre las 5 grandes ligas europeas (≈1500 partidos) mostró que **`k`
-(shrinkage) es la palanca real, no `rho`**. Hallazgos aplicados como defaults:
-- `rho = -0.10` (el óptimo es plano entre 0 y −0.10; antes −0.13).
-- **Clubes**: `k = 3` (tienen muchos partidos → poco shrinkage). Bajó el log_loss
-  del modelo de 1.030 a 1.025.
+(shrinkage) es la palanca real, no `rho`**. Recalibrado tras las nuevas variables:
+- `rho = -0.05` (el óptimo es plano cerca de 0).
+- **Clubes**: `k = 2` (muchos partidos → poco shrinkage).
 - **Mundial**: se mantiene `k = 5`. Las selecciones tienen **pocos partidos**
-  (7–25), así que necesitan MÁS shrinkage; un `k=3` las sobreajustaría. Por eso
-  los defaults son **por contexto**, no un valor único.
+  (7–25) y necesitan MÁS shrinkage; un `k` bajo las sobreajustaría. Los defaults
+  son **por contexto**, no un valor único.
+
+**Auditoría anti-fuga (EWM)** (`backtest.auditar_ewm_sin_fuga()`): confirma que
+el suavizado `.shift(1).ewm().mean()` es causal — no filtra datos del partido
+actual ni del futuro hacia los promedios del pasado. Pasa sin fuga.
+
+**Confirmación con Monte Carlo**: tras los Sprints 1-2, las potencias reales
+suben su % de título (España 3.7→6.0%, Inglaterra 4.2→5.6%, Argentina 9.5→11.3%)
+y bajan los beneficiarios de grupo débil — señal de que el modelo captura mejor
+la calidad subyacente.
 
 ### Calibrar el modelo (avanzado)
 ```python

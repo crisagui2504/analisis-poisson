@@ -7,7 +7,7 @@ La paleta vive en app_gui.py (PALETA); aqui la importamos para no duplicar.
 import tkinter.ttk as ttk
 
 from paleta import (
-    BG, PANEL, CARD2, BORDE, TEXTO, TEXTO_SEC, ACENTO, ACENTO_HOVER,
+    BG, PANEL, CARD, CARD2, BORDE, TEXTO, TEXTO_SEC, ACENTO, ACENTO_HOVER,
 )
 
 
@@ -54,6 +54,14 @@ def aplicar_tema(root):
         troughcolor=BORDE, background=ACENTO, bordercolor=PANEL,
         lightcolor=ACENTO, darkcolor=ACENTO, thickness=6,
     )
+
+    # Pestañas (Notebook)
+    style.configure("Moderno.TNotebook", background=CARD, borderwidth=0)
+    style.configure("Moderno.TNotebook.Tab", background=CARD, foreground=TEXTO_SEC,
+                    padding=(16, 8), borderwidth=0, font="{Segoe UI} 10 bold")
+    style.map("Moderno.TNotebook.Tab",
+              background=[("selected", CARD2)],
+              foreground=[("selected", TEXTO)])
 
     # Checkbutton
     style.configure(

@@ -20,6 +20,46 @@ from calcular_lambdas import calcular_lambdas
 from matriz_poisson import generar_matriz_poisson
 
 
+def auditar_ewm_sin_fuga(n=30, span=10):
+    """
+    Verifica que el suavizado .shift(1).ewm().mean() NO filtre datos del partido
+    actual ni del futuro hacia los promedios del pasado.
+      1) Causalidad: el suavizado en i calculado con toda la serie debe ser igual
+         al calculado solo con los datos [0..i] (no usa el futuro).
+      2) El valor del partido i NO debe afectar su propio promedio (shift(1)),
+         pero SÍ debe afectar el del partido i+1.
+    """
+    rng = np.random.default_rng(0)
+    serie = pd.Series(rng.normal(1.5, 1.0, n))
+
+    def prom(s):
+        return s.shift(1).ewm(span=span, min_periods=1).mean()
+
+    full = prom(serie)
+    max_dif = 0.0
+    for i in range(n):
+        parcial = prom(serie.iloc[:i + 1]).iloc[i]
+        if pd.notna(full.iloc[i]) and pd.notna(parcial):
+            max_dif = max(max_dif, abs(full.iloc[i] - parcial))
+
+    serie2 = serie.copy()
+    serie2.iloc[5] = 999.0
+    full2 = prom(serie2)
+    dif_presente = abs(float(full2.iloc[5] or 0) - float(full.iloc[5] or 0)) if pd.notna(full.iloc[5]) else 0.0
+    dif_futuro = abs(float(full2.iloc[6]) - float(full.iloc[6]))
+
+    ok = (max_dif < 1e-9) and (dif_presente < 1e-9) and (dif_futuro > 0)
+    print("Auditoria EWM (fuga de datos):")
+    print(f"  1) causalidad (toda la serie vs prefijo): max_dif={max_dif:.2e}  "
+          f"{'OK sin fuga' if max_dif < 1e-9 else 'FUGA!'}")
+    print(f"  2) el partido actual NO afecta su propio promedio: dif={dif_presente:.2e}  "
+          f"{'OK' if dif_presente < 1e-9 else 'FUGA!'}")
+    print(f"  3) el partido actual SI afecta el del siguiente:   dif={dif_futuro:.3f}  "
+          f"{'OK' if dif_futuro > 0 else 'ERROR'}")
+    print("  Resultado:", "SIN FUGA DE DATOS" if ok else "REVISAR")
+    return ok
+
+
 def calcular_brier_score(preds, trues):
     """Error cuadrático medio entre probabilidades predichas y resultado real (one-hot)."""
     preds = np.array(preds)

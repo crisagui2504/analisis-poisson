@@ -72,7 +72,7 @@ def predecir_partido(
     equipo_visitante: str,
     liga: str,
     temporada: str,
-    rho: float = -0.10,
+    rho: float = -0.05,
     k_shrinkage: int = 5,
     no_cache: bool = False,
     n_window: int = 6,
@@ -156,6 +156,22 @@ def predecir_partido(
 
     mercados = calcular_mercados(matriz)
 
+    def _forma(df):
+        return list(df.sort_values("Date")["Result"].dropna().tail(5))
+
+    def _num(fila, col):
+        v = fila.get(col)
+        return float(v) if (v is not None and pd.notna(v)) else 0.0
+
+    def _metricas(fila):
+        return {
+            "ataque": _num(fila, "xg_favor_adj"),
+            "defensa": _num(fila, "xg_contra_adj"),
+            "tiros": _num(fila, "tiros_puerta_adj"),
+            "posesion": _num(fila, "posesion_prom"),
+            "disciplina": _num(fila, "disciplina_prom"),
+        }
+
     return {
         "lambda_local": lambda_local,
         "lambda_visitante": lambda_visitante,
@@ -164,6 +180,12 @@ def predecir_partido(
         "prob_visitante": prob_visitante,
         "matriz": matriz,
         "df_liga": pd.DataFrame(),
+        "forma_local": _forma(df_local),
+        "forma_visitante": _forma(df_visitante),
+        "descanso_local": _num(fila_local, "dias_descanso"),
+        "descanso_visitante": _num(fila_visitante, "dias_descanso"),
+        "metricas_local": _metricas(fila_local),
+        "metricas_visitante": _metricas(fila_visitante),
         **mercados,
     }
 
@@ -180,9 +202,14 @@ def calcular_mercados(matriz: np.ndarray) -> dict:
     # Ambos anotan (BTTS): ambos marcan >= 1 gol -> excluye fila 0 y columna 0.
     prob_btts = float(matriz[1:, 1:].sum())
 
-    # Over/Under 2.5: suma de goles (i + j) mayor que 2.
-    prob_over25 = float(matriz[(idx_i + idx_j) > 2].sum())
-    prob_under25 = float(matriz[(idx_i + idx_j) <= 2].sum())
+    # Over/Under por linea de goles totales (i + j). Mercados "asiaticos".
+    total = idx_i + idx_j
+    prob_over15 = float(matriz[total > 1].sum())
+    prob_under15 = float(matriz[total <= 1].sum())
+    prob_over25 = float(matriz[total > 2].sum())
+    prob_under25 = float(matriz[total <= 2].sum())
+    prob_over35 = float(matriz[total > 3].sum())
+    prob_under35 = float(matriz[total <= 3].sum())
 
     # Porteria a cero (clean sheet): el rival no anota.
     # Local deja la porteria a cero -> visitante marca 0 -> columna 0.
@@ -192,8 +219,12 @@ def calcular_mercados(matriz: np.ndarray) -> dict:
 
     return {
         "prob_btts": prob_btts,
+        "prob_over15": prob_over15,
+        "prob_under15": prob_under15,
         "prob_over25": prob_over25,
         "prob_under25": prob_under25,
+        "prob_over35": prob_over35,
+        "prob_under35": prob_under35,
         "prob_cs_local": prob_cs_local,
         "prob_cs_visitante": prob_cs_visitante,
     }

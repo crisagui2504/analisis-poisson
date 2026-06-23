@@ -29,7 +29,7 @@ RONDAS = ["16avos", "Octavos", "Cuartos", "Semis", "Final", "Campeon"]
 SALIDA_CSV = "montecarlo_resultados.csv"
 
 
-def construir_modelo(rho: float = -0.13, k_shrinkage: int = 5):
+def construir_modelo(rho: float = -0.05, k_shrinkage: int = 5):
     """Calcula la fila de features y el Elo de cada seleccion UNA sola vez."""
     if not existe_csv_maestro():
         raise SystemExit(
