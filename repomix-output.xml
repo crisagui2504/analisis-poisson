@@ -2866,16 +2866,19 @@ def _factor_h2h(df, local, visit, peso=0.04, min_partidos=3):
     equipos y devuelve (factor_local, factor_visitante) acotado a +/-peso. Si hay
     'paternidad' clara (un equipo gana la mayoria), inclina sutilmente los lambdas.
     """
-    if df is None or getattr(df, "empty", True) or "Opponent" not in df.columns:
+    if df is None or getattr(df, "empty", True) or not {"Team", "Opponent"} <= set(df.columns):
         return 1.0, 1.0
 
     def _norm(s):
         return _limpiar_nombre_rival(str(s)).lower()
 
     nl, nv = _norm(local), _norm(visit)
-    opp = df["Opponent"].map(_norm)
-    loc_rows = df[(df["Team"] == local) & (opp == nv)]
-    vis_rows = df[(df["Team"] == visit) & (opp == nl)]
+    # Normalizacion SIMETRICA: ambas columnas pasan por _norm, no solo Opponent.
+    # Asi un espacio/mayuscula colado en Team no rompe el match en silencio.
+    team_norm = df["Team"].map(_norm)
+    opp_norm = df["Opponent"].map(_norm)
+    loc_rows = df[(team_norm == nl) & (opp_norm == nv)]
+    vis_rows = df[(team_norm == nv) & (opp_norm == nl)]
 
     # Resultados desde la optica del local (invertimos los del visitante).
     res = list(loc_rows["Result"])
