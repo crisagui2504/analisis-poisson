@@ -18,6 +18,7 @@ from ligas_config import (
 )
 from predecir_partido import predecir_partido, cargar_equipos
 import proveedores
+import montecarlo_mundial
 from tema_oscuro import aplicar_tema
 from paleta import (
     BG, PANEL, CARD, CARD2, BORDE, TEXTO, TEXTO_SEC,
@@ -252,9 +253,35 @@ class PredictorApp(tk.Tk):
                                    wraplength=280, justify="left")
         self.lbl_estado.pack(padx=20, pady=10, anchor="w")
 
+        # ── Simulación del torneo (Monte Carlo) ──
+        tk.Frame(frame, bg=BORDE, height=1).pack(fill="x", padx=20, pady=(6, 8))
+        fila_mc = tk.Frame(frame, bg=PANEL)
+        fila_mc.pack(fill="x", padx=20)
+        tk.Label(fila_mc, text="Simulaciones", fg=TEXTO_SEC, bg=PANEL,
+                 font=(FUENTE, 9)).pack(side="left")
+        self.var_nsim = tk.StringVar(value="5000")
+        ttk.Combobox(fila_mc, textvariable=self.var_nsim, values=["1000", "5000", "10000"],
+                     state="readonly", width=8, style="Moderno.TCombobox",
+                     font=(FUENTE, 9)).pack(side="right")
+
+        self.btn_montecarlo = tk.Button(
+            frame, text="🏆  Simular Mundial",
+            font=(FUENTE, 12, "bold"), bg=AMARILLO, fg="#1a1500",
+            activebackground="#fcd34d", activeforeground="#1a1500",
+            relief="flat", cursor="hand2", bd=0, pady=11,
+            command=self._iniciar_montecarlo,
+        )
+        self.btn_montecarlo.pack(fill="x", padx=20, pady=(8, 4))
+        self.btn_montecarlo.bind("<Enter>", lambda e: self._hover_mc(True))
+        self.btn_montecarlo.bind("<Leave>", lambda e: self._hover_mc(False))
+
     def _hover_btn(self, dentro):
         if str(self.btn_predecir["state"]) != "disabled":
             self.btn_predecir.config(bg=ACENTO_HOVER if dentro else ACENTO)
+
+    def _hover_mc(self, dentro):
+        if str(self.btn_montecarlo["state"]) != "disabled":
+            self.btn_montecarlo.config(bg="#fcd34d" if dentro else AMARILLO)
 
     def _slider(self, frame, etiqueta, desde, hasta, ini, clave, fmt):
         fila = tk.Frame(frame, bg=PANEL)
@@ -312,6 +339,7 @@ class PredictorApp(tk.Tk):
         self.lbl_estado.config(text="Cargando equipos de la liga...")
         self.progreso.start(10)
         self.btn_predecir.config(state="disabled")
+        self.btn_montecarlo.config(state="disabled", bg=BORDE)
 
         def tarea():
             try:
@@ -366,6 +394,7 @@ class PredictorApp(tk.Tk):
         actualizar = self.var_actualizar.get()
 
         self.btn_predecir.config(state="disabled", bg=BORDE)
+        self.btn_montecarlo.config(state="disabled", bg=BORDE)
         self.progreso.start(10)
         self.lbl_estado.config(text="Calculando predicción…")
 
@@ -412,6 +441,87 @@ class PredictorApp(tk.Tk):
     def _parar_progreso(self):
         self.progreso.stop()
         self.btn_predecir.config(state="normal", bg=ACENTO)
+        self.btn_montecarlo.config(state="normal", bg=AMARILLO)
+
+    # ── Simulación Monte Carlo del torneo ─────────────────────────────────
+
+    def _iniciar_montecarlo(self):
+        try:
+            n_sim = int(self.var_nsim.get())
+        except ValueError:
+            n_sim = 5000
+
+        self.btn_predecir.config(state="disabled", bg=BORDE)
+        self.btn_montecarlo.config(state="disabled", bg=BORDE)
+        self.progreso.start(10)
+        self.lbl_estado.config(text=f"Simulando el Mundial {n_sim:,} veces…")
+
+        def tarea():
+            try:
+                df = montecarlo_mundial.correr(n_sim=n_sim)
+                self.after(0, lambda: self._mostrar_montecarlo(df, n_sim))
+            except Exception as e:
+                err = str(e)
+                self.after(0, lambda: messagebox.showerror("Error en la simulación", err))
+            finally:
+                self.after(0, self._parar_progreso)
+
+        threading.Thread(target=tarea, daemon=True).start()
+
+    def _mostrar_montecarlo(self, df, n_sim):
+        self.lbl_estado.config(text="¡Simulación lista!")
+        for w in self.frame_der.winfo_children():
+            w.destroy()
+        cont = tk.Frame(self.frame_der, bg=CARD)
+        cont.pack(fill="both", expand=True, padx=18, pady=14)
+
+        tk.Label(cont, text=f"🏆 Probabilidades de título · {n_sim:,} simulaciones",
+                 font=(FUENTE, 15, "bold"), fg=TEXTO, bg=CARD).pack(anchor="w")
+        tk.Label(cont, text="Grupos provisionales (sembrados por Elo) — edita "
+                            "GRUPOS_MUNDIAL para el sorteo oficial.",
+                 font=(FUENTE, 8), fg=TEXTO_SEC, bg=CARD).pack(anchor="w", pady=(0, 6))
+
+        self._barras_montecarlo(cont, df)
+        self._tabla_montecarlo(cont, df)
+
+    def _barras_montecarlo(self, parent, df):
+        top = df.head(12).iloc[::-1]  # invertido: el mayor arriba en barh
+        fig, ax = plt.subplots(figsize=(6.0, 3.4))
+        fig.patch.set_facecolor(CARD)
+        ax.set_facecolor(CARD)
+        barras = ax.barh(top["Equipo"], top["Campeon_%"], color=ACENTO, height=0.7)
+        for b, v in zip(barras, top["Campeon_%"]):
+            ax.text(v + 0.1, b.get_y() + b.get_height() / 2, f"{v:.1f}%",
+                    va="center", color=TEXTO_SEC, fontsize=8)
+        ax.set_title("Top 12 candidatos al título (%)", color=TEXTO, fontsize=10, pad=8)
+        ax.tick_params(colors=TEXTO_SEC, labelsize=9)
+        for s in ax.spines.values():
+            s.set_visible(False)
+        ax.set_xlim(0, max(top["Campeon_%"]) * 1.18)
+        fig.tight_layout()
+        canvas = FigureCanvasTkAgg(fig, master=parent)
+        canvas.draw()
+        canvas.get_tk_widget().pack(fill="x")
+        plt.close(fig)
+
+    def _tabla_montecarlo(self, parent, df):
+        tk.Label(parent, text="RANKING (Top 16)  ·  Campeón / Final / Semis",
+                 font=(FUENTE, 9, "bold"), fg=TEXTO_SEC, bg=CARD).pack(anchor="w", pady=(10, 4))
+        tabla = tk.Frame(parent, bg=CARD)
+        tabla.pack(fill="x")
+        encabezados = ["#", "Selección", "Campeón", "Final", "Semis"]
+        anchos = [3, 18, 9, 8, 8]
+        for c, (txt, w) in enumerate(zip(encabezados, anchos)):
+            tk.Label(tabla, text=txt, font=(FUENTE, 8, "bold"), fg=TEXTO_SEC, bg=CARD,
+                     width=w, anchor="w").grid(row=0, column=c, sticky="w", padx=2)
+        for i, (_, r) in enumerate(df.head(16).iterrows(), 1):
+            color = VERDE if i <= 3 else TEXTO
+            celdas = [str(i), r["Equipo"], f"{r['Campeon_%']:.1f}%",
+                      f"{r['Final_%']:.0f}%", f"{r['Semis_%']:.0f}%"]
+            for c, (txt, w) in enumerate(zip(celdas, anchos)):
+                fg = color if c <= 1 else TEXTO_SEC
+                tk.Label(tabla, text=txt, font=(FUENTE, 9), fg=fg, bg=CARD,
+                         width=w, anchor="w").grid(row=i, column=c, sticky="w", padx=2)
 
     # ── Panel de resultados ───────────────────────────────────────────────
 

@@ -2835,248 +2835,6 @@ def generar_matriz_poisson(lambda_local, lambda_visitante, max_goles=5, rho=-0.0
     return matriz_corregida
 </file>
 
-<file path="predecir_partido.py">
-"""
-Logica de prediccion sin interfaz. La GUI llama a predecir_partido().
-"""
-import json
-import os
-import numpy as np
-import pandas as pd
-
-from ingest_fbref import (
-    descargar_liga,
-    construir_historial_equipo,
-    obtener_equipos_liga,
-    construir_historial_equipo_directo,
-    cargar_historial_csv,
-    existe_csv_maestro,
-    _chequear_dependencia,
-    sd,
-)
-from feature_engineering import procesar_equipo, ultima_fila_valida
-from calcular_lambdas import calcular_lambdas, _acota
-from matriz_poisson import generar_matriz_poisson
-from ligas_config import elo_de, _limpiar_nombre_rival
-
-
-def _factor_h2h(df, local, visit, peso=0.04, min_partidos=3):
-    """
-    Historial directo (head-to-head). Busca en la base los cruces entre los dos
-    equipos y devuelve (factor_local, factor_visitante) acotado a +/-peso. Si hay
-    'paternidad' clara (un equipo gana la mayoria), inclina sutilmente los lambdas.
-    """
-    if df is None or getattr(df, "empty", True) or not {"Team", "Opponent"} <= set(df.columns):
-        return 1.0, 1.0
-
-    def _norm(s):
-        return _limpiar_nombre_rival(str(s)).lower()
-
-    nl, nv = _norm(local), _norm(visit)
-    # Normalizacion SIMETRICA: ambas columnas pasan por _norm, no solo Opponent.
-    # Asi un espacio/mayuscula colado en Team no rompe el match en silencio.
-    team_norm = df["Team"].map(_norm)
-    opp_norm = df["Opponent"].map(_norm)
-    loc_rows = df[(team_norm == nl) & (opp_norm == nv)]
-    vis_rows = df[(team_norm == nv) & (opp_norm == nl)]
-
-    # Resultados desde la optica del local (invertimos los del visitante).
-    res = list(loc_rows["Result"])
-    res += ["W" if r == "L" else "L" if r == "W" else "D" for r in vis_rows["Result"]]
-    n = len(res)
-    if n < min_partidos:
-        return 1.0, 1.0
-
-    tasa_local = sum(1 for r in res if r == "W") / n   # 1 = domina el local
-    aj = _acota(peso * (tasa_local - 0.5) * 2, -peso, peso)
-    return 1 + aj, 1 - aj
-
-
-PROMEDIOS_LIGA_PATH = "promedios_liga.json"
-PROMEDIOS_DEFAULT = {"xg_favor": 1.3, "xg_contra": 1.3, "sot": 4.5}
-
-
-def _cargar_promedios_liga():
-    if os.path.exists(PROMEDIOS_LIGA_PATH):
-        with open(PROMEDIOS_LIGA_PATH, "r", encoding="utf-8") as f:
-            return json.load(f)
-
-    print(
-        f"Aviso: no se encontro {PROMEDIOS_LIGA_PATH}. Usando promedios por defecto. "
-        "Ejecuta calcular_promedios_liga.py una vez para generarlo desde el cache local."
-    )
-    return PROMEDIOS_DEFAULT
-
-
-def predecir_partido(
-    equipo_local: str,
-    equipo_visitante: str,
-    liga: str,
-    temporada: str,
-    rho: float = -0.05,
-    k_shrinkage: int = 5,
-    no_cache: bool = False,
-    n_window: int = 6,
-    neutral: bool | None = None,
-) -> dict:
-    df_h2h = None  # base para el historial directo (solo Mundial vía CSV)
-    if liga == "INT-World Cup":
-        # Ruta preferente: CSV maestro local (100% offline y rapido). Si no
-        # existe o se forzo no_cache, caemos a la descarga directa de FBref.
-        if existe_csv_maestro() and not no_cache:
-            df_maestro = cargar_historial_csv()
-            df_h2h = df_maestro
-            df_local = construir_historial_equipo(df_maestro, equipo_local)
-            df_visitante = construir_historial_equipo(df_maestro, equipo_visitante)
-        else:
-            _chequear_dependencia()
-            fbref = sd.FBref(leagues=liga, seasons=temporada, no_cache=no_cache)
-            df_local = construir_historial_equipo_directo(fbref, equipo_local)
-            df_visitante = construir_historial_equipo_directo(fbref, equipo_visitante)
-
-        promedios = _cargar_promedios_liga()
-        prom_xg_fav = promedios.get("xg_favor", PROMEDIOS_DEFAULT["xg_favor"])
-        prom_xg_con = promedios.get("xg_contra", PROMEDIOS_DEFAULT["xg_contra"])
-        prom_tiros = promedios.get("sot", PROMEDIOS_DEFAULT["sot"])
-        if neutral is None:
-            neutral = True
-    else:
-        df_liga = descargar_liga(liga, temporada, no_cache=no_cache)
-        prom_xg_fav = df_liga["xG"].mean() if "xG" in df_liga.columns else 1.2
-        prom_xg_con = df_liga["xGA"].mean() if "xGA" in df_liga.columns else 1.2
-        prom_tiros = df_liga["SoT"].mean() if "SoT" in df_liga.columns else 4.5
-        df_local = construir_historial_equipo(df_liga, equipo_local)
-        df_visitante = construir_historial_equipo(df_liga, equipo_visitante)
-        if neutral is None:
-            neutral = False
-
-    feats_local = procesar_equipo(
-        df_local,
-        prom_xg_fav,
-        prom_xg_con,
-        prom_tiros,
-        n_window=n_window,
-        k_shrinkage=k_shrinkage,
-    )
-    feats_visitante = procesar_equipo(
-        df_visitante,
-        prom_xg_fav,
-        prom_xg_con,
-        prom_tiros,
-        n_window=n_window,
-        k_shrinkage=k_shrinkage,
-    )
-
-    fila_local = ultima_fila_valida(feats_local)
-    fila_visitante = ultima_fila_valida(feats_visitante)
-
-    if fila_local is None or fila_visitante is None:
-        raise ValueError(
-            f"No hay suficientes partidos completos para calcular ({equipo_local}: "
-            f"{len(df_local)} partidos, {equipo_visitante}: {len(df_visitante)} partidos)."
-        )
-
-    lambda_local, lambda_visitante = calcular_lambdas(
-        fila_local,
-        fila_visitante,
-        neutral=neutral,
-        elo_local=elo_de(equipo_local),
-        elo_visitante=elo_de(equipo_visitante),
-    )
-
-    # Historial directo (head-to-head): inclina sutilmente si hay paternidad.
-    f_loc, f_vis = _factor_h2h(df_h2h, equipo_local, equipo_visitante)
-    lambda_local *= f_loc
-    lambda_visitante *= f_vis
-
-    matriz = generar_matriz_poisson(lambda_local, lambda_visitante, rho=rho)
-
-    prob_local = float(np.sum(np.tril(matriz, -1)))
-    prob_empate = float(np.sum(np.diag(matriz)))
-    prob_visitante = float(np.sum(np.triu(matriz, 1)))
-
-    mercados = calcular_mercados(matriz)
-
-    def _forma(df):
-        return list(df.sort_values("Date")["Result"].dropna().tail(5))
-
-    def _num(fila, col):
-        v = fila.get(col)
-        return float(v) if (v is not None and pd.notna(v)) else 0.0
-
-    def _metricas(fila):
-        return {
-            "ataque": _num(fila, "xg_favor_adj"),
-            "defensa": _num(fila, "xg_contra_adj"),
-            "tiros": _num(fila, "tiros_puerta_adj"),
-            "posesion": _num(fila, "posesion_prom"),
-            "disciplina": _num(fila, "disciplina_prom"),
-        }
-
-    return {
-        "lambda_local": lambda_local,
-        "lambda_visitante": lambda_visitante,
-        "prob_local": prob_local,
-        "prob_empate": prob_empate,
-        "prob_visitante": prob_visitante,
-        "matriz": matriz,
-        "df_liga": pd.DataFrame(),
-        "forma_local": _forma(df_local),
-        "forma_visitante": _forma(df_visitante),
-        "descanso_local": _num(fila_local, "dias_descanso"),
-        "descanso_visitante": _num(fila_visitante, "dias_descanso"),
-        "metricas_local": _metricas(fila_local),
-        "metricas_visitante": _metricas(fila_visitante),
-        **mercados,
-    }
-
-
-def calcular_mercados(matriz: np.ndarray) -> dict:
-    """
-    Deriva metricas tipo casa de apuestas de la matriz de Poisson, sin tocar la
-    matematica base. Filas = goles del local (i), columnas = goles del
-    visitante (j).
-    """
-    n = matriz.shape[0]
-    idx_i, idx_j = np.indices((n, n))
-
-    # Ambos anotan (BTTS): ambos marcan >= 1 gol -> excluye fila 0 y columna 0.
-    prob_btts = float(matriz[1:, 1:].sum())
-
-    # Over/Under por linea de goles totales (i + j). Mercados "asiaticos".
-    total = idx_i + idx_j
-    prob_over15 = float(matriz[total > 1].sum())
-    prob_under15 = float(matriz[total <= 1].sum())
-    prob_over25 = float(matriz[total > 2].sum())
-    prob_under25 = float(matriz[total <= 2].sum())
-    prob_over35 = float(matriz[total > 3].sum())
-    prob_under35 = float(matriz[total <= 3].sum())
-
-    # Porteria a cero (clean sheet): el rival no anota.
-    # Local deja la porteria a cero -> visitante marca 0 -> columna 0.
-    prob_cs_local = float(matriz[:, 0].sum())
-    # Visitante deja la porteria a cero -> local marca 0 -> fila 0.
-    prob_cs_visitante = float(matriz[0, :].sum())
-
-    return {
-        "prob_btts": prob_btts,
-        "prob_over15": prob_over15,
-        "prob_under15": prob_under15,
-        "prob_over25": prob_over25,
-        "prob_under25": prob_under25,
-        "prob_over35": prob_over35,
-        "prob_under35": prob_under35,
-        "prob_cs_local": prob_cs_local,
-        "prob_cs_visitante": prob_cs_visitante,
-    }
-
-
-def cargar_equipos(liga: str, temporada: str):
-    """Descarga la liga y devuelve la lista de equipos para los desplegables."""
-    df_liga = descargar_liga(liga, temporada)
-    return obtener_equipos_liga(df_liga), df_liga
-</file>
-
 <file path="app_gui.py">
 """
 Interfaz gráfica del predictor de fútbol — estilo moderno.
@@ -3098,6 +2856,7 @@ from ligas_config import (
 )
 from predecir_partido import predecir_partido, cargar_equipos
 import proveedores
+import montecarlo_mundial
 from tema_oscuro import aplicar_tema
 from paleta import (
     BG, PANEL, CARD, CARD2, BORDE, TEXTO, TEXTO_SEC,
@@ -3332,9 +3091,35 @@ class PredictorApp(tk.Tk):
                                    wraplength=280, justify="left")
         self.lbl_estado.pack(padx=20, pady=10, anchor="w")
 
+        # ── Simulación del torneo (Monte Carlo) ──
+        tk.Frame(frame, bg=BORDE, height=1).pack(fill="x", padx=20, pady=(6, 8))
+        fila_mc = tk.Frame(frame, bg=PANEL)
+        fila_mc.pack(fill="x", padx=20)
+        tk.Label(fila_mc, text="Simulaciones", fg=TEXTO_SEC, bg=PANEL,
+                 font=(FUENTE, 9)).pack(side="left")
+        self.var_nsim = tk.StringVar(value="5000")
+        ttk.Combobox(fila_mc, textvariable=self.var_nsim, values=["1000", "5000", "10000"],
+                     state="readonly", width=8, style="Moderno.TCombobox",
+                     font=(FUENTE, 9)).pack(side="right")
+
+        self.btn_montecarlo = tk.Button(
+            frame, text="🏆  Simular Mundial",
+            font=(FUENTE, 12, "bold"), bg=AMARILLO, fg="#1a1500",
+            activebackground="#fcd34d", activeforeground="#1a1500",
+            relief="flat", cursor="hand2", bd=0, pady=11,
+            command=self._iniciar_montecarlo,
+        )
+        self.btn_montecarlo.pack(fill="x", padx=20, pady=(8, 4))
+        self.btn_montecarlo.bind("<Enter>", lambda e: self._hover_mc(True))
+        self.btn_montecarlo.bind("<Leave>", lambda e: self._hover_mc(False))
+
     def _hover_btn(self, dentro):
         if str(self.btn_predecir["state"]) != "disabled":
             self.btn_predecir.config(bg=ACENTO_HOVER if dentro else ACENTO)
+
+    def _hover_mc(self, dentro):
+        if str(self.btn_montecarlo["state"]) != "disabled":
+            self.btn_montecarlo.config(bg="#fcd34d" if dentro else AMARILLO)
 
     def _slider(self, frame, etiqueta, desde, hasta, ini, clave, fmt):
         fila = tk.Frame(frame, bg=PANEL)
@@ -3392,6 +3177,7 @@ class PredictorApp(tk.Tk):
         self.lbl_estado.config(text="Cargando equipos de la liga...")
         self.progreso.start(10)
         self.btn_predecir.config(state="disabled")
+        self.btn_montecarlo.config(state="disabled", bg=BORDE)
 
         def tarea():
             try:
@@ -3446,6 +3232,7 @@ class PredictorApp(tk.Tk):
         actualizar = self.var_actualizar.get()
 
         self.btn_predecir.config(state="disabled", bg=BORDE)
+        self.btn_montecarlo.config(state="disabled", bg=BORDE)
         self.progreso.start(10)
         self.lbl_estado.config(text="Calculando predicción…")
 
@@ -3492,6 +3279,87 @@ class PredictorApp(tk.Tk):
     def _parar_progreso(self):
         self.progreso.stop()
         self.btn_predecir.config(state="normal", bg=ACENTO)
+        self.btn_montecarlo.config(state="normal", bg=AMARILLO)
+
+    # ── Simulación Monte Carlo del torneo ─────────────────────────────────
+
+    def _iniciar_montecarlo(self):
+        try:
+            n_sim = int(self.var_nsim.get())
+        except ValueError:
+            n_sim = 5000
+
+        self.btn_predecir.config(state="disabled", bg=BORDE)
+        self.btn_montecarlo.config(state="disabled", bg=BORDE)
+        self.progreso.start(10)
+        self.lbl_estado.config(text=f"Simulando el Mundial {n_sim:,} veces…")
+
+        def tarea():
+            try:
+                df = montecarlo_mundial.correr(n_sim=n_sim)
+                self.after(0, lambda: self._mostrar_montecarlo(df, n_sim))
+            except Exception as e:
+                err = str(e)
+                self.after(0, lambda: messagebox.showerror("Error en la simulación", err))
+            finally:
+                self.after(0, self._parar_progreso)
+
+        threading.Thread(target=tarea, daemon=True).start()
+
+    def _mostrar_montecarlo(self, df, n_sim):
+        self.lbl_estado.config(text="¡Simulación lista!")
+        for w in self.frame_der.winfo_children():
+            w.destroy()
+        cont = tk.Frame(self.frame_der, bg=CARD)
+        cont.pack(fill="both", expand=True, padx=18, pady=14)
+
+        tk.Label(cont, text=f"🏆 Probabilidades de título · {n_sim:,} simulaciones",
+                 font=(FUENTE, 15, "bold"), fg=TEXTO, bg=CARD).pack(anchor="w")
+        tk.Label(cont, text="Grupos provisionales (sembrados por Elo) — edita "
+                            "GRUPOS_MUNDIAL para el sorteo oficial.",
+                 font=(FUENTE, 8), fg=TEXTO_SEC, bg=CARD).pack(anchor="w", pady=(0, 6))
+
+        self._barras_montecarlo(cont, df)
+        self._tabla_montecarlo(cont, df)
+
+    def _barras_montecarlo(self, parent, df):
+        top = df.head(12).iloc[::-1]  # invertido: el mayor arriba en barh
+        fig, ax = plt.subplots(figsize=(6.0, 3.4))
+        fig.patch.set_facecolor(CARD)
+        ax.set_facecolor(CARD)
+        barras = ax.barh(top["Equipo"], top["Campeon_%"], color=ACENTO, height=0.7)
+        for b, v in zip(barras, top["Campeon_%"]):
+            ax.text(v + 0.1, b.get_y() + b.get_height() / 2, f"{v:.1f}%",
+                    va="center", color=TEXTO_SEC, fontsize=8)
+        ax.set_title("Top 12 candidatos al título (%)", color=TEXTO, fontsize=10, pad=8)
+        ax.tick_params(colors=TEXTO_SEC, labelsize=9)
+        for s in ax.spines.values():
+            s.set_visible(False)
+        ax.set_xlim(0, max(top["Campeon_%"]) * 1.18)
+        fig.tight_layout()
+        canvas = FigureCanvasTkAgg(fig, master=parent)
+        canvas.draw()
+        canvas.get_tk_widget().pack(fill="x")
+        plt.close(fig)
+
+    def _tabla_montecarlo(self, parent, df):
+        tk.Label(parent, text="RANKING (Top 16)  ·  Campeón / Final / Semis",
+                 font=(FUENTE, 9, "bold"), fg=TEXTO_SEC, bg=CARD).pack(anchor="w", pady=(10, 4))
+        tabla = tk.Frame(parent, bg=CARD)
+        tabla.pack(fill="x")
+        encabezados = ["#", "Selección", "Campeón", "Final", "Semis"]
+        anchos = [3, 18, 9, 8, 8]
+        for c, (txt, w) in enumerate(zip(encabezados, anchos)):
+            tk.Label(tabla, text=txt, font=(FUENTE, 8, "bold"), fg=TEXTO_SEC, bg=CARD,
+                     width=w, anchor="w").grid(row=0, column=c, sticky="w", padx=2)
+        for i, (_, r) in enumerate(df.head(16).iterrows(), 1):
+            color = VERDE if i <= 3 else TEXTO
+            celdas = [str(i), r["Equipo"], f"{r['Campeon_%']:.1f}%",
+                      f"{r['Final_%']:.0f}%", f"{r['Semis_%']:.0f}%"]
+            for c, (txt, w) in enumerate(zip(celdas, anchos)):
+                fg = color if c <= 1 else TEXTO_SEC
+                tk.Label(tabla, text=txt, font=(FUENTE, 9), fg=fg, bg=CARD,
+                         width=w, anchor="w").grid(row=i, column=c, sticky="w", padx=2)
 
     # ── Panel de resultados ───────────────────────────────────────────────
 
@@ -3902,6 +3770,248 @@ if __name__ == "__main__":
     print("  (ROI>0 sería ganarle al mercado; lo normal es negativo por el margen)")
 </file>
 
+<file path="predecir_partido.py">
+"""
+Logica de prediccion sin interfaz. La GUI llama a predecir_partido().
+"""
+import json
+import os
+import numpy as np
+import pandas as pd
+
+from ingest_fbref import (
+    descargar_liga,
+    construir_historial_equipo,
+    obtener_equipos_liga,
+    construir_historial_equipo_directo,
+    cargar_historial_csv,
+    existe_csv_maestro,
+    _chequear_dependencia,
+    sd,
+)
+from feature_engineering import procesar_equipo, ultima_fila_valida
+from calcular_lambdas import calcular_lambdas, _acota
+from matriz_poisson import generar_matriz_poisson
+from ligas_config import elo_de, _limpiar_nombre_rival
+
+
+def _factor_h2h(df, local, visit, peso=0.04, min_partidos=3):
+    """
+    Historial directo (head-to-head). Busca en la base los cruces entre los dos
+    equipos y devuelve (factor_local, factor_visitante) acotado a +/-peso. Si hay
+    'paternidad' clara (un equipo gana la mayoria), inclina sutilmente los lambdas.
+    """
+    if df is None or getattr(df, "empty", True) or not {"Team", "Opponent"} <= set(df.columns):
+        return 1.0, 1.0
+
+    def _norm(s):
+        return _limpiar_nombre_rival(str(s)).lower()
+
+    nl, nv = _norm(local), _norm(visit)
+    # Normalizacion SIMETRICA: ambas columnas pasan por _norm, no solo Opponent.
+    # Asi un espacio/mayuscula colado en Team no rompe el match en silencio.
+    team_norm = df["Team"].map(_norm)
+    opp_norm = df["Opponent"].map(_norm)
+    loc_rows = df[(team_norm == nl) & (opp_norm == nv)]
+    vis_rows = df[(team_norm == nv) & (opp_norm == nl)]
+
+    # Resultados desde la optica del local (invertimos los del visitante).
+    res = list(loc_rows["Result"])
+    res += ["W" if r == "L" else "L" if r == "W" else "D" for r in vis_rows["Result"]]
+    n = len(res)
+    if n < min_partidos:
+        return 1.0, 1.0
+
+    tasa_local = sum(1 for r in res if r == "W") / n   # 1 = domina el local
+    aj = _acota(peso * (tasa_local - 0.5) * 2, -peso, peso)
+    return 1 + aj, 1 - aj
+
+
+PROMEDIOS_LIGA_PATH = "promedios_liga.json"
+PROMEDIOS_DEFAULT = {"xg_favor": 1.3, "xg_contra": 1.3, "sot": 4.5}
+
+
+def _cargar_promedios_liga():
+    if os.path.exists(PROMEDIOS_LIGA_PATH):
+        with open(PROMEDIOS_LIGA_PATH, "r", encoding="utf-8") as f:
+            return json.load(f)
+
+    print(
+        f"Aviso: no se encontro {PROMEDIOS_LIGA_PATH}. Usando promedios por defecto. "
+        "Ejecuta calcular_promedios_liga.py una vez para generarlo desde el cache local."
+    )
+    return PROMEDIOS_DEFAULT
+
+
+def predecir_partido(
+    equipo_local: str,
+    equipo_visitante: str,
+    liga: str,
+    temporada: str,
+    rho: float = -0.05,
+    k_shrinkage: int = 5,
+    no_cache: bool = False,
+    n_window: int = 6,
+    neutral: bool | None = None,
+) -> dict:
+    df_h2h = None  # base para el historial directo (solo Mundial vía CSV)
+    if liga == "INT-World Cup":
+        # Ruta preferente: CSV maestro local (100% offline y rapido). Si no
+        # existe o se forzo no_cache, caemos a la descarga directa de FBref.
+        if existe_csv_maestro() and not no_cache:
+            df_maestro = cargar_historial_csv()
+            df_h2h = df_maestro
+            df_local = construir_historial_equipo(df_maestro, equipo_local)
+            df_visitante = construir_historial_equipo(df_maestro, equipo_visitante)
+        else:
+            _chequear_dependencia()
+            fbref = sd.FBref(leagues=liga, seasons=temporada, no_cache=no_cache)
+            df_local = construir_historial_equipo_directo(fbref, equipo_local)
+            df_visitante = construir_historial_equipo_directo(fbref, equipo_visitante)
+
+        promedios = _cargar_promedios_liga()
+        prom_xg_fav = promedios.get("xg_favor", PROMEDIOS_DEFAULT["xg_favor"])
+        prom_xg_con = promedios.get("xg_contra", PROMEDIOS_DEFAULT["xg_contra"])
+        prom_tiros = promedios.get("sot", PROMEDIOS_DEFAULT["sot"])
+        if neutral is None:
+            neutral = True
+    else:
+        df_liga = descargar_liga(liga, temporada, no_cache=no_cache)
+        prom_xg_fav = df_liga["xG"].mean() if "xG" in df_liga.columns else 1.2
+        prom_xg_con = df_liga["xGA"].mean() if "xGA" in df_liga.columns else 1.2
+        prom_tiros = df_liga["SoT"].mean() if "SoT" in df_liga.columns else 4.5
+        df_local = construir_historial_equipo(df_liga, equipo_local)
+        df_visitante = construir_historial_equipo(df_liga, equipo_visitante)
+        if neutral is None:
+            neutral = False
+
+    feats_local = procesar_equipo(
+        df_local,
+        prom_xg_fav,
+        prom_xg_con,
+        prom_tiros,
+        n_window=n_window,
+        k_shrinkage=k_shrinkage,
+    )
+    feats_visitante = procesar_equipo(
+        df_visitante,
+        prom_xg_fav,
+        prom_xg_con,
+        prom_tiros,
+        n_window=n_window,
+        k_shrinkage=k_shrinkage,
+    )
+
+    fila_local = ultima_fila_valida(feats_local)
+    fila_visitante = ultima_fila_valida(feats_visitante)
+
+    if fila_local is None or fila_visitante is None:
+        raise ValueError(
+            f"No hay suficientes partidos completos para calcular ({equipo_local}: "
+            f"{len(df_local)} partidos, {equipo_visitante}: {len(df_visitante)} partidos)."
+        )
+
+    lambda_local, lambda_visitante = calcular_lambdas(
+        fila_local,
+        fila_visitante,
+        neutral=neutral,
+        elo_local=elo_de(equipo_local),
+        elo_visitante=elo_de(equipo_visitante),
+    )
+
+    # Historial directo (head-to-head): inclina sutilmente si hay paternidad.
+    f_loc, f_vis = _factor_h2h(df_h2h, equipo_local, equipo_visitante)
+    lambda_local *= f_loc
+    lambda_visitante *= f_vis
+
+    matriz = generar_matriz_poisson(lambda_local, lambda_visitante, rho=rho)
+
+    prob_local = float(np.sum(np.tril(matriz, -1)))
+    prob_empate = float(np.sum(np.diag(matriz)))
+    prob_visitante = float(np.sum(np.triu(matriz, 1)))
+
+    mercados = calcular_mercados(matriz)
+
+    def _forma(df):
+        return list(df.sort_values("Date")["Result"].dropna().tail(5))
+
+    def _num(fila, col):
+        v = fila.get(col)
+        return float(v) if (v is not None and pd.notna(v)) else 0.0
+
+    def _metricas(fila):
+        return {
+            "ataque": _num(fila, "xg_favor_adj"),
+            "defensa": _num(fila, "xg_contra_adj"),
+            "tiros": _num(fila, "tiros_puerta_adj"),
+            "posesion": _num(fila, "posesion_prom"),
+            "disciplina": _num(fila, "disciplina_prom"),
+        }
+
+    return {
+        "lambda_local": lambda_local,
+        "lambda_visitante": lambda_visitante,
+        "prob_local": prob_local,
+        "prob_empate": prob_empate,
+        "prob_visitante": prob_visitante,
+        "matriz": matriz,
+        "df_liga": pd.DataFrame(),
+        "forma_local": _forma(df_local),
+        "forma_visitante": _forma(df_visitante),
+        "descanso_local": _num(fila_local, "dias_descanso"),
+        "descanso_visitante": _num(fila_visitante, "dias_descanso"),
+        "metricas_local": _metricas(fila_local),
+        "metricas_visitante": _metricas(fila_visitante),
+        **mercados,
+    }
+
+
+def calcular_mercados(matriz: np.ndarray) -> dict:
+    """
+    Deriva metricas tipo casa de apuestas de la matriz de Poisson, sin tocar la
+    matematica base. Filas = goles del local (i), columnas = goles del
+    visitante (j).
+    """
+    n = matriz.shape[0]
+    idx_i, idx_j = np.indices((n, n))
+
+    # Ambos anotan (BTTS): ambos marcan >= 1 gol -> excluye fila 0 y columna 0.
+    prob_btts = float(matriz[1:, 1:].sum())
+
+    # Over/Under por linea de goles totales (i + j). Mercados "asiaticos".
+    total = idx_i + idx_j
+    prob_over15 = float(matriz[total > 1].sum())
+    prob_under15 = float(matriz[total <= 1].sum())
+    prob_over25 = float(matriz[total > 2].sum())
+    prob_under25 = float(matriz[total <= 2].sum())
+    prob_over35 = float(matriz[total > 3].sum())
+    prob_under35 = float(matriz[total <= 3].sum())
+
+    # Porteria a cero (clean sheet): el rival no anota.
+    # Local deja la porteria a cero -> visitante marca 0 -> columna 0.
+    prob_cs_local = float(matriz[:, 0].sum())
+    # Visitante deja la porteria a cero -> local marca 0 -> fila 0.
+    prob_cs_visitante = float(matriz[0, :].sum())
+
+    return {
+        "prob_btts": prob_btts,
+        "prob_over15": prob_over15,
+        "prob_under15": prob_under15,
+        "prob_over25": prob_over25,
+        "prob_under25": prob_under25,
+        "prob_over35": prob_over35,
+        "prob_under35": prob_under35,
+        "prob_cs_local": prob_cs_local,
+        "prob_cs_visitante": prob_cs_visitante,
+    }
+
+
+def cargar_equipos(liga: str, temporada: str):
+    """Descarga la liga y devuelve la lista de equipos para los desplegables."""
+    df_liga = descargar_liga(liga, temporada)
+    return obtener_equipos_liga(df_liga), df_liga
+</file>
+
 <file path="README.md">
 # ⚽ Predictor de Fútbol · Mundial 2026
 
@@ -3946,6 +4056,9 @@ también funciona para clubes de las grandes ligas europeas y la Liga MX.
     predice. Si falla la red, avisa y usa los datos locales.
 - Tras predecir, aparece la **forma reciente** (últimos 5: 🟢W / ⚪D / 🔴L) y los
   **días de descanso** de cada equipo.
+- **🏆 Simular Mundial**: corre el Monte Carlo del torneo completo (selector de
+  1.000 / 5.000 / 10.000 simulaciones) y muestra el ranking de candidatos al
+  título con gráfico de barras, sin salir de la app.
 
 **Panel de resultados (derecha), en dos pestañas:**
 
@@ -4076,7 +4189,8 @@ entorno `FOOTBALL_DATA_ORG_KEY`). Agregar otra API = una subclase de
 
 ## 📊 Análisis avanzado
 
-**Simular el Mundial completo (Monte Carlo).**
+**Simular el Mundial completo (Monte Carlo).** Desde la app con el botón
+**🏆 Simular Mundial**, o por terminal:
 ```powershell
 py -3.11 montecarlo_mundial.py 10000   # [n_simulaciones] [semilla] opcionales
 ```

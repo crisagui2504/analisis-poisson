@@ -41,6 +41,9 @@ también funciona para clubes de las grandes ligas europeas y la Liga MX.
     predice. Si falla la red, avisa y usa los datos locales.
 - Tras predecir, aparece la **forma reciente** (últimos 5: 🟢W / ⚪D / 🔴L) y los
   **días de descanso** de cada equipo.
+- **🏆 Simular Mundial**: corre el Monte Carlo del torneo completo (selector de
+  1.000 / 5.000 / 10.000 simulaciones) y muestra el ranking de candidatos al
+  título con gráfico de barras, sin salir de la app.
 
 **Panel de resultados (derecha), en dos pestañas:**
 
@@ -171,7 +174,8 @@ entorno `FOOTBALL_DATA_ORG_KEY`). Agregar otra API = una subclase de
 
 ## 📊 Análisis avanzado
 
-**Simular el Mundial completo (Monte Carlo).**
+**Simular el Mundial completo (Monte Carlo).** Desde la app con el botón
+**🏆 Simular Mundial**, o por terminal:
 ```powershell
 py -3.11 montecarlo_mundial.py 10000   # [n_simulaciones] [semilla] opcionales
 ```
