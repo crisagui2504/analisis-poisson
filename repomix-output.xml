@@ -106,217 +106,6 @@ if errorlevel 1 (
 }
 </file>
 
-<file path="backtest.py">
-"""
-Fase 6: Backtest / calibración de rho (Dixon-Coles) y k (shrinkage).
-
-Corrige respecto a la versión anterior:
-  1. Data leakage: el promedio de liga usado en el shrinkage ahora se calcula
-     SOLO con partidos anteriores a la fecha de corte de cada predicción
-     (antes se pasaba un promedio fijo, calculado con toda la temporada,
-     lo cual filtraba información "del futuro" al backtest).
-  2. NaN-check explícito antes de calcular lambdas.
-  3. Conversión de fechas centralizada al inicio, no dispersa en cada función.
-  4. Excepciones logueadas en vez de silenciadas con `pass`.
-  5. Soporta correr sobre MUCHOS partidos/equipos de liga, no solo un par fijo.
-"""
-import pandas as pd
-import numpy as np
-from sklearn.metrics import log_loss
-
-from feature_engineering import procesar_equipo, ultima_fila_valida
-from calcular_lambdas import calcular_lambdas
-from matriz_poisson import generar_matriz_poisson
-
-
-def auditar_ewm_sin_fuga(n=30, span=10):
-    """
-    Verifica que el suavizado .shift(1).ewm().mean() NO filtre datos del partido
-    actual ni del futuro hacia los promedios del pasado.
-      1) Causalidad: el suavizado en i calculado con toda la serie debe ser igual
-         al calculado solo con los datos [0..i] (no usa el futuro).
-      2) El valor del partido i NO debe afectar su propio promedio (shift(1)),
-         pero SÍ debe afectar el del partido i+1.
-    """
-    rng = np.random.default_rng(0)
-    serie = pd.Series(rng.normal(1.5, 1.0, n))
-
-    def prom(s):
-        return s.shift(1).ewm(span=span, min_periods=1).mean()
-
-    full = prom(serie)
-    max_dif = 0.0
-    for i in range(n):
-        parcial = prom(serie.iloc[:i + 1]).iloc[i]
-        if pd.notna(full.iloc[i]) and pd.notna(parcial):
-            max_dif = max(max_dif, abs(full.iloc[i] - parcial))
-
-    serie2 = serie.copy()
-    serie2.iloc[5] = 999.0
-    full2 = prom(serie2)
-    dif_presente = abs(float(full2.iloc[5] or 0) - float(full.iloc[5] or 0)) if pd.notna(full.iloc[5]) else 0.0
-    dif_futuro = abs(float(full2.iloc[6]) - float(full.iloc[6]))
-
-    ok = (max_dif < 1e-9) and (dif_presente < 1e-9) and (dif_futuro > 0)
-    print("Auditoria EWM (fuga de datos):")
-    print(f"  1) causalidad (toda la serie vs prefijo): max_dif={max_dif:.2e}  "
-          f"{'OK sin fuga' if max_dif < 1e-9 else 'FUGA!'}")
-    print(f"  2) el partido actual NO afecta su propio promedio: dif={dif_presente:.2e}  "
-          f"{'OK' if dif_presente < 1e-9 else 'FUGA!'}")
-    print(f"  3) el partido actual SI afecta el del siguiente:   dif={dif_futuro:.3f}  "
-          f"{'OK' if dif_futuro > 0 else 'ERROR'}")
-    print("  Resultado:", "SIN FUGA DE DATOS" if ok else "REVISAR")
-    return ok
-
-
-def calcular_brier_score(preds, trues):
-    """Error cuadrático medio entre probabilidades predichas y resultado real (one-hot)."""
-    preds = np.array(preds)
-    trues = np.array(trues)
-    return np.mean((preds - trues) ** 2)
-
-
-def df_hasta(df, fecha_corte):
-    """Filtra el dataframe para simular que solo vemos datos anteriores al partido."""
-    return df[df['Date'] < fecha_corte].copy()
-
-
-def promedio_liga_hasta(df_liga, fecha_corte, columna):
-    """
-    Promedio de liga calculado SOLO con partidos jugados antes de fecha_corte.
-    Evita el data leakage de usar un promedio de temporada completa para
-    predecir un partido de mitad de temporada.
-    """
-    subset = df_liga[df_liga['Date'] < fecha_corte]
-    if subset.empty or columna not in subset.columns:
-        return np.nan
-    return subset[columna].mean()
-
-
-def correr_backtest(partidos_historicos, df_liga_completo,
-                     rho_test=(-0.1, -0.13, -0.15, -0.2), k_test=(3, 5, 10),
-                     min_partidos_previos=5, verbose=False):
-    """
-    Recorre el histórico simulando predicciones antes de cada partido y compara
-    contra el resultado real, para distintas combinaciones de rho y k.
-
-    Parámetros
-    ----------
-    partidos_historicos : DataFrame con columnas ['Date', 'Team', 'Opponent', 'Result', ...]
-        Cada fila es un partido ya jugado que se usará como caso de prueba.
-    df_liga_completo : DataFrame con el historial completo de TODOS los equipos de la liga
-        (columnas: Date, Team, GF, GA, xG, xGA, SoT, Poss, Fls, CrdY, CrdR, Result).
-        Se usa tanto para construir el historial de cada equipo como para los
-        promedios de liga dinámicos.
-    """
-    print("Iniciando backtest...")
-    df_liga_completo = df_liga_completo.copy()
-    df_liga_completo['Date'] = pd.to_datetime(df_liga_completo['Date'])
-    partidos_historicos = partidos_historicos.copy()
-    partidos_historicos['Date'] = pd.to_datetime(partidos_historicos['Date'])
-
-    resultados = []
-
-    for r in rho_test:
-        for k in k_test:
-            log_losses, briers = [], []
-            errores = 0
-
-            for _, partido in partidos_historicos.iterrows():
-                fecha_corte = partido['Date']
-                equipo_local = partido['Team']
-                equipo_visitante = partido['Opponent']
-                resultado_real_str = partido['Result']  # 'W' = local, 'D' = empate, 'L' = visitante
-
-                df_local = df_hasta(df_liga_completo[df_liga_completo['Team'] == equipo_local], fecha_corte)
-                df_vis = df_hasta(df_liga_completo[df_liga_completo['Team'] == equipo_visitante], fecha_corte)
-
-                if len(df_local) < min_partidos_previos or len(df_vis) < min_partidos_previos:
-                    continue
-
-                # Promedios de liga calculados SOLO con datos previos a este partido
-                prom_xg_fav = promedio_liga_hasta(df_liga_completo, fecha_corte, 'xG')
-                prom_xg_con = promedio_liga_hasta(df_liga_completo, fecha_corte, 'xGA')
-                prom_tiros = promedio_liga_hasta(df_liga_completo, fecha_corte, 'SoT')
-
-                if any(pd.isna(v) for v in [prom_xg_fav, prom_xg_con, prom_tiros]):
-                    continue
-
-                feats_local = procesar_equipo(df_local, prom_xg_fav, prom_xg_con, prom_tiros, k_shrinkage=k)
-                feats_vis = procesar_equipo(df_vis, prom_xg_fav, prom_xg_con, prom_tiros, k_shrinkage=k)
-
-                fila_local = ultima_fila_valida(feats_local)
-                fila_vis = ultima_fila_valida(feats_vis)
-
-                # NaN-check explícito: si no hay una fila completa para alguno de los dos
-                # equipos, se descarta el partido en vez de dejar pasar NaN silenciosamente
-                # (comparaciones tipo `NaN < 4` no lanzan error en Python, devuelven False).
-                if fila_local is None or fila_vis is None:
-                    continue
-
-                try:
-                    lam_l, lam_v = calcular_lambdas(fila_local, fila_vis)
-                    matriz = generar_matriz_poisson(lam_l, lam_v, rho=r)
-
-                    prob_local = float(np.sum(np.tril(matriz, -1)))
-                    prob_empate = float(np.sum(np.diag(matriz)))
-                    prob_visitante = float(np.sum(np.triu(matriz, 1)))
-                    probs = [prob_local, prob_empate, prob_visitante]
-
-                    # sklearn.log_loss espera la etiqueta real como índice de clase
-                    # (0/1/2), no en formato one-hot -- ese era el bug.
-                    clase_real = (
-                        0 if resultado_real_str == 'W'
-                        else 1 if resultado_real_str == 'D'
-                        else 2
-                    )
-                    real_onehot = [1, 0, 0] if clase_real == 0 else [0, 1, 0] if clase_real == 1 else [0, 0, 1]
-
-                    loss = log_loss([clase_real], [probs], labels=[0, 1, 2])
-                    brier = calcular_brier_score(probs, real_onehot)
-
-                    log_losses.append(loss)
-                    briers.append(brier)
-
-                except Exception as e:
-                    errores += 1
-                    if verbose:
-                        print(f"  [rho={r}, k={k}] error en partido {equipo_local} vs "
-                              f"{equipo_visitante} ({fecha_corte.date()}): {e}")
-                    continue
-
-            if log_losses:
-                resultados.append({
-                    'rho': r, 'k': k,
-                    'log_loss': np.mean(log_losses),
-                    'brier_score': np.mean(briers),
-                    'n_partidos_validos': len(log_losses),
-                    'n_errores': errores,
-                })
-            elif verbose:
-                print(f"  [rho={r}, k={k}] sin partidos válidos (errores: {errores})")
-
-    df_resultados = pd.DataFrame(resultados)
-    if not df_resultados.empty:
-        df_resultados = df_resultados.sort_values(by='log_loss')
-        print("\nMejores combinaciones de parámetros (menor log_loss primero):")
-        print(df_resultados.head(5).to_string(index=False))
-        df_resultados.to_csv("resultados_backtest.csv", index=False)
-        print("\nResultados completos guardados en resultados_backtest.csv")
-    else:
-        print("No se calcularon resultados. Revisar formato de datos y columnas requeridas.")
-
-    return df_resultados
-
-
-if __name__ == "__main__":
-    print("Módulo de backtest listo.")
-    print("Uso esperado:")
-    print("  correr_backtest(partidos_historicos_df, df_liga_completo_df)")
-    print("Donde partidos_historicos_df tiene una fila por partido a evaluar (Team, Opponent, Date, Result)")
-    print("y df_liga_completo_df tiene el historial de TODOS los equipos de la liga.")
-</file>
-
 <file path="calcular_promedios_liga.py">
 """
 Calcula promedios del Mundial leyendo directamente el cache HTML de soccerdata.
@@ -493,209 +282,6 @@ except Exception as e:
 
 print("Ahora abre app_gui.py normalmente.")
 input("Presiona Enter para cerrar...")
-</file>
-
-<file path="montecarlo_mundial.py">
-"""
-Simulacion de Monte Carlo del Mundial 2026.
-
-Juega el torneo completo miles de veces (fase de grupos + eliminatorias) usando
-las probabilidades del modelo Poisson/Dixon-Coles, y estima la probabilidad de
-que cada seleccion sea campeona.
-
-Uso:
-    py -3.11 montecarlo_mundial.py [n_simulaciones] [semilla]
-    py -3.11 montecarlo_mundial.py 10000
-
-Optimizacion clave: las caracteristicas de cada equipo se calculan UNA sola vez
-y la distribucion de marcadores de cada cruce se memoriza. Asi millones de
-partidos simulados se resuelven en segundos, sin volver a tocar el CSV ni la red.
-"""
-import sys
-
-import numpy as np
-import pandas as pd
-
-from ligas_config import GRUPOS_MUNDIAL, elo_de
-from ingest_fbref import cargar_historial_csv, construir_historial_equipo, existe_csv_maestro
-from feature_engineering import procesar_equipo, ultima_fila_valida
-from calcular_lambdas import calcular_lambdas
-from matriz_poisson import generar_matriz_poisson
-from predecir_partido import _cargar_promedios_liga
-
-RONDAS = ["16avos", "Octavos", "Cuartos", "Semis", "Final", "Campeon"]
-SALIDA_CSV = "montecarlo_resultados.csv"
-
-
-def construir_modelo(rho: float = -0.05, k_shrinkage: int = 5):
-    """Calcula la fila de features y el Elo de cada seleccion UNA sola vez."""
-    if not existe_csv_maestro():
-        raise SystemExit(
-            "Falta base_mundial_2026.csv. Ejecuta descargar_datos.py "
-            "(o actualizar_datos.py) para generarlo."
-        )
-
-    df = cargar_historial_csv()
-    prom = _cargar_promedios_liga()
-    feats, elos = {}, {}
-    faltantes = []
-    for equipos in GRUPOS_MUNDIAL.values():
-        for eq in equipos:
-            if eq in feats:
-                continue
-            try:
-                hist = construir_historial_equipo(df, eq)
-                fila = ultima_fila_valida(
-                    procesar_equipo(hist, prom["xg_favor"], prom["xg_contra"],
-                                    prom["sot"], k_shrinkage=k_shrinkage)
-                )
-            except Exception:
-                fila = None
-            if fila is None:
-                faltantes.append(eq)
-            else:
-                feats[eq] = fila
-                elos[eq] = elo_de(eq)
-    if faltantes:
-        print(f"Aviso: sin datos suficientes para {faltantes}. Se usara Elo de respaldo.")
-    return feats, elos, rho
-
-
-def crear_sampler(feats, elos, rho):
-    """Devuelve dist(a, b) -> distribucion acumulada de marcadores (memorizada)."""
-    cache = {}
-
-    def dist(a, b):
-        clave = (a, b)
-        if clave not in cache:
-            if a in feats and b in feats:
-                ll, lv = calcular_lambdas(
-                    feats[a], feats[b], neutral=True,
-                    elo_local=elos.get(a), elo_visitante=elos.get(b),
-                )
-            else:
-                # Respaldo si falta historial: lambdas a partir del Elo puro.
-                ea, eb = elo_de(a), elo_de(b)
-                e = 1.0 / (1.0 + 10 ** ((eb - ea) / 400.0))
-                ll, lv = 0.8 + e, 0.8 + (1 - e)
-            matriz = generar_matriz_poisson(ll, lv, rho=rho)
-            flat = matriz.ravel()
-            cache[clave] = (np.cumsum(flat), matriz.shape[0])
-        return cache[clave]
-
-    return dist
-
-
-def _marcador(rng, dist, a, b):
-    acum, n = dist(a, b)
-    idx = int(np.searchsorted(acum, rng.random() * acum[-1]))
-    return divmod(idx, n)
-
-
-def _ganador(rng, dist, a, b):
-    gi, gj = _marcador(rng, dist, a, b)
-    if gi > gj:
-        return a
-    if gj > gi:
-        return b
-    return a if rng.random() < 0.5 else b  # penales
-
-
-def simular_torneo(rng, dist):
-    """Juega un Mundial completo y devuelve dict equipo -> etapa mas avanzada."""
-    primeros_segundos, terceros = [], []
-
-    for equipos in GRUPOS_MUNDIAL.values():
-        pts = {t: 0 for t in equipos}
-        gd = {t: 0 for t in equipos}
-        gf = {t: 0 for t in equipos}
-        for i in range(len(equipos)):
-            for j in range(i + 1, len(equipos)):
-                a, b = equipos[i], equipos[j]
-                gi, gj = _marcador(rng, dist, a, b)
-                gf[a] += gi; gf[b] += gj
-                gd[a] += gi - gj; gd[b] += gj - gi
-                if gi > gj:
-                    pts[a] += 3
-                elif gj > gi:
-                    pts[b] += 3
-                else:
-                    pts[a] += 1; pts[b] += 1
-        clasif = sorted(equipos, key=lambda t: (pts[t], gd[t], gf[t], rng.random()),
-                        reverse=True)
-        primeros_segundos.append((clasif[0], pts[clasif[0]], gd[clasif[0]], gf[clasif[0]]))
-        primeros_segundos.append((clasif[1], pts[clasif[1]], gd[clasif[1]], gf[clasif[1]]))
-        terceros.append((clasif[2], pts[clasif[2]], gd[clasif[2]], gf[clasif[2]]))
-
-    # 8 mejores terceros completan los 32 clasificados.
-    terceros.sort(key=lambda x: (x[1], x[2], x[3], rng.random()), reverse=True)
-    clasificados = primeros_segundos + terceros[:8]
-    clasificados.sort(key=lambda x: (x[1], x[2], x[3], rng.random()), reverse=True)
-
-    etapa = {}
-    ronda = [c[0] for c in clasificados]  # 32 sembrados
-    for t in ronda:
-        etapa[t] = "16avos"
-
-    nombre_idx = 1  # siguiente etiqueta tras 16avos
-    while len(ronda) > 1:
-        siguiente = []
-        for i in range(len(ronda) // 2):
-            a, b = ronda[i], ronda[len(ronda) - 1 - i]
-            g = _ganador(rng, dist, a, b)
-            siguiente.append(g)
-            etapa[g] = RONDAS[nombre_idx]
-        ronda = siguiente
-        nombre_idx += 1
-    return etapa
-
-
-def correr(n_sim: int = 10000, semilla: int = 42) -> pd.DataFrame:
-    feats, elos, rho = construir_modelo()
-    dist = crear_sampler(feats, elos, rho)
-    rng = np.random.default_rng(semilla)
-
-    equipos = [t for g in GRUPOS_MUNDIAL.values() for t in g]
-    cont = {t: {r: 0 for r in RONDAS} for t in equipos}
-
-    for _ in range(n_sim):
-        etapa = simular_torneo(rng, dist)
-        for t, e in etapa.items():
-            # Llegar a la etapa e implica haber alcanzado todas las rondas
-            # previas (un semifinalista tambien jugo cuartos, etc.), pero NO las
-            # posteriores. Acreditamos las rondas con indice <= indice de e.
-            ie = RONDAS.index(e)
-            for r in RONDAS:
-                if RONDAS.index(r) <= ie:
-                    cont[t][r] += 1
-
-    filas = []
-    for t in equipos:
-        filas.append({
-            "Equipo": t,
-            "Campeon": cont[t]["Campeon"],
-            "Campeon_%": round(100 * cont[t]["Campeon"] / n_sim, 2),
-            "Final_%": round(100 * cont[t]["Final"] / n_sim, 2),
-            "Semis_%": round(100 * cont[t]["Semis"] / n_sim, 2),
-            "Cuartos_%": round(100 * cont[t]["Cuartos"] / n_sim, 2),
-        })
-    df = pd.DataFrame(filas).sort_values("Campeon", ascending=False).reset_index(drop=True)
-    df.to_csv(SALIDA_CSV, index=False, encoding="utf-8")
-    return df
-
-
-if __name__ == "__main__":
-    n = int(sys.argv[1]) if len(sys.argv) > 1 else 10000
-    seed = int(sys.argv[2]) if len(sys.argv) > 2 else 42
-
-    print(f"Simulando el Mundial 2026 {n:,} veces (semilla={seed})...")
-    df = correr(n_sim=n, semilla=seed)
-
-    print(f"\nTop 12 candidatos al titulo ({n:,} simulaciones):")
-    print(f"  {'Equipo':<16}{'Campeon':>9}{'Final':>8}{'Semis':>8}")
-    for _, r in df.head(12).iterrows():
-        print(f"  {r['Equipo']:<16}{r['Campeon_%']:>8.1f}%{r['Final_%']:>7.1f}%{r['Semis_%']:>7.1f}%")
-    print(f"\nResultados completos guardados en '{SALIDA_CSV}'.")
 </file>
 
 <file path="paleta.py">
@@ -1440,86 +1026,6 @@ Presiona Enter para cerrar...
 py -c "import time; t0=time.time(); from predecir_partido import predecir_partido; print('Predicting...'); res = predecir_partido('Argentina', 'Brazil', 'INT-World Cup', '2026', no_cache=False); print('Probabilidad Argentina:', res['prob_local']); print('Time taken:', time.time()-t0, 'seconds')"
 </file>
 
-<file path="tema_oscuro.py">
-"""
-Tema oscuro moderno para los widgets ttk (combos, sliders, progreso, checks).
-Se llama automaticamente desde app_gui.py; no necesitas ejecutarlo tu.
-
-La paleta vive en app_gui.py (PALETA); aqui la importamos para no duplicar.
-"""
-import tkinter.ttk as ttk
-
-from paleta import (
-    BG, PANEL, CARD, CARD2, BORDE, TEXTO, TEXTO_SEC, ACENTO, ACENTO_HOVER,
-)
-
-
-def aplicar_tema(root):
-    style = ttk.Style(root)
-    try:
-        style.theme_use("clam")
-    except Exception:
-        pass
-
-    # Desplegables (Combobox)
-    style.configure(
-        "Moderno.TCombobox",
-        fieldbackground=CARD2, background=CARD2, foreground=TEXTO,
-        selectbackground=ACENTO, selectforeground="#ffffff",
-        bordercolor=BORDE, lightcolor=BORDE, darkcolor=BORDE,
-        arrowcolor=TEXTO_SEC, arrowsize=14, padding=8, relief="flat",
-    )
-    style.map(
-        "Moderno.TCombobox",
-        fieldbackground=[("readonly", CARD2), ("focus", CARD2)],
-        foreground=[("readonly", TEXTO)],
-        bordercolor=[("focus", ACENTO), ("active", ACENTO)],
-        arrowcolor=[("active", TEXTO)],
-    )
-    # Lista desplegada del combobox
-    root.option_add("*TCombobox*Listbox.background", CARD2)
-    root.option_add("*TCombobox*Listbox.foreground", TEXTO)
-    root.option_add("*TCombobox*Listbox.selectBackground", ACENTO)
-    root.option_add("*TCombobox*Listbox.selectForeground", "#ffffff")
-    root.option_add("*TCombobox*Listbox.borderWidth", 0)
-    root.option_add("*TCombobox*Listbox.font", "{Segoe UI} 10")
-
-    # Sliders (Scale)
-    style.configure(
-        "Moderno.Horizontal.TScale",
-        background=PANEL, troughcolor=BORDE, bordercolor=PANEL,
-        lightcolor=ACENTO, darkcolor=ACENTO, sliderrelief="flat",
-    )
-
-    # Barra de progreso
-    style.configure(
-        "Moderno.Horizontal.TProgressbar",
-        troughcolor=BORDE, background=ACENTO, bordercolor=PANEL,
-        lightcolor=ACENTO, darkcolor=ACENTO, thickness=6,
-    )
-
-    # Pestañas (Notebook)
-    style.configure("Moderno.TNotebook", background=CARD, borderwidth=0)
-    style.configure("Moderno.TNotebook.Tab", background=CARD, foreground=TEXTO_SEC,
-                    padding=(16, 8), borderwidth=0, font="{Segoe UI} 10 bold")
-    style.map("Moderno.TNotebook.Tab",
-              background=[("selected", CARD2)],
-              foreground=[("selected", TEXTO)])
-
-    # Checkbutton
-    style.configure(
-        "Moderno.TCheckbutton",
-        background=PANEL, foreground=TEXTO_SEC, focuscolor=PANEL,
-        indicatorcolor=CARD2, indicatorrelief="flat",
-    )
-    style.map(
-        "Moderno.TCheckbutton",
-        background=[("active", PANEL)],
-        foreground=[("active", TEXTO)],
-        indicatorcolor=[("selected", ACENTO), ("active", BORDE)],
-    )
-</file>
-
 <file path=".gitignore">
 # Python
 __pycache__/
@@ -1593,6 +1099,217 @@ print(f"  Total de partidos ahora:   {resumen['filas_despues']}")
 print(f"  Equipos en la base:        {resumen['equipos']}")
 print(f"\nListo. '{CSV_MAESTRO_MUNDIAL}' actualizado. Abre la app normalmente.")
 input("Presiona Enter para cerrar...")
+</file>
+
+<file path="backtest.py">
+"""
+Fase 6: Backtest / calibración de rho (Dixon-Coles) y k (shrinkage).
+
+Corrige respecto a la versión anterior:
+  1. Data leakage: el promedio de liga usado en el shrinkage ahora se calcula
+     SOLO con partidos anteriores a la fecha de corte de cada predicción
+     (antes se pasaba un promedio fijo, calculado con toda la temporada,
+     lo cual filtraba información "del futuro" al backtest).
+  2. NaN-check explícito antes de calcular lambdas.
+  3. Conversión de fechas centralizada al inicio, no dispersa en cada función.
+  4. Excepciones logueadas en vez de silenciadas con `pass`.
+  5. Soporta correr sobre MUCHOS partidos/equipos de liga, no solo un par fijo.
+"""
+import pandas as pd
+import numpy as np
+from sklearn.metrics import log_loss
+
+from feature_engineering import procesar_equipo, ultima_fila_valida
+from calcular_lambdas import calcular_lambdas
+from matriz_poisson import generar_matriz_poisson
+
+
+def auditar_ewm_sin_fuga(n=30, span=10):
+    """
+    Verifica que el suavizado .shift(1).ewm().mean() NO filtre datos del partido
+    actual ni del futuro hacia los promedios del pasado.
+      1) Causalidad: el suavizado en i calculado con toda la serie debe ser igual
+         al calculado solo con los datos [0..i] (no usa el futuro).
+      2) El valor del partido i NO debe afectar su propio promedio (shift(1)),
+         pero SÍ debe afectar el del partido i+1.
+    """
+    rng = np.random.default_rng(0)
+    serie = pd.Series(rng.normal(1.5, 1.0, n))
+
+    def prom(s):
+        return s.shift(1).ewm(span=span, min_periods=1).mean()
+
+    full = prom(serie)
+    max_dif = 0.0
+    for i in range(n):
+        parcial = prom(serie.iloc[:i + 1]).iloc[i]
+        if pd.notna(full.iloc[i]) and pd.notna(parcial):
+            max_dif = max(max_dif, abs(full.iloc[i] - parcial))
+
+    serie2 = serie.copy()
+    serie2.iloc[5] = 999.0
+    full2 = prom(serie2)
+    dif_presente = abs(float(full2.iloc[5] or 0) - float(full.iloc[5] or 0)) if pd.notna(full.iloc[5]) else 0.0
+    dif_futuro = abs(float(full2.iloc[6]) - float(full.iloc[6]))
+
+    ok = (max_dif < 1e-9) and (dif_presente < 1e-9) and (dif_futuro > 0)
+    print("Auditoria EWM (fuga de datos):")
+    print(f"  1) causalidad (toda la serie vs prefijo): max_dif={max_dif:.2e}  "
+          f"{'OK sin fuga' if max_dif < 1e-9 else 'FUGA!'}")
+    print(f"  2) el partido actual NO afecta su propio promedio: dif={dif_presente:.2e}  "
+          f"{'OK' if dif_presente < 1e-9 else 'FUGA!'}")
+    print(f"  3) el partido actual SI afecta el del siguiente:   dif={dif_futuro:.3f}  "
+          f"{'OK' if dif_futuro > 0 else 'ERROR'}")
+    print("  Resultado:", "SIN FUGA DE DATOS" if ok else "REVISAR")
+    return ok
+
+
+def calcular_brier_score(preds, trues):
+    """Error cuadrático medio entre probabilidades predichas y resultado real (one-hot)."""
+    preds = np.array(preds)
+    trues = np.array(trues)
+    return np.mean((preds - trues) ** 2)
+
+
+def df_hasta(df, fecha_corte):
+    """Filtra el dataframe para simular que solo vemos datos anteriores al partido."""
+    return df[df['Date'] < fecha_corte].copy()
+
+
+def promedio_liga_hasta(df_liga, fecha_corte, columna):
+    """
+    Promedio de liga calculado SOLO con partidos jugados antes de fecha_corte.
+    Evita el data leakage de usar un promedio de temporada completa para
+    predecir un partido de mitad de temporada.
+    """
+    subset = df_liga[df_liga['Date'] < fecha_corte]
+    if subset.empty or columna not in subset.columns:
+        return np.nan
+    return subset[columna].mean()
+
+
+def correr_backtest(partidos_historicos, df_liga_completo,
+                     rho_test=(-0.1, -0.13, -0.15, -0.2), k_test=(3, 5, 10),
+                     min_partidos_previos=5, verbose=False):
+    """
+    Recorre el histórico simulando predicciones antes de cada partido y compara
+    contra el resultado real, para distintas combinaciones de rho y k.
+
+    Parámetros
+    ----------
+    partidos_historicos : DataFrame con columnas ['Date', 'Team', 'Opponent', 'Result', ...]
+        Cada fila es un partido ya jugado que se usará como caso de prueba.
+    df_liga_completo : DataFrame con el historial completo de TODOS los equipos de la liga
+        (columnas: Date, Team, GF, GA, xG, xGA, SoT, Poss, Fls, CrdY, CrdR, Result).
+        Se usa tanto para construir el historial de cada equipo como para los
+        promedios de liga dinámicos.
+    """
+    print("Iniciando backtest...")
+    df_liga_completo = df_liga_completo.copy()
+    df_liga_completo['Date'] = pd.to_datetime(df_liga_completo['Date'])
+    partidos_historicos = partidos_historicos.copy()
+    partidos_historicos['Date'] = pd.to_datetime(partidos_historicos['Date'])
+
+    resultados = []
+
+    for r in rho_test:
+        for k in k_test:
+            log_losses, briers = [], []
+            errores = 0
+
+            for _, partido in partidos_historicos.iterrows():
+                fecha_corte = partido['Date']
+                equipo_local = partido['Team']
+                equipo_visitante = partido['Opponent']
+                resultado_real_str = partido['Result']  # 'W' = local, 'D' = empate, 'L' = visitante
+
+                df_local = df_hasta(df_liga_completo[df_liga_completo['Team'] == equipo_local], fecha_corte)
+                df_vis = df_hasta(df_liga_completo[df_liga_completo['Team'] == equipo_visitante], fecha_corte)
+
+                if len(df_local) < min_partidos_previos or len(df_vis) < min_partidos_previos:
+                    continue
+
+                # Promedios de liga calculados SOLO con datos previos a este partido
+                prom_xg_fav = promedio_liga_hasta(df_liga_completo, fecha_corte, 'xG')
+                prom_xg_con = promedio_liga_hasta(df_liga_completo, fecha_corte, 'xGA')
+                prom_tiros = promedio_liga_hasta(df_liga_completo, fecha_corte, 'SoT')
+
+                if any(pd.isna(v) for v in [prom_xg_fav, prom_xg_con, prom_tiros]):
+                    continue
+
+                feats_local = procesar_equipo(df_local, prom_xg_fav, prom_xg_con, prom_tiros, k_shrinkage=k)
+                feats_vis = procesar_equipo(df_vis, prom_xg_fav, prom_xg_con, prom_tiros, k_shrinkage=k)
+
+                fila_local = ultima_fila_valida(feats_local)
+                fila_vis = ultima_fila_valida(feats_vis)
+
+                # NaN-check explícito: si no hay una fila completa para alguno de los dos
+                # equipos, se descarta el partido en vez de dejar pasar NaN silenciosamente
+                # (comparaciones tipo `NaN < 4` no lanzan error en Python, devuelven False).
+                if fila_local is None or fila_vis is None:
+                    continue
+
+                try:
+                    lam_l, lam_v = calcular_lambdas(fila_local, fila_vis)
+                    matriz = generar_matriz_poisson(lam_l, lam_v, rho=r)
+
+                    prob_local = float(np.sum(np.tril(matriz, -1)))
+                    prob_empate = float(np.sum(np.diag(matriz)))
+                    prob_visitante = float(np.sum(np.triu(matriz, 1)))
+                    probs = [prob_local, prob_empate, prob_visitante]
+
+                    # sklearn.log_loss espera la etiqueta real como índice de clase
+                    # (0/1/2), no en formato one-hot -- ese era el bug.
+                    clase_real = (
+                        0 if resultado_real_str == 'W'
+                        else 1 if resultado_real_str == 'D'
+                        else 2
+                    )
+                    real_onehot = [1, 0, 0] if clase_real == 0 else [0, 1, 0] if clase_real == 1 else [0, 0, 1]
+
+                    loss = log_loss([clase_real], [probs], labels=[0, 1, 2])
+                    brier = calcular_brier_score(probs, real_onehot)
+
+                    log_losses.append(loss)
+                    briers.append(brier)
+
+                except Exception as e:
+                    errores += 1
+                    if verbose:
+                        print(f"  [rho={r}, k={k}] error en partido {equipo_local} vs "
+                              f"{equipo_visitante} ({fecha_corte.date()}): {e}")
+                    continue
+
+            if log_losses:
+                resultados.append({
+                    'rho': r, 'k': k,
+                    'log_loss': np.mean(log_losses),
+                    'brier_score': np.mean(briers),
+                    'n_partidos_validos': len(log_losses),
+                    'n_errores': errores,
+                })
+            elif verbose:
+                print(f"  [rho={r}, k={k}] sin partidos válidos (errores: {errores})")
+
+    df_resultados = pd.DataFrame(resultados)
+    if not df_resultados.empty:
+        df_resultados = df_resultados.sort_values(by='log_loss')
+        print("\nMejores combinaciones de parámetros (menor log_loss primero):")
+        print(df_resultados.head(5).to_string(index=False))
+        df_resultados.to_csv("resultados_backtest.csv", index=False)
+        print("\nResultados completos guardados en resultados_backtest.csv")
+    else:
+        print("No se calcularon resultados. Revisar formato de datos y columnas requeridas.")
+
+    return df_resultados
+
+
+if __name__ == "__main__":
+    print("Módulo de backtest listo.")
+    print("Uso esperado:")
+    print("  correr_backtest(partidos_historicos_df, df_liga_completo_df)")
+    print("Donde partidos_historicos_df tiene una fila por partido a evaluar (Team, Opponent, Date, Result)")
+    print("y df_liga_completo_df tiene el historial de TODOS los equipos de la liga.")
 </file>
 
 <file path="ingest_fbref.py">
@@ -1957,32 +1674,207 @@ def obtener_equipos_liga(df_liga):
     return sorted(equipos)
 </file>
 
-<file path="matriz_poisson.py">
+<file path="montecarlo_mundial.py">
+"""
+Simulacion de Monte Carlo del Mundial 2026.
+
+Juega el torneo completo miles de veces (fase de grupos + eliminatorias) usando
+las probabilidades del modelo Poisson/Dixon-Coles, y estima la probabilidad de
+que cada seleccion sea campeona.
+
+Uso:
+    py -3.11 montecarlo_mundial.py [n_simulaciones] [semilla]
+    py -3.11 montecarlo_mundial.py 10000
+
+Optimizacion clave: las caracteristicas de cada equipo se calculan UNA sola vez
+y la distribucion de marcadores de cada cruce se memoriza. Asi millones de
+partidos simulados se resuelven en segundos, sin volver a tocar el CSV ni la red.
+"""
+import sys
+
 import numpy as np
-from scipy.stats import poisson
+import pandas as pd
+
+from ligas_config import GRUPOS_MUNDIAL, elo_de
+from ingest_fbref import cargar_historial_csv, construir_historial_equipo, existe_csv_maestro
+from feature_engineering import procesar_equipo, ultima_fila_valida
+from calcular_lambdas import calcular_lambdas
+from matriz_poisson import generar_matriz_poisson
+from predecir_partido import _cargar_promedios_liga
+
+RONDAS = ["16avos", "Octavos", "Cuartos", "Semis", "Final", "Campeon"]
+SALIDA_CSV = "montecarlo_resultados.csv"
 
 
-def correccion_dixon_coles(probabilidades, lambda_l, lambda_v, rho=-0.05):
-    probabilidades[0, 0] *= max(0, 1 - lambda_l * lambda_v * rho)
-    probabilidades[1, 0] *= max(0, 1 + lambda_v * rho)
-    probabilidades[0, 1] *= max(0, 1 + lambda_l * rho)
-    probabilidades[1, 1] *= max(0, 1 - rho)
-    probabilidades /= probabilidades.sum()
-    return probabilidades
+def construir_modelo(rho: float = -0.05, k_shrinkage: int = 5):
+    """Calcula la fila de features y el Elo de cada seleccion UNA sola vez."""
+    if not existe_csv_maestro():
+        raise SystemExit(
+            "Falta base_mundial_2026.csv. Ejecuta descargar_datos.py "
+            "(o actualizar_datos.py) para generarlo."
+        )
+
+    df = cargar_historial_csv()
+    prom = _cargar_promedios_liga()
+    feats, elos = {}, {}
+    faltantes = []
+    for equipos in GRUPOS_MUNDIAL.values():
+        for eq in equipos:
+            if eq in feats:
+                continue
+            try:
+                hist = construir_historial_equipo(df, eq)
+                fila = ultima_fila_valida(
+                    procesar_equipo(hist, prom["xg_favor"], prom["xg_contra"],
+                                    prom["sot"], k_shrinkage=k_shrinkage)
+                )
+            except Exception:
+                fila = None
+            if fila is None:
+                faltantes.append(eq)
+            else:
+                feats[eq] = fila
+                elos[eq] = elo_de(eq)
+    if faltantes:
+        print(f"Aviso: sin datos suficientes para {faltantes}. Se usara Elo de respaldo.")
+    return feats, elos, rho
 
 
-def generar_matriz_poisson(lambda_local, lambda_visitante, max_goles=5, rho=-0.05):
-    goles = np.arange(0, max_goles + 1)
-    prob_local = poisson.pmf(goles, lambda_local)
-    prob_visitante = poisson.pmf(goles, lambda_visitante)
-    matriz_probs = np.outer(prob_local, prob_visitante)
-    if rho != 0:
-        matriz_corregida = correccion_dixon_coles(matriz_probs, lambda_local, lambda_visitante, rho=rho)
-    else:
-        # Normalizamos tambien sin Dixon-Coles: como la Poisson se trunca en
-        # max_goles, el producto exterior suma <1 y habia que reescalarlo.
-        matriz_corregida = matriz_probs / matriz_probs.sum()
-    return matriz_corregida
+def crear_sampler(feats, elos, rho):
+    """Devuelve dist(a, b) -> distribucion acumulada de marcadores (memorizada)."""
+    cache = {}
+
+    def dist(a, b):
+        clave = (a, b)
+        if clave not in cache:
+            if a in feats and b in feats:
+                ll, lv = calcular_lambdas(
+                    feats[a], feats[b], neutral=True,
+                    elo_local=elos.get(a), elo_visitante=elos.get(b),
+                )
+            else:
+                # Respaldo si falta historial: lambdas a partir del Elo puro.
+                ea, eb = elo_de(a), elo_de(b)
+                e = 1.0 / (1.0 + 10 ** ((eb - ea) / 400.0))
+                ll, lv = 0.8 + e, 0.8 + (1 - e)
+            matriz = generar_matriz_poisson(ll, lv, rho=rho)
+            flat = matriz.ravel()
+            cache[clave] = (np.cumsum(flat), matriz.shape[0])
+        return cache[clave]
+
+    return dist
+
+
+def _marcador(rng, dist, a, b):
+    acum, n = dist(a, b)
+    idx = int(np.searchsorted(acum, rng.random() * acum[-1]))
+    return divmod(idx, n)
+
+
+def _ganador(rng, dist, a, b):
+    gi, gj = _marcador(rng, dist, a, b)
+    if gi > gj:
+        return a
+    if gj > gi:
+        return b
+    return a if rng.random() < 0.5 else b  # penales
+
+
+def simular_torneo(rng, dist):
+    """Juega un Mundial completo y devuelve dict equipo -> etapa mas avanzada."""
+    primeros_segundos, terceros = [], []
+
+    for equipos in GRUPOS_MUNDIAL.values():
+        pts = {t: 0 for t in equipos}
+        gd = {t: 0 for t in equipos}
+        gf = {t: 0 for t in equipos}
+        for i in range(len(equipos)):
+            for j in range(i + 1, len(equipos)):
+                a, b = equipos[i], equipos[j]
+                gi, gj = _marcador(rng, dist, a, b)
+                gf[a] += gi; gf[b] += gj
+                gd[a] += gi - gj; gd[b] += gj - gi
+                if gi > gj:
+                    pts[a] += 3
+                elif gj > gi:
+                    pts[b] += 3
+                else:
+                    pts[a] += 1; pts[b] += 1
+        clasif = sorted(equipos, key=lambda t: (pts[t], gd[t], gf[t], rng.random()),
+                        reverse=True)
+        primeros_segundos.append((clasif[0], pts[clasif[0]], gd[clasif[0]], gf[clasif[0]]))
+        primeros_segundos.append((clasif[1], pts[clasif[1]], gd[clasif[1]], gf[clasif[1]]))
+        terceros.append((clasif[2], pts[clasif[2]], gd[clasif[2]], gf[clasif[2]]))
+
+    # 8 mejores terceros completan los 32 clasificados.
+    terceros.sort(key=lambda x: (x[1], x[2], x[3], rng.random()), reverse=True)
+    clasificados = primeros_segundos + terceros[:8]
+    clasificados.sort(key=lambda x: (x[1], x[2], x[3], rng.random()), reverse=True)
+
+    etapa = {}
+    ronda = [c[0] for c in clasificados]  # 32 sembrados
+    for t in ronda:
+        etapa[t] = "16avos"
+
+    nombre_idx = 1  # siguiente etiqueta tras 16avos
+    while len(ronda) > 1:
+        siguiente = []
+        for i in range(len(ronda) // 2):
+            a, b = ronda[i], ronda[len(ronda) - 1 - i]
+            g = _ganador(rng, dist, a, b)
+            siguiente.append(g)
+            etapa[g] = RONDAS[nombre_idx]
+        ronda = siguiente
+        nombre_idx += 1
+    return etapa
+
+
+def correr(n_sim: int = 10000, semilla: int = 42) -> pd.DataFrame:
+    feats, elos, rho = construir_modelo()
+    dist = crear_sampler(feats, elos, rho)
+    rng = np.random.default_rng(semilla)
+
+    equipos = [t for g in GRUPOS_MUNDIAL.values() for t in g]
+    cont = {t: {r: 0 for r in RONDAS} for t in equipos}
+
+    for _ in range(n_sim):
+        etapa = simular_torneo(rng, dist)
+        for t, e in etapa.items():
+            # Llegar a la etapa e implica haber alcanzado todas las rondas
+            # previas (un semifinalista tambien jugo cuartos, etc.), pero NO las
+            # posteriores. Acreditamos las rondas con indice <= indice de e.
+            ie = RONDAS.index(e)
+            for r in RONDAS:
+                if RONDAS.index(r) <= ie:
+                    cont[t][r] += 1
+
+    filas = []
+    for t in equipos:
+        filas.append({
+            "Equipo": t,
+            "Campeon": cont[t]["Campeon"],
+            "Campeon_%": round(100 * cont[t]["Campeon"] / n_sim, 2),
+            "Final_%": round(100 * cont[t]["Final"] / n_sim, 2),
+            "Semis_%": round(100 * cont[t]["Semis"] / n_sim, 2),
+            "Cuartos_%": round(100 * cont[t]["Cuartos"] / n_sim, 2),
+        })
+    df = pd.DataFrame(filas).sort_values("Campeon", ascending=False).reset_index(drop=True)
+    df.to_csv(SALIDA_CSV, index=False, encoding="utf-8")
+    return df
+
+
+if __name__ == "__main__":
+    n = int(sys.argv[1]) if len(sys.argv) > 1 else 10000
+    seed = int(sys.argv[2]) if len(sys.argv) > 2 else 42
+
+    print(f"Simulando el Mundial 2026 {n:,} veces (semilla={seed})...")
+    df = correr(n_sim=n, semilla=seed)
+
+    print(f"\nTop 12 candidatos al titulo ({n:,} simulaciones):")
+    print(f"  {'Equipo':<16}{'Campeon':>9}{'Final':>8}{'Semis':>8}")
+    for _, r in df.head(12).iterrows():
+        print(f"  {r['Equipo']:<16}{r['Campeon_%']:>8.1f}%{r['Final_%']:>7.1f}%{r['Semis_%']:>7.1f}%")
+    print(f"\nResultados completos guardados en '{SALIDA_CSV}'.")
 </file>
 
 <file path="proveedores.py">
@@ -2271,6 +2163,86 @@ if __name__ == "__main__":
         diagnostico()
         print("\nUso: py proveedores.py            (diagnostico)")
         print("     py proveedores.py update [Equipo1 Equipo2 ...]  (actualizar)")
+</file>
+
+<file path="tema_oscuro.py">
+"""
+Tema oscuro moderno para los widgets ttk (combos, sliders, progreso, checks).
+Se llama automaticamente desde app_gui.py; no necesitas ejecutarlo tu.
+
+La paleta vive en app_gui.py (PALETA); aqui la importamos para no duplicar.
+"""
+import tkinter.ttk as ttk
+
+from paleta import (
+    BG, PANEL, CARD, CARD2, BORDE, TEXTO, TEXTO_SEC, ACENTO, ACENTO_HOVER,
+)
+
+
+def aplicar_tema(root):
+    style = ttk.Style(root)
+    try:
+        style.theme_use("clam")
+    except Exception:
+        pass
+
+    # Desplegables (Combobox)
+    style.configure(
+        "Moderno.TCombobox",
+        fieldbackground=CARD2, background=CARD2, foreground=TEXTO,
+        selectbackground=ACENTO, selectforeground="#ffffff",
+        bordercolor=BORDE, lightcolor=BORDE, darkcolor=BORDE,
+        arrowcolor=TEXTO_SEC, arrowsize=14, padding=8, relief="flat",
+    )
+    style.map(
+        "Moderno.TCombobox",
+        fieldbackground=[("readonly", CARD2), ("focus", CARD2)],
+        foreground=[("readonly", TEXTO)],
+        bordercolor=[("focus", ACENTO), ("active", ACENTO)],
+        arrowcolor=[("active", TEXTO)],
+    )
+    # Lista desplegada del combobox
+    root.option_add("*TCombobox*Listbox.background", CARD2)
+    root.option_add("*TCombobox*Listbox.foreground", TEXTO)
+    root.option_add("*TCombobox*Listbox.selectBackground", ACENTO)
+    root.option_add("*TCombobox*Listbox.selectForeground", "#ffffff")
+    root.option_add("*TCombobox*Listbox.borderWidth", 0)
+    root.option_add("*TCombobox*Listbox.font", "{Segoe UI} 10")
+
+    # Sliders (Scale)
+    style.configure(
+        "Moderno.Horizontal.TScale",
+        background=PANEL, troughcolor=BORDE, bordercolor=PANEL,
+        lightcolor=ACENTO, darkcolor=ACENTO, sliderrelief="flat",
+    )
+
+    # Barra de progreso
+    style.configure(
+        "Moderno.Horizontal.TProgressbar",
+        troughcolor=BORDE, background=ACENTO, bordercolor=PANEL,
+        lightcolor=ACENTO, darkcolor=ACENTO, thickness=6,
+    )
+
+    # Pestañas (Notebook)
+    style.configure("Moderno.TNotebook", background=CARD, borderwidth=0)
+    style.configure("Moderno.TNotebook.Tab", background=CARD, foreground=TEXTO_SEC,
+                    padding=(16, 8), borderwidth=0, font="{Segoe UI} 10 bold")
+    style.map("Moderno.TNotebook.Tab",
+              background=[("selected", CARD2)],
+              foreground=[("selected", TEXTO)])
+
+    # Checkbutton
+    style.configure(
+        "Moderno.TCheckbutton",
+        background=PANEL, foreground=TEXTO_SEC, focuscolor=PANEL,
+        indicatorcolor=CARD2, indicatorrelief="flat",
+    )
+    style.map(
+        "Moderno.TCheckbutton",
+        background=[("active", PANEL)],
+        foreground=[("active", TEXTO)],
+        indicatorcolor=[("selected", ACENTO), ("active", BORDE)],
+    )
 </file>
 
 <file path="calcular_lambdas.py">
@@ -2833,6 +2805,34 @@ NOMBRE_DISPLAY = {
 }
 
 EQUIPOS_MUNDIAL_ES = sorted(NOMBRE_DISPLAY.keys())
+</file>
+
+<file path="matriz_poisson.py">
+import numpy as np
+from scipy.stats import poisson
+
+
+def correccion_dixon_coles(probabilidades, lambda_l, lambda_v, rho=-0.05):
+    probabilidades[0, 0] *= max(0, 1 - lambda_l * lambda_v * rho)
+    probabilidades[1, 0] *= max(0, 1 + lambda_v * rho)
+    probabilidades[0, 1] *= max(0, 1 + lambda_l * rho)
+    probabilidades[1, 1] *= max(0, 1 - rho)
+    probabilidades /= probabilidades.sum()
+    return probabilidades
+
+
+def generar_matriz_poisson(lambda_local, lambda_visitante, max_goles=5, rho=-0.05):
+    goles = np.arange(0, max_goles + 1)
+    prob_local = poisson.pmf(goles, lambda_local)
+    prob_visitante = poisson.pmf(goles, lambda_visitante)
+    matriz_probs = np.outer(prob_local, prob_visitante)
+    if rho != 0:
+        matriz_corregida = correccion_dixon_coles(matriz_probs, lambda_local, lambda_visitante, rho=rho)
+    else:
+        # Normalizamos tambien sin Dixon-Coles: como la Poisson se trunca en
+        # max_goles, el producto exterior suma <1 y habia que reescalarlo.
+        matriz_corregida = matriz_probs / matriz_probs.sum()
+    return matriz_corregida
 </file>
 
 <file path="predecir_partido.py">
@@ -4293,9 +4293,17 @@ correr_backtest(partidos, df_liga, verbose=True)
 
 ## 📌 Pendiente (no implementado)
 
-- `fuerza_rival_prom`: normalizar el xG según la fuerza de los rivales
-  enfrentados.
-- Backtest multi-liga / multi-temporada para una calibración más robusta.
+- **Backtest multi-temporada**: hoy la calibración usa varias ligas pero una sola
+  temporada (2024-25); ampliarlo a varias temporadas daría parámetros más robustos.
+- **xT (Expected Threat)** desde datos de eventos (StatsBomb) y **modelo a nivel
+  jugador / PSxG** (FBref `read_player_match_stats`) — saltos de arquitectura mayores.
+- **Score effects** medidos (tiempo real en ventaja): requiere datos jugada-a-jugada
+  que `soccerdata` no expone.
+
+> Nota: la "fuerza del rival" (normalizar según el Elo de los rivales enfrentados)
+> y el "backtest multi-liga" que figuraban aquí **ya están implementados** —
+> ponderación Elo/SoS en `feature_engineering.py` y `backtest_cuotas.calibrar()`
+> sobre 5 ligas.
 </file>
 
 </files>

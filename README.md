@@ -391,6 +391,14 @@ correr_backtest(partidos, df_liga, verbose=True)
 
 ## 📌 Pendiente (no implementado)
 
-- `fuerza_rival_prom`: normalizar el xG según la fuerza de los rivales
-  enfrentados.
-- Backtest multi-liga / multi-temporada para una calibración más robusta.
+- **Backtest multi-temporada**: hoy la calibración usa varias ligas pero una sola
+  temporada (2024-25); ampliarlo a varias temporadas daría parámetros más robustos.
+- **xT (Expected Threat)** desde datos de eventos (StatsBomb) y **modelo a nivel
+  jugador / PSxG** (FBref `read_player_match_stats`) — saltos de arquitectura mayores.
+- **Score effects** medidos (tiempo real en ventaja): requiere datos jugada-a-jugada
+  que `soccerdata` no expone.
+
+> Nota: la "fuerza del rival" (normalizar según el Elo de los rivales enfrentados)
+> y el "backtest multi-liga" que figuraban aquí **ya están implementados** —
+> ponderación Elo/SoS en `feature_engineering.py` y `backtest_cuotas.calibrar()`
+> sobre 5 ligas.
