@@ -1,6 +1,16 @@
 """
-Descarga datos del Mundial equipo por equipo con pausas anti-bloqueo.
+Descarga MASIVA del Mundial (equipo por equipo, con pausas anti-bloqueo) y al
+terminar regenera el CSV maestro. Tarda varios minutos; para mantener al dia usa
+mejor actualizar_datos.py (incremental).
 """
+# ── Bootstrap de rutas: permite ejecutar este script directamente ──
+import os as _os, sys as _sys
+_SRC = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
+for _sub in ("", "modelo", "datos", "interfaz", "analisis"):
+    _ruta = _os.path.join(_SRC, _sub)
+    if _ruta not in _sys.path:
+        _sys.path.insert(0, _ruta)
+
 import soccerdata as sd
 import time
 import pandas as pd

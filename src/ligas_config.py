@@ -1,8 +1,15 @@
 """
-Configuracion de ligas y equipos precargados para el Mundial 2026.
+Configuracion central del proyecto: ligas, temporadas, las 48 selecciones del
+Mundial (nombre español <-> FBref), el ranking Elo, los grupos del torneo y el
+diccionario PESOS_MODELO con todos los pesos calibrables del modelo.
+
+Es el unico modulo "compartido" (vive en src/, fuera de las subcarpetas) porque
+lo consumen el modelo, los datos, la interfaz y el analisis.
 """
 import json
 import os
+
+from rutas import data
 
 # ── Pesos y umbrales del modelo de lambdas ──────────────────────────────────
 # Centralizados aqui para poder calibrar el modelo sin tocar las formulas
@@ -220,7 +227,7 @@ GRUPOS_MUNDIAL = {
 
 # Los grupos se pueden editar desde la app y se guardan en este JSON, que tiene
 # prioridad sobre el GRUPOS_MUNDIAL de arriba (que queda como respaldo).
-GRUPOS_JSON_PATH = "grupos_mundial.json"
+GRUPOS_JSON_PATH = data("grupos_mundial.json")
 
 
 def cargar_grupos():

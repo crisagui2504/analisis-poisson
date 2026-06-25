@@ -11,6 +11,8 @@ from typing import List, Sequence
 import pandas as pd
 import numpy as np
 
+from rutas import data
+
 try:
     import soccerdata as sd
 except ImportError:
@@ -24,7 +26,7 @@ COLUMNAS_REQUERIDAS = [
 
 # Archivo maestro limpio del Mundial. Se genera con descargar_datos.py y permite
 # que la prediccion sea 100% offline y rapida (sin tocar el cache de soccerdata).
-CSV_MAESTRO_MUNDIAL = "base_mundial_2026.csv"
+CSV_MAESTRO_MUNDIAL = data("base_mundial_2026.csv")
 
 
 def _chequear_dependencia():

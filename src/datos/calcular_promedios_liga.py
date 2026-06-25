@@ -4,17 +4,26 @@ Calcula promedios del Mundial leyendo directamente el cache HTML de soccerdata.
 No importa soccerdata ni abre Chrome. Lee archivos como:
     C:\\Users\\<usuario>\\soccerdata\\data\\FBref\\matchlogs_Spain_2026_shooting.html
 
-Genera promedios_liga.json en esta carpeta.
+Genera data/promedios_liga.json, que usa el shrinkage del modelo.
 """
+# ── Bootstrap de rutas: permite ejecutar este script directamente ──
+import os as _os, sys as _sys
+_SRC = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
+for _sub in ("", "modelo", "datos", "interfaz", "analisis"):
+    _ruta = _os.path.join(_SRC, _sub)
+    if _ruta not in _sys.path:
+        _sys.path.insert(0, _ruta)
+
 import json
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
+from rutas import data
 
 CACHE_BASE = Path.home() / "soccerdata" / "data" / "FBref"
-SALIDA = Path("promedios_liga.json")
+SALIDA = Path(data("promedios_liga.json"))
 
 
 def _aplanar_columnas(df):

@@ -15,12 +15,21 @@ Fuentes incluidas:
 Claves de API: se leen de variables de entorno o de un archivo local
 `apis.local.json` (NO se sube a git). Ver apis.example.json.
 """
+# ── Bootstrap de rutas: permite ejecutar este script directamente ──
+import os as _os, sys as _sys
+_SRC = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
+for _sub in ("", "modelo", "datos", "interfaz", "analisis"):
+    _ruta = _os.path.join(_SRC, _sub)
+    if _ruta not in _sys.path:
+        _sys.path.insert(0, _ruta)
+
 import json
 import os
 
 import numpy as np
 import pandas as pd
 
+from rutas import raiz
 from ingest_fbref import (
     COLUMNAS_REQUERIDAS, sd, _chequear_dependencia,
     construir_historial_equipo_directo, fusionar_historiales,
@@ -36,7 +45,7 @@ def _leer_clave(nombre_env: str, json_key: str) -> str:
     if valor:
         return valor
     try:
-        with open("apis.local.json", encoding="utf-8") as f:
+        with open(raiz("apis.local.json"), encoding="utf-8") as f:
             return str(json.load(f).get(json_key, "")).strip()
     except Exception:
         return ""

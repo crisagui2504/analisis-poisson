@@ -15,6 +15,14 @@ Uso:
     py -3.11 backtest_cuotas.py            # Premier League 2024-25
     py -3.11 backtest_cuotas.py SP1 2425   # La Liga 2024-25
 """
+# ── Bootstrap de rutas: permite ejecutar este script directamente ──
+import os as _os, sys as _sys
+_SRC = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
+for _sub in ("", "modelo", "datos", "interfaz", "analisis"):
+    _ruta = _os.path.join(_SRC, _sub)
+    if _ruta not in _sys.path:
+        _sys.path.insert(0, _ruta)
+
 import sys
 
 import numpy as np

@@ -13,6 +13,14 @@ jugaron unos pocos equipos, actualiza SOLO esos pasandolos como argumento:
     py -3.11 actualizar_datos.py                       # las 48 (lento)
     py -3.11 actualizar_datos.py Spain Brazil Mexico   # solo esos (rapido)
 """
+# ── Bootstrap de rutas: permite ejecutar este script directamente ──
+import os as _os, sys as _sys
+_SRC = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
+for _sub in ("", "modelo", "datos", "interfaz", "analisis"):
+    _ruta = _os.path.join(_SRC, _sub)
+    if _ruta not in _sys.path:
+        _sys.path.insert(0, _ruta)
+
 import sys
 
 import soccerdata as sd

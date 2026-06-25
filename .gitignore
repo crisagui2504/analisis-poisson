@@ -5,8 +5,10 @@ __pycache__/
 .venv/
 venv/
 
-# Salidas regenerables
+# Salidas regenerables (se generan en data/)
 montecarlo_resultados.csv
+resultados_backtest.csv
+data/grupos_mundial.json
 
 # Claves de API (nunca subir)
 apis.local.json

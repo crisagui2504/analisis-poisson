@@ -13,11 +13,20 @@ Optimizacion clave: las caracteristicas de cada equipo se calculan UNA sola vez
 y la distribucion de marcadores de cada cruce se memoriza. Asi millones de
 partidos simulados se resuelven en segundos, sin volver a tocar el CSV ni la red.
 """
+# ── Bootstrap de rutas: permite ejecutar este script directamente ──
+import os as _os, sys as _sys
+_SRC = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
+for _sub in ("", "modelo", "datos", "interfaz", "analisis"):
+    _ruta = _os.path.join(_SRC, _sub)
+    if _ruta not in _sys.path:
+        _sys.path.insert(0, _ruta)
+
 import sys
 
 import numpy as np
 import pandas as pd
 
+from rutas import data
 from ligas_config import GRUPOS_MUNDIAL, cargar_grupos, elo_de
 from ingest_fbref import cargar_historial_csv, construir_historial_equipo, existe_csv_maestro
 from feature_engineering import procesar_equipo, ultima_fila_valida
@@ -26,7 +35,7 @@ from matriz_poisson import generar_matriz_poisson
 from predecir_partido import _cargar_promedios_liga
 
 RONDAS = ["16avos", "Octavos", "Cuartos", "Semis", "Final", "Campeon"]
-SALIDA_CSV = "montecarlo_resultados.csv"
+SALIDA_CSV = data("montecarlo_resultados.csv")
 
 
 def construir_modelo(grupos=None, rho: float = -0.05, k_shrinkage: int = 5):

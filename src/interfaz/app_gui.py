@@ -1,7 +1,19 @@
 """
-Interfaz gráfica del predictor de fútbol — estilo moderno.
-Ejecutar: py -3.11 app_gui.py
+Interfaz gráfica del predictor — estilo moderno (la "aplicación principal").
+
+Es lo que abre `Abrir Predictor.bat`. Dos modos: predicción de un partido (con
+dashboard de mercados, cuotas, top-5, radar y mapa de calor) y simulación del
+torneo completo (Monte Carlo) con editor de grupos.
+Ejecutar: py -3.11 src/interfaz/app_gui.py
 """
+# ── Bootstrap de rutas: permite ejecutar este script directamente ──
+import os as _os, sys as _sys
+_SRC = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
+for _sub in ("", "modelo", "datos", "interfaz", "analisis"):
+    _ruta = _os.path.join(_SRC, _sub)
+    if _ruta not in _sys.path:
+        _sys.path.insert(0, _ruta)
+
 import tkinter as tk
 from tkinter import ttk, messagebox
 import threading

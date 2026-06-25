@@ -1,11 +1,14 @@
 """
-Logica de prediccion sin interfaz. La GUI llama a predecir_partido().
+Orquestador de la prediccion de UN partido (sin interfaz). La GUI y el motor
+Monte Carlo llaman a predecir_partido(). Encadena: historial -> features ->
+lambdas -> matriz de Poisson -> probabilidades 1X2 + mercados.
 """
 import json
 import os
 import numpy as np
 import pandas as pd
 
+from rutas import data
 from ingest_fbref import (
     descargar_liga,
     construir_historial_equipo,
@@ -54,7 +57,7 @@ def _factor_h2h(df, local, visit, peso=0.04, min_partidos=3):
     return 1 + aj, 1 - aj
 
 
-PROMEDIOS_LIGA_PATH = "promedios_liga.json"
+PROMEDIOS_LIGA_PATH = data("promedios_liga.json")
 PROMEDIOS_DEFAULT = {"xg_favor": 1.3, "xg_contra": 1.3, "sot": 4.5}
 
 

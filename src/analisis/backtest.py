@@ -10,11 +10,23 @@ Corrige respecto a la versión anterior:
   3. Conversión de fechas centralizada al inicio, no dispersa en cada función.
   4. Excepciones logueadas en vez de silenciadas con `pass`.
   5. Soporta correr sobre MUCHOS partidos/equipos de liga, no solo un par fijo.
+
+Incluye tambien auditar_ewm_sin_fuga(): verifica que el suavizado EWM no filtre
+datos del partido actual hacia los promedios del pasado.
 """
+# ── Bootstrap de rutas: permite ejecutar este script directamente ──
+import os as _os, sys as _sys
+_SRC = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
+for _sub in ("", "modelo", "datos", "interfaz", "analisis"):
+    _ruta = _os.path.join(_SRC, _sub)
+    if _ruta not in _sys.path:
+        _sys.path.insert(0, _ruta)
+
 import pandas as pd
 import numpy as np
 from sklearn.metrics import log_loss
 
+from rutas import data
 from feature_engineering import procesar_equipo, ultima_fila_valida
 from calcular_lambdas import calcular_lambdas
 from matriz_poisson import generar_matriz_poisson
@@ -192,8 +204,8 @@ def correr_backtest(partidos_historicos, df_liga_completo,
         df_resultados = df_resultados.sort_values(by='log_loss')
         print("\nMejores combinaciones de parámetros (menor log_loss primero):")
         print(df_resultados.head(5).to_string(index=False))
-        df_resultados.to_csv("resultados_backtest.csv", index=False)
-        print("\nResultados completos guardados en resultados_backtest.csv")
+        df_resultados.to_csv(data("resultados_backtest.csv"), index=False)
+        print("\nResultados completos guardados en data/resultados_backtest.csv")
     else:
         print("No se calcularon resultados. Revisar formato de datos y columnas requeridas.")
 

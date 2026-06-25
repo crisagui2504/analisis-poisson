@@ -14,7 +14,7 @@ echo.
 
 REM Usamos el lanzador "py" porque "python" en este equipo esta
 REM secuestrado por el atajo de la Microsoft Store y falla.
-py -3.11 app_gui.py
+py -3.11 src\interfaz\app_gui.py
 
 REM Si la app cierra por un error, la ventana queda abierta para leerlo.
 if errorlevel 1 (
