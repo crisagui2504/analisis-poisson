@@ -49,10 +49,12 @@ def _mezcla(c1, c2, t):
 
 
 def _clamp01(x):
+    """Recorta x a [0, 1] (para normalizar los ejes del radar)."""
     return max(0.0, min(1.0, x))
 
 
 def _cuota(p):
+    """Convierte una probabilidad en su cuota justa (1/p). '—' si p es 0."""
     return f"Cuota {1 / p:.2f}" if p and p > 0 else "—"
 
 
@@ -101,6 +103,7 @@ class Tarjeta(tk.Canvas):
         self.bind("<Configure>", self._dibujar)
 
     def actualizar(self, valor=None, sub=None):
+        """Cambia el valor y/o subtítulo de la tarjeta y la redibuja."""
         if valor is not None:
             self.valor = valor
         if sub is not None:
@@ -156,6 +159,13 @@ class BarraProbabilidad(tk.Canvas):
 
 
 class PredictorApp(tk.Tk):
+    """
+    Ventana principal de la aplicación. Construye la interfaz, gestiona los dos
+    flujos (predicción de un partido y simulación Monte Carlo) en hilos de fondo
+    y dibuja todos los resultados (tarjetas, mercados, radar, mapa de calor,
+    ranking del torneo y editor de grupos).
+    """
+
     def __init__(self):
         super().__init__()
         self.title("Predictor de Fútbol · Mundial 2026")
@@ -175,6 +185,7 @@ class PredictorApp(tk.Tk):
     # ── Construcción de la UI ──────────────────────────────────────────────
 
     def _construir_ui(self):
+        """Arma el layout: cabecera + panel lateral (controles) + panel derecho."""
         Cabecera(self).pack(fill="x")
 
         contenedor = tk.Frame(self, bg=BG)
@@ -187,6 +198,8 @@ class PredictorApp(tk.Tk):
         self._panel_der(contenedor)
 
     def _panel_izq(self, parent):
+        """Panel lateral: liga, equipos, forma, ajustes, botones de predecir /
+        simular Mundial / editar grupos, y la barra de estado."""
         frame = tk.Frame(parent, bg=PANEL, width=326)
         frame.grid(row=0, column=0, sticky="nsew", padx=(0, 18))
         frame.pack_propagate(False)
@@ -302,6 +315,8 @@ class PredictorApp(tk.Tk):
             self.btn_montecarlo.config(bg="#fcd34d" if dentro else AMARILLO)
 
     def _slider(self, frame, etiqueta, desde, hasta, ini, clave, fmt):
+        """Crea un slider con su etiqueta y valor en vivo, y guarda su variable
+        como self.var_<clave>."""
         fila = tk.Frame(frame, bg=PANEL)
         fila.pack(fill="x", padx=20, pady=(8, 0))
         tk.Label(fila, text=etiqueta, fg=TEXTO_SEC, bg=PANEL,
@@ -316,11 +331,14 @@ class PredictorApp(tk.Tk):
         setattr(self, f"var_{clave}", var)
 
     def _panel_der(self, parent):
+        """Panel derecho: muestra la bienvenida y luego los resultados (pestañas
+        de predicción / análisis o la vista de torneo)."""
         self.frame_der = tk.Frame(parent, bg=CARD)
         self.frame_der.grid(row=0, column=1, sticky="nsew")
         self._mostrar_bienvenida()
 
     def _mostrar_bienvenida(self):
+        """Pantalla inicial del panel derecho (antes de la primera predicción)."""
         for w in self.frame_der.winfo_children():
             w.destroy()
         cont = tk.Frame(self.frame_der, bg=CARD)
@@ -335,6 +353,8 @@ class PredictorApp(tk.Tk):
     # ── Lógica de liga / desplegables ─────────────────────────────────────
 
     def _on_liga_change(self):
+        """Al cambiar de liga, repuebla los desplegables de equipos (selecciones
+        en español para el Mundial; clubes desde FBref para las demás)."""
         liga_nombre = self.var_liga.get()
         if liga_nombre == "Mundial 2026":
             equipos_es = EQUIPOS_MUNDIAL_ES
@@ -346,6 +366,8 @@ class PredictorApp(tk.Tk):
             self._cargar_equipos_liga(liga_nombre)
 
     def _cargar_equipos_liga(self, liga_nombre):
+        """Carga (con caché) los equipos de una liga de clubes desde FBref en un
+        hilo de fondo y los pone en los desplegables."""
         liga_id = LIGAS[liga_nombre]
         temporada = TEMPORADAS[liga_nombre]
         clave = f"{liga_id}_{temporada}"
@@ -375,6 +397,7 @@ class PredictorApp(tk.Tk):
         threading.Thread(target=tarea, daemon=True).start()
 
     def _actualizar_desplegables(self, equipos):
+        """Rellena los combos de equipos con la lista dada y reactiva la UI."""
         self.cb_eq1.config(values=equipos)
         self.cb_eq2.config(values=equipos)
         if equipos:
@@ -386,6 +409,8 @@ class PredictorApp(tk.Tk):
     # ── Predicción ────────────────────────────────────────────────────────
 
     def _iniciar_prediccion(self):
+        """Valida la selección y lanza la predicción en un hilo de fondo (incluye
+        la actualización de datos opcional). Al terminar dibuja el resultado."""
         liga_nombre = self.var_liga.get()
         eq1_display = self.var_eq1.get()
         eq2_display = self.var_eq2.get()
@@ -457,6 +482,7 @@ class PredictorApp(tk.Tk):
         threading.Thread(target=tarea, daemon=True).start()
 
     def _parar_progreso(self):
+        """Detiene la barra de progreso y reactiva los botones de acción."""
         self.progreso.stop()
         self.btn_predecir.config(state="normal", bg=ACENTO)
         self.btn_montecarlo.config(state="normal", bg=AMARILLO)
@@ -464,6 +490,8 @@ class PredictorApp(tk.Tk):
     # ── Simulación Monte Carlo del torneo ─────────────────────────────────
 
     def _iniciar_montecarlo(self):
+        """Lanza la simulación Monte Carlo del torneo en un hilo de fondo y, al
+        terminar, muestra el ranking de candidatos al título."""
         try:
             n_sim = int(self.var_nsim.get())
         except ValueError:
@@ -487,6 +515,7 @@ class PredictorApp(tk.Tk):
         threading.Thread(target=tarea, daemon=True).start()
 
     def _mostrar_montecarlo(self, df, n_sim):
+        """Dibuja la vista de torneo: gráfico de barras (Top 12) + tabla ranking."""
         self.lbl_estado.config(text="¡Simulación lista!")
         for w in self.frame_der.winfo_children():
             w.destroy()
@@ -503,6 +532,7 @@ class PredictorApp(tk.Tk):
         self._tabla_montecarlo(cont, df)
 
     def _barras_montecarlo(self, parent, df):
+        """Gráfico de barras horizontal con el Top 12 por % de título."""
         top = df.head(12).iloc[::-1]  # invertido: el mayor arriba en barh
         fig, ax = plt.subplots(figsize=(6.0, 3.4))
         fig.patch.set_facecolor(CARD)
@@ -523,6 +553,7 @@ class PredictorApp(tk.Tk):
         plt.close(fig)
 
     def _tabla_montecarlo(self, parent, df):
+        """Tabla ranking (Top 16): Campeón / Final / Semis por selección."""
         tk.Label(parent, text="RANKING (Top 16)  ·  Campeón / Final / Semis",
                  font=(FUENTE, 9, "bold"), fg=TEXTO_SEC, bg=CARD).pack(anchor="w", pady=(10, 4))
         tabla = tk.Frame(parent, bg=CARD)
@@ -544,6 +575,9 @@ class PredictorApp(tk.Tk):
     # ── Editor de grupos del Mundial ──────────────────────────────────────
 
     def _abrir_editor_grupos(self):
+        """Abre una ventana para editar los 12 grupos (sorteo oficial). Muestra
+        los equipos en español, valida que cada selección aparezca una sola vez y
+        guarda en data/grupos_mundial.json."""
         es_a_fbref = NOMBRE_DISPLAY
         fbref_a_es = {v: k for k, v in NOMBRE_DISPLAY.items()}
         grupos = cargar_grupos()
@@ -615,6 +649,8 @@ class PredictorApp(tk.Tk):
     # ── Panel de resultados ───────────────────────────────────────────────
 
     def _mostrar_resultado(self, resultado, nombre_eq1, nombre_eq2):
+        """Renderiza la predicción: forma en el lateral + pestañas Predicción
+        (1X2, mercados, top-5) y Análisis (radar + mapa de calor)."""
         self.lbl_estado.config(text="¡Listo!")
         for w in self.frame_der.winfo_children():
             w.destroy()
@@ -633,6 +669,7 @@ class PredictorApp(tk.Tk):
         self._tab_analisis(tab_anal, resultado, nombre_eq1, nombre_eq2)
 
     def _tab_prediccion(self, parent, r, n1, n2):
+        """Pestaña Predicción: tarjetas 1X2 con cuota, barra, λ, mercados y top-5."""
         cont = tk.Frame(parent, bg=CARD)
         cont.pack(fill="both", expand=True, padx=18, pady=14)
         p1, px, p2 = r['prob_local'], r['prob_empate'], r['prob_visitante']
@@ -680,6 +717,7 @@ class PredictorApp(tk.Tk):
         self._render_top5(cont, r['matriz'])
 
     def _render_top5(self, parent, mat):
+        """Los 5 marcadores más probables de la matriz, con su % y cuota justa."""
         n = mat.shape[0]
         idx = np.dstack(np.unravel_index(np.argsort(mat.ravel())[::-1], mat.shape))[0][:5]
         tk.Label(parent, text="MARCADORES MÁS PROBABLES  ·  con cuota justa",
@@ -696,6 +734,7 @@ class PredictorApp(tk.Tk):
                      font=(FUENTE, 9), fg=TEXTO_SEC, bg=CARD2).pack(pady=(0, 8))
 
     def _tab_analisis(self, parent, r, n1, n2):
+        """Pestaña Análisis: radar de dominio + mapa de calor de marcadores."""
         cont = tk.Frame(parent, bg=CARD)
         cont.pack(fill="both", expand=True, padx=14, pady=10)
         tk.Label(cont, text="RADAR DE DOMINIO", font=(FUENTE, 9, "bold"),
@@ -706,6 +745,8 @@ class PredictorApp(tk.Tk):
         self._dibujar_heatmap(cont, r['matriz'], n1, n2)
 
     def _dibujar_radar(self, parent, m_loc, m_vis, n1, n2):
+        """Gráfico de radar (telaraña) comparando 5 métricas normalizadas del
+        local (verde) vs el visitante (rojo)."""
         ejes = ["Ataque", "Posesión", "Tiros", "Defensa", "Disciplina"]
 
         def norm(m):
@@ -745,6 +786,7 @@ class PredictorApp(tk.Tk):
         plt.close(fig)
 
     def _render_forma_sidebar(self, r, n1, n2):
+        """Dibuja en el panel lateral la forma reciente de ambos equipos."""
         for w in self.frame_forma.winfo_children():
             w.destroy()
         tk.Label(self.frame_forma, text="FORMA (últimos 5)", font=(FUENTE, 8, "bold"),
@@ -753,6 +795,7 @@ class PredictorApp(tk.Tk):
         self._fila_forma(n2, r.get("forma_visitante", []), r.get("descanso_visitante", 0))
 
     def _fila_forma(self, nombre, forma, descanso):
+        """Una fila de forma: nombre + círculos de color (W/D/L) + días de descanso."""
         fila = tk.Frame(self.frame_forma, bg=PANEL)
         fila.pack(fill="x", pady=3)
         tk.Label(fila, text=nombre[:11], font=(FUENTE, 9), fg=TEXTO, bg=PANEL,
@@ -767,6 +810,7 @@ class PredictorApp(tk.Tk):
                  fg=TEXTO_SEC, bg=PANEL).pack(side="right")
 
     def _dibujar_heatmap(self, parent, mat, nombre_eq1, nombre_eq2):
+        """Mapa de calor (matplotlib) con la probabilidad de cada marcador exacto."""
         fig, ax = plt.subplots(figsize=(6.0, 3.6))
         fig.patch.set_facecolor(CARD)
         ax.set_facecolor(CARD)

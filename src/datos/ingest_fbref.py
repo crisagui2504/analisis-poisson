@@ -30,6 +30,7 @@ CSV_MAESTRO_MUNDIAL = data("base_mundial_2026.csv")
 
 
 def _chequear_dependencia():
+    """Lanza un error claro si soccerdata no esta instalado."""
     if sd is None:
         raise ImportError("Falta instalar 'soccerdata'. Ejecuta: pip install soccerdata")
 
@@ -67,6 +68,7 @@ def _buscar_columna(df, *posibles_nombres):
 
 
 def _copiar_columna_si_falta(origen, destino, *nombres):
+    """Copia una columna de `origen` a `destino` si existe alli y aun no esta."""
     col_origen = _buscar_columna(origen, *nombres)
     if col_origen is None:
         return
@@ -189,6 +191,7 @@ def actualizar_csv_maestro(fbref, equipos: Sequence[str],
 
 
 def existe_csv_maestro(ruta: str = CSV_MAESTRO_MUNDIAL) -> bool:
+    """True si existe la base maestra del Mundial (data/base_mundial_2026.csv)."""
     return os.path.exists(ruta)
 
 
@@ -300,6 +303,9 @@ def actualizar_mundial(temporada: str = "2026", equipos: Sequence[str] = None,
 
 
 def construir_historial_equipo(df_liga, nombre_equipo):
+    """Filtra y normaliza el historial de un equipo a partir de un DataFrame de
+    liga ya cargado (p. ej. la base maestra del Mundial). Devuelve sus partidos
+    en el esquema normalizado, ordenados por fecha."""
     if "team" in df_liga.columns:
         equipo_df = df_liga[df_liga["team"] == nombre_equipo].copy()
     elif "Team" in df_liga.columns:

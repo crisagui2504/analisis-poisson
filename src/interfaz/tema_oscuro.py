@@ -12,6 +12,9 @@ from paleta import (
 
 
 def aplicar_tema(root):
+    """Configura el estilo oscuro de todos los widgets ttk (combos, sliders,
+    barras de progreso, checks, pestanas) acorde a la paleta. Se llama una vez
+    al crear la ventana."""
     style = ttk.Style(root)
     try:
         style.theme_use("clam")

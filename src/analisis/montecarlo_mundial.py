@@ -100,12 +100,16 @@ def crear_sampler(feats, elos, rho):
 
 
 def _marcador(rng, dist, a, b):
+    """Sortea un marcador (goles_a, goles_b) de la distribucion memorizada del
+    cruce a-b, usando la acumulada (busqueda binaria sobre un numero aleatorio)."""
     acum, n = dist(a, b)
     idx = int(np.searchsorted(acum, rng.random() * acum[-1]))
     return divmod(idx, n)
 
 
 def _ganador(rng, dist, a, b):
+    """Devuelve el ganador de un cruce de eliminatoria: sortea el marcador y, si
+    hay empate, lo resuelve con un volado 50/50 (penales)."""
     gi, gj = _marcador(rng, dist, a, b)
     if gi > gj:
         return a
@@ -164,6 +168,12 @@ def simular_torneo(rng, dist, grupos):
 
 
 def correr(n_sim: int = 10000, semilla: int = 42, grupos=None) -> pd.DataFrame:
+    """
+    Corre la simulacion completa: precalcula el modelo una vez y juega el torneo
+    `n_sim` veces. Cuenta cuantas veces cada seleccion llega a cada ronda y
+    devuelve un DataFrame ordenado por % de titulo (lo guarda en
+    data/montecarlo_resultados.csv). `grupos` por defecto = cargar_grupos().
+    """
     if grupos is None:
         grupos = cargar_grupos()
     feats, elos, rho = construir_modelo(grupos)

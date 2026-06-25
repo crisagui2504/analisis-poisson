@@ -176,6 +176,8 @@ def calibrar(dfs, rhos=(-0.20, -0.15, -0.13, -0.10, -0.05, 0.0),
 
 
 def metricas(probs, y):
+    """Calidad de unas probabilidades vs el resultado real: log_loss, Brier y
+    % de acierto. `probs` es Nx3 (local/empate/visitante), `y` el indice real."""
     onehot = np.eye(3)[y]
     return {"log_loss": log_loss(y, probs, labels=[0, 1, 2]),
             "brier": float(np.mean(np.sum((probs - onehot) ** 2, axis=1))),

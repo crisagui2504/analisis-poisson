@@ -9,6 +9,13 @@ from ligas_config import elo_de, ELO_REFERENCIA
 
 
 def aplicar_shrinkage(promedio_equipo, promedio_liga, n_partidos, k=5):
+    """
+    Regulariza el promedio de un equipo hacia el promedio de la liga/torneo.
+
+    Mezcla ambos ponderando por el numero de partidos: con pocos partidos pesa
+    mas el promedio de liga (evita sobre-interpretar muestras chicas); con muchos
+    pesa mas el del equipo. `k` controla la fuerza del "tiron" hacia la media.
+    """
     return (n_partidos * promedio_equipo + k * promedio_liga) / (n_partidos + k)
 
 
@@ -16,6 +23,27 @@ def procesar_equipo(df_partidos, promedio_liga_xg_favor, promedio_liga_xg_contra
                     promedio_liga_tiros, n_window=6, k_shrinkage=5,
                     ponderar_por_elo=True, suavizado="ewm", ewm_span=10,
                     venue=None):
+    """
+    Convierte el historial de UN equipo en sus caracteristicas predictivas.
+
+    Calcula promedios suavizados (EWM por defecto) de ataque/defensa, tiros,
+    posesion, disciplina, forma y descanso; aplica shrinkage hacia el promedio
+    del torneo; pondera los goles por la fuerza Elo del rival (Strength of
+    Schedule) y deriva xGD y la tasa de conversion. Usa goles reales si falta xG.
+    El shift(1) garantiza que ningun promedio incluya el partido actual (sin fuga
+    de datos).
+
+    Parametros clave
+    ----------------
+    df_partidos : DataFrame    Historial del equipo (esquema normalizado).
+    promedio_liga_* : float    Promedios del torneo para el shrinkage.
+    n_window, ewm_span : int   Ventana y span del suavizado.
+    k_shrinkage : int          Fuerza del shrinkage.
+    suavizado : "ewm" | "sma"  Tipo de promedio.
+    venue : None | "Home" | "Away"  Filtra por sede (splits; off por defecto).
+
+    Devuelve el DataFrame con todas las columnas de features anadidas.
+    """
     df_partidos = df_partidos.copy()
     df_partidos['Date'] = pd.to_datetime(df_partidos['Date'])
     df_partidos = df_partidos.sort_values(by='Date').reset_index(drop=True)
@@ -126,6 +154,12 @@ def procesar_equipo(df_partidos, promedio_liga_xg_favor, promedio_liga_xg_contra
 
 
 def ultima_fila_valida(df_features, columnas_requeridas=None):
+    """
+    Devuelve la fila MAS reciente cuyas columnas imprescindibles no son nulas
+    (o None si no hay ninguna). Es el "estado actual" del equipo que se pasa a
+    calcular_lambdas. Solo exige las features esenciales (ataque, defensa,
+    descanso); las opcionales se manejan con valores por defecto mas adelante.
+    """
     if columnas_requeridas is None:
         # Solo exigimos lo imprescindible para estimar los goles esperados.
         # posesion_prom, disciplina_prom y racha_puntos_prom son opcionales:

@@ -12,6 +12,7 @@ from ligas_config import PESOS_MODELO, ELO_REFERENCIA
 
 
 def _acota(x, lo, hi):
+    """Recorta x al rango [lo, hi]. Evita que un ajuste se dispare."""
     return max(lo, min(hi, x))
 
 
@@ -78,6 +79,7 @@ def calcular_lambdas(
     # Tiros a puerta: ajuste CONTINUO (no escalon). Un equipo que remata mas que
     # la media gana algo de lambda, proporcional a cuanto supera la media.
     def _ajuste_tiros(feats, lam):
+        """Bono/penalizacion continua segun los tiros a puerta vs la media."""
         t = feats.get("tiros_puerta_adj")
         if t is None or pd.isna(t) or t <= 0:
             return lam
@@ -90,6 +92,7 @@ def calcular_lambdas(
     # Fuerza del Calendario (SoS): stats logradas contra rivales fuertes valen
     # mas; contra debiles, menos. Acotado a +/-3%.
     def _ajuste_sos(feats, lam):
+        """Ajuste por fuerza del calendario (Elo medio de rivales), +/-3%."""
         sos = feats.get("sos_prom")
         if sos is None or pd.isna(sos):
             return lam
@@ -101,6 +104,7 @@ def calcular_lambdas(
 
     # Tasa de conversion: premia al hiper-efectivo, penaliza al inofensivo.
     def _ajuste_conversion(feats, lam):
+        """Premia al hiper-efectivo (goles/tiro) y penaliza al inofensivo."""
         c = feats.get("conversion_prom")
         if c is None or pd.isna(c) or c <= 0:
             return lam
@@ -116,6 +120,7 @@ def calcular_lambdas(
 
     # Diferencial de xG (xGD): bono de dominio, acotado a +/-3%.
     def _ajuste_xgd(feats, lam):
+        """Bono de dominio segun el diferencial de xG (ataque - defensa), +/-3%."""
         x = feats.get("xgd_prom")
         if x is None or pd.isna(x):
             return lam

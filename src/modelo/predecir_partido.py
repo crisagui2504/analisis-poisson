@@ -62,6 +62,8 @@ PROMEDIOS_DEFAULT = {"xg_favor": 1.3, "xg_contra": 1.3, "sot": 4.5}
 
 
 def _cargar_promedios_liga():
+    """Carga los promedios del torneo (data/promedios_liga.json) para el
+    shrinkage; si no existe, avisa y usa los valores por defecto."""
     if os.path.exists(PROMEDIOS_LIGA_PATH):
         with open(PROMEDIOS_LIGA_PATH, "r", encoding="utf-8") as f:
             return json.load(f)
@@ -84,6 +86,26 @@ def predecir_partido(
     n_window: int = 6,
     neutral: bool | None = None,
 ) -> dict:
+    """
+    Predice un partido de principio a fin. Es la funcion central del proyecto:
+    la llaman la interfaz y el motor Monte Carlo.
+
+    Pasos: obtiene el historial de cada equipo (CSV maestro para el Mundial, o
+    FBref en vivo para clubes) -> features -> lambdas -> matriz de Poisson ->
+    probabilidades 1X2 -> mercados. Aplica el factor head-to-head si hay datos.
+
+    Parametros
+    ----------
+    equipo_local, equipo_visitante : str  Nombres tal como aparecen en la fuente.
+    liga : str        "INT-World Cup" o el codigo de liga de FBref.
+    temporada : str   Temporada ("2026", "2025-2026"...).
+    rho, k_shrinkage, n_window : parametros del modelo.
+    no_cache : bool   Fuerza descarga en vivo (ignora el CSV maestro).
+    neutral : bool    Sede neutral (sin localia). None = automatico (True Mundial).
+
+    Devuelve un dict con: prob_local/empate/visitante, lambda_*, la matriz, los
+    mercados (BTTS, Over/Under, porteria a cero), forma, descanso y metricas.
+    """
     df_h2h = None  # base para el historial directo (solo Mundial vía CSV)
     if liga == "INT-World Cup":
         # Ruta preferente: CSV maestro local (100% offline y rapido). Si no
@@ -163,13 +185,16 @@ def predecir_partido(
     mercados = calcular_mercados(matriz)
 
     def _forma(df):
+        """Ultimos 5 resultados (W/D/L) del equipo, para los circulos de forma."""
         return list(df.sort_values("Date")["Result"].dropna().tail(5))
 
     def _num(fila, col):
+        """Lee un numero de la fila; 0.0 si falta o es NaN (evita romper la UI)."""
         v = fila.get(col)
         return float(v) if (v is not None and pd.notna(v)) else 0.0
 
     def _metricas(fila):
+        """Las 5 metricas del radar (ataque, defensa, tiros, posesion, disciplina)."""
         return {
             "ataque": _num(fila, "xg_favor_adj"),
             "defensa": _num(fila, "xg_contra_adj"),

@@ -54,12 +54,17 @@ def _leer_clave(nombre_env: str, json_key: str) -> str:
 # ── Contrato común ───────────────────────────────────────────────────────────
 
 class ProveedorDatos:
+    """Contrato común de una fuente de datos (plug-in). Cada API es una subclase
+    que implementa `disponible()` y `historial_equipo()` devolviendo el esquema
+    normalizado. Los atributos de clase definen prioridad, si necesita clave y si
+    es rápida (API REST) o lenta (scraping)."""
     nombre = "base"
     prioridad = 0          # mayor = más confiable (gana al fusionar)
     requiere_clave = False
     rapida = False         # True si responde rápido (API REST) vs scraping lento
 
     def disponible(self) -> bool:
+        """True si esta fuente esta configurada y usable (tiene clave, etc.)."""
         raise NotImplementedError
 
     def historial_equipo(self, equipo: str, temporada: str = "2026") -> pd.DataFrame:
@@ -70,15 +75,19 @@ class ProveedorDatos:
 # ── FBref (soccerdata) ───────────────────────────────────────────────────────
 
 class FBrefProvider(ProveedorDatos):
+    """Fuente FBref (via soccerdata). La mas rica (goles, tiros, posesion, xG) y
+    sin clave, pero lenta (scraping con rate-limit). Maxima prioridad."""
     nombre = "FBref"
     prioridad = 10  # fuente más rica (xG, tiros) -> prevalece
     requiere_clave = False
     rapida = False   # scraping con rate-limit: lento
 
     def disponible(self) -> bool:
+        """Disponible si la libreria soccerdata esta instalada."""
         return sd is not None
 
     def historial_equipo(self, equipo, temporada="2026", no_cache=True):
+        """Lee de FBref el historial normalizado del equipo (shooting + misc)."""
         _chequear_dependencia()
         fbref = sd.FBref(leagues="INT-World Cup", seasons=temporada, no_cache=no_cache)
         df = construir_historial_equipo_directo(fbref, equipo)
@@ -136,6 +145,9 @@ def _parsear_fdorg(data: dict, equipo: str, nombre_busqueda: str = None) -> pd.D
 
 
 class FootballDataOrgProvider(ProveedorDatos):
+    """Fuente football-data.org (API REST). Rapida y da los resultados reales del
+    Mundial, pero en el plan gratuito solo trae goles (no tiros/xG). Requiere API
+    key gratis. Cede ante FBref al fusionar."""
     nombre = "football-data.org"
     prioridad = 5  # solo goles/resultados -> cede ante FBref
     requiere_clave = True
@@ -143,13 +155,16 @@ class FootballDataOrgProvider(ProveedorDatos):
     BASE = "https://api.football-data.org/v4"
 
     def __init__(self):
+        """Lee la API key (de entorno o apis.local.json) y prepara el cache."""
         self.clave = _leer_clave("FOOTBALL_DATA_ORG_KEY", "football_data_org")
         self._cache_matches = None
 
     def disponible(self) -> bool:
+        """Disponible si hay una API key configurada."""
         return bool(self.clave)
 
     def _matches_mundial(self) -> dict:
+        """Descarga (una vez, cacheado) todos los partidos del Mundial de la API."""
         if self._cache_matches is None:
             import requests
             r = requests.get(f"{self.BASE}/competitions/WC/matches",
@@ -159,6 +174,8 @@ class FootballDataOrgProvider(ProveedorDatos):
         return self._cache_matches
 
     def historial_equipo(self, equipo, temporada="2026"):
+        """Historial del equipo desde los partidos del Mundial de la API,
+        traduciendo el nombre al que usa football-data.org (alias)."""
         fd_nombre = ALIAS_FDORG.get(equipo, equipo)
         return _parsear_fdorg(self._matches_mundial(), equipo, nombre_busqueda=fd_nombre)
 

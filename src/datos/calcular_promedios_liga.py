@@ -27,6 +27,7 @@ SALIDA = Path(data("promedios_liga.json"))
 
 
 def _aplanar_columnas(df):
+    """Aplana columnas MultiIndex de FBref a nombres simples (sin 'Unnamed')."""
     if isinstance(df.columns, pd.MultiIndex):
         df.columns = [
             "_".join(str(x) for x in col if str(x) and "Unnamed" not in str(x)).strip()
@@ -37,6 +38,7 @@ def _aplanar_columnas(df):
 
 
 def _buscar_columna(df, *nombres):
+    """Busca una columna por nombre (exacto o como sufijo tras aplanar). None si no esta."""
     cols = {c.lower(): c for c in df.columns}
     for nombre in nombres:
         objetivo = nombre.lower()
@@ -48,6 +50,7 @@ def _buscar_columna(df, *nombres):
 
 
 def _tabla_matchlog(ruta, table_id):
+    """Lee una tabla concreta (por id HTML) de un matchlog cacheado. None si no esta."""
     tablas = pd.read_html(ruta, attrs={"id": table_id})
     if not tablas:
         return None
@@ -55,6 +58,8 @@ def _tabla_matchlog(ruta, table_id):
 
 
 def _agregar_numericos(destino, df, *columnas):
+    """Agrega a la lista `destino` los valores numericos de la primera de
+    `columnas` que exista. Devuelve True si agrego algo."""
     for columna in columnas:
         col = _buscar_columna(df, columna)
         if col:
