@@ -107,6 +107,12 @@ py -3.11 src/datos/proveedores.py update Spain     # cruzar fuentes
 # Descarga completa desde cero (regenera data/base_mundial_2026.csv)
 py -3.11 src/datos/descargar_datos.py
 py -3.11 src/datos/calcular_promedios_liga.py
+
+# Clubes: base maestra por liga (predicción offline e instantánea, con cold-start)
+py -3.11 src/datos/descargar_liga_csv.py "ENG-Premier League"   # genera liga_*.csv
+
+# Elo de clubes (ClubElo): reactiva SoS y jerarquía en ligas; puente inter-ligas
+py -3.11 src/datos/descargar_club_elo.py
 ```
 Para activar **football-data.org**: copia `apis.example.json` → `apis.local.json`
 (no se sube a git) y pega tu key gratis. Detalle en
@@ -120,12 +126,13 @@ Para activar **football-data.org**: copia `apis.example.json` → `apis.local.js
 # Simular el Mundial (también desde el botón 🏆 de la app)
 py -3.11 src/analisis/montecarlo_mundial.py 10000
 
-# ¿Le gana al mercado? Backtest contra cuotas reales de cierre
+# ¿Le gana al mercado? Backtest contra cuotas reales de cierre (log_loss/Brier/RPS)
 py -3.11 src/analisis/backtest_cuotas.py            # Premier League 2024-25
 py -3.11 src/analisis/backtest_cuotas.py SP1 2425   # E0/SP1/I1/D1/F1
+py -3.11 src/analisis/backtest_cuotas.py E0 2425 barrido   # barre half_life por RPS
 ```
-Calibración de `rho`/`k`, auditoría anti-fuga y simulador de ROI en
-**[src/analisis/README.md](src/analisis/README.md)**.
+Calibración de `rho`/`k`, **RPS**, time-weighting (`suavizado="tiempo"`), auditoría
+anti-fuga y simulador de ROI en **[src/analisis/README.md](src/analisis/README.md)**.
 
 ---
 
@@ -161,9 +168,15 @@ calibran contra el mercado; los defaults son **por contexto**:
 - **App**: interfaz moderna en pestañas, mercados + cuotas justas, top-5, radar,
   forma, simulador Monte Carlo integrado con editor de grupos.
 - **Datos**: base maestra offline, actualización incremental, capa de fuentes
-  intercambiables (FBref + football-data.org).
-- **QA**: backtest contra cuotas reales, calibración por contexto, auditoría
-  anti-fuga del EWM.
+  intercambiables (FBref + football-data.org), **base maestra por liga de clubes**
+  con **cold-start** (concatena la temporada anterior para equipos con pocos partidos).
+- **Clubes**: **Elo de ClubElo** (reactiva SoS y jerarquía fuera del Mundial),
+  **localía por liga** (`FACTOR_LOCAL`), y **predicción inter-ligas**
+  (`predecir_partido_interligas`) con el Elo de ClubElo como puente.
+- **Torneo**: el Monte Carlo simula el **bracket de eliminatorias confirmado**
+  (`data/bracket_eliminatoria.json`) si existe, en vez de sembrar los grupos.
+- **QA**: backtest contra cuotas reales con **RPS**, **time-weighting** opcional
+  (Dixon-Coles) calibrable por RPS, calibración por contexto, auditoría anti-fuga.
 
-**Pendiente**: backtest multi-temporada; xT (StatsBomb) y nivel jugador/PSxG;
-score effects medidos.
+**Pendiente**: GUI para inter-ligas (modo "Competiciones Internacionales");
+xT (StatsBomb) y nivel jugador/PSxG; score effects medidos.

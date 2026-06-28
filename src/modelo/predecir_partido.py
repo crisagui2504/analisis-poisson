@@ -16,13 +16,14 @@ from ingest_fbref import (
     construir_historial_equipo_directo,
     cargar_historial_csv,
     existe_csv_maestro,
+    ruta_csv_liga,
     _chequear_dependencia,
     sd,
 )
 from feature_engineering import procesar_equipo, ultima_fila_valida
 from calcular_lambdas import calcular_lambdas, _acota
 from matriz_poisson import generar_matriz_poisson
-from ligas_config import elo_de, _limpiar_nombre_rival
+from ligas_config import elo_de, factor_local_de, temporada_de, _limpiar_nombre_rival
 
 
 def _factor_h2h(df, local, visit, peso=0.04, min_partidos=3):
@@ -128,12 +129,22 @@ def predecir_partido(
         if neutral is None:
             neutral = True
     else:
-        df_liga = descargar_liga(liga, temporada, no_cache=no_cache)
-        prom_xg_fav = df_liga["xG"].mean() if "xG" in df_liga.columns else 1.2
-        prom_xg_con = df_liga["xGA"].mean() if "xGA" in df_liga.columns else 1.2
-        prom_tiros = df_liga["SoT"].mean() if "SoT" in df_liga.columns else 4.5
-        df_local = construir_historial_equipo(df_liga, equipo_local)
-        df_visitante = construir_historial_equipo(df_liga, equipo_visitante)
+        ruta_liga = ruta_csv_liga(liga, temporada)
+        if os.path.exists(ruta_liga) and not no_cache:
+            # Ruta rapida offline: CSV maestro de la liga (espejo del Mundial).
+            df_maestro = cargar_historial_csv(ruta_liga)
+            df_h2h = df_maestro
+            df_local = construir_historial_equipo(df_maestro, equipo_local)
+            df_visitante = construir_historial_equipo(df_maestro, equipo_visitante)
+            df_promedios = df_maestro
+        else:
+            # Respaldo: descarga/parseo en vivo desde FBref (lento la 1a vez).
+            df_promedios = descargar_liga(liga, temporada, no_cache=no_cache)
+            df_local = construir_historial_equipo(df_promedios, equipo_local)
+            df_visitante = construir_historial_equipo(df_promedios, equipo_visitante)
+        prom_xg_fav = df_promedios["xG"].mean() if "xG" in df_promedios.columns else 1.2
+        prom_xg_con = df_promedios["xGA"].mean() if "xGA" in df_promedios.columns else 1.2
+        prom_tiros = df_promedios["SoT"].mean() if "SoT" in df_promedios.columns else 4.5
         if neutral is None:
             neutral = False
 
@@ -166,6 +177,7 @@ def predecir_partido(
     lambda_local, lambda_visitante = calcular_lambdas(
         fila_local,
         fila_visitante,
+        factor_local=factor_local_de(liga),
         neutral=neutral,
         elo_local=elo_de(equipo_local),
         elo_visitante=elo_de(equipo_visitante),
@@ -176,6 +188,17 @@ def predecir_partido(
     lambda_local *= f_loc
     lambda_visitante *= f_vis
 
+    return _ensamblar_resultado(lambda_local, lambda_visitante, rho,
+                                df_local, df_visitante, fila_local, fila_visitante)
+
+
+def _ensamblar_resultado(lambda_local, lambda_visitante, rho,
+                         df_local, df_visitante, fila_local, fila_visitante) -> dict:
+    """
+    A partir de los goles esperados ya calculados, construye la matriz de Poisson,
+    las probabilidades 1X2, los mercados y el dict de salida que consume la GUI.
+    Lo comparten predecir_partido() y predecir_partido_interligas().
+    """
     matriz = generar_matriz_poisson(lambda_local, lambda_visitante, rho=rho)
 
     prob_local = float(np.sum(np.tril(matriz, -1)))
@@ -221,6 +244,100 @@ def predecir_partido(
     }
 
 
+def _historial_y_promedios(equipo, liga, temporada, no_cache=False):
+    """
+    Carga el historial normalizado de UN equipo y los promedios de su liga (para
+    el shrinkage): usa el CSV maestro local (Mundial o liga) si existe, o FBref.
+    Devuelve (df_equipo, (prom_xg_favor, prom_xg_contra, prom_tiros)).
+    Pensado para predicciones inter-ligas, donde cada equipo viene de una fuente.
+    """
+    if liga == "INT-World Cup":
+        if existe_csv_maestro() and not no_cache:
+            df_equipo = construir_historial_equipo(cargar_historial_csv(), equipo)
+        else:
+            _chequear_dependencia()
+            fbref = sd.FBref(leagues=liga, seasons=temporada, no_cache=no_cache)
+            df_equipo = construir_historial_equipo_directo(fbref, equipo)
+        prom = _cargar_promedios_liga()
+        return df_equipo, (
+            prom.get("xg_favor", PROMEDIOS_DEFAULT["xg_favor"]),
+            prom.get("xg_contra", PROMEDIOS_DEFAULT["xg_contra"]),
+            prom.get("sot", PROMEDIOS_DEFAULT["sot"]),
+        )
+
+    ruta = ruta_csv_liga(liga, temporada)
+    if os.path.exists(ruta) and not no_cache:
+        df_liga = cargar_historial_csv(ruta)
+    else:
+        df_liga = descargar_liga(liga, temporada, no_cache=no_cache)
+    df_equipo = construir_historial_equipo(df_liga, equipo)
+    return df_equipo, (
+        df_liga["xG"].mean() if "xG" in df_liga.columns else 1.2,
+        df_liga["xGA"].mean() if "xGA" in df_liga.columns else 1.2,
+        df_liga["SoT"].mean() if "SoT" in df_liga.columns else 4.5,
+    )
+
+
+def predecir_partido_interligas(
+    equipo_local: str,
+    liga_local: str,
+    equipo_visitante: str,
+    liga_visitante: str,
+    temporada_local: str | None = None,
+    temporada_visitante: str | None = None,
+    rho: float = -0.05,
+    k_shrinkage: int = 5,
+    no_cache: bool = False,
+    n_window: int = 6,
+    neutral: bool = True,
+) -> dict:
+    """
+    Predice un cruce entre equipos de DOS ligas distintas (Champions, Mundial de
+    Clubes, amistosos...). Cada equipo se evalua con los datos y promedios de SU
+    propia liga; el puente de fuerza entre ligas lo aporta el Elo de ClubElo
+    (via elo_de), comparable entre ligas europeas. Devuelve el mismo dict que
+    predecir_partido().
+
+    neutral=True por defecto (sede neutral). Con neutral=False se aplica la
+    localia de la liga del equipo local. No se aplica head-to-head: dos equipos
+    de ligas distintas rara vez aparecen enfrentados en los datos de liga.
+    """
+    if temporada_local is None:
+        temporada_local = temporada_de(liga_local)
+    if temporada_visitante is None:
+        temporada_visitante = temporada_de(liga_visitante)
+
+    df_local, prom_local = _historial_y_promedios(
+        equipo_local, liga_local, temporada_local, no_cache)
+    df_visitante, prom_visit = _historial_y_promedios(
+        equipo_visitante, liga_visitante, temporada_visitante, no_cache)
+
+    feats_local = procesar_equipo(df_local, *prom_local,
+                                  n_window=n_window, k_shrinkage=k_shrinkage)
+    feats_visitante = procesar_equipo(df_visitante, *prom_visit,
+                                      n_window=n_window, k_shrinkage=k_shrinkage)
+
+    fila_local = ultima_fila_valida(feats_local)
+    fila_visitante = ultima_fila_valida(feats_visitante)
+    if fila_local is None or fila_visitante is None:
+        raise ValueError(
+            f"No hay suficientes partidos completos para calcular ({equipo_local}: "
+            f"{len(df_local)} partidos, {equipo_visitante}: {len(df_visitante)} partidos)."
+        )
+
+    lambda_local, lambda_visitante = calcular_lambdas(
+        fila_local,
+        fila_visitante,
+        factor_local=factor_local_de(liga_local),
+        neutral=neutral,
+        elo_local=elo_de(equipo_local),
+        elo_visitante=elo_de(equipo_visitante),
+    )
+
+    return _ensamblar_resultado(lambda_local, lambda_visitante, rho,
+                                df_local, df_visitante, fila_local, fila_visitante)
+
+
 def calcular_mercados(matriz: np.ndarray) -> dict:
     """
     Deriva metricas tipo casa de apuestas de la matriz de Poisson, sin tocar la
@@ -262,6 +379,14 @@ def calcular_mercados(matriz: np.ndarray) -> dict:
 
 
 def cargar_equipos(liga: str, temporada: str):
-    """Descarga la liga y devuelve la lista de equipos para los desplegables."""
-    df_liga = descargar_liga(liga, temporada)
+    """
+    Lista de equipos para los desplegables (+ el DataFrame de la liga). Usa el
+    CSV maestro local si existe (offline e instantaneo); si no, descarga el
+    calendario desde FBref.
+    """
+    ruta = ruta_csv_liga(liga, temporada)
+    if os.path.exists(ruta):
+        df_liga = cargar_historial_csv(ruta)
+    else:
+        df_liga = descargar_liga(liga, temporada)
     return obtener_equipos_liga(df_liga), df_liga

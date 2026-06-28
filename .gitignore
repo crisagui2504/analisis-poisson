@@ -9,6 +9,8 @@ venv/
 montecarlo_resultados.csv
 resultados_backtest.csv
 data/grupos_mundial.json
+club_elo.csv
+liga_*.csv
 
 # Claves de API (nunca subir)
 apis.local.json

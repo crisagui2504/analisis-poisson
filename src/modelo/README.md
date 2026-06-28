@@ -14,6 +14,10 @@ Convierte el historial de un equipo en sus "características" predictivas.
   Schedule), y deriva **xGD** y la **tasa de conversión**. Si falta xG (típico en
   selecciones) usa goles reales. El `shift(1)` garantiza **cero fuga de datos**.
   Soporta `venue="Home"/"Away"` para splits (apagado por defecto: medido, empeora).
+  Además del EWM admite **`suavizado="tiempo"`** (time-weighting de Dixon-Coles):
+  cada partido pesa `exp(-ξ·días)` según los **días reales** transcurridos, con
+  `ξ = ln(2)/half_life_dias`. Opt-in (default sigue siendo EWM); calíbralo con el
+  backtest y RPS.
 - **`ultima_fila_valida(df)`** — devuelve la fila más reciente con las features
   imprescindibles no nulas (o `None`).
 - **`aplicar_shrinkage(...)`** — la fórmula de regularización hacia la media.
@@ -36,6 +40,11 @@ Convierte las features de los dos equipos en sus **goles esperados (λ)**.
 - **`predecir_partido(local, visitante, liga, temporada, ...)`** — encadena todo
   el pipeline y devuelve un dict con probabilidades 1X2, λ, la matriz, los
   **mercados**, la **forma**, el **descanso** y las **métricas** para el radar.
+- **`predecir_partido_interligas(local, liga_local, visitante, liga_visitante, ...)`**
+  — cruces entre equipos de **ligas distintas** (Champions, Mundial de Clubes,
+  amistosos). Cada equipo se evalúa con los datos y promedios de su propia liga;
+  el **Elo de ClubElo** (comparable entre ligas europeas) hace de puente de fuerza.
+  Por defecto `neutral=True` y sin head-to-head. Devuelve el mismo dict.
 - **`calcular_mercados(matriz)`** — deriva BTTS, Over/Under 1.5/2.5/3.5 y portería
   a cero sumando regiones de la matriz.
 - **`_factor_h2h(df, local, visitante)`** — historial directo (paternidad): inclina

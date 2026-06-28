@@ -9,7 +9,7 @@ propio README con el detalle de sus módulos.
 | [`datos/`](datos/README.md) | Ingesta desde FBref, capa de fuentes intercambiables y scripts de descarga/actualización. |
 | [`interfaz/`](interfaz/README.md) | La aplicación gráfica (tkinter) y su estilo. |
 | [`analisis/`](analisis/README.md) | Simulación Monte Carlo del torneo y backtests contra el mercado. |
-| `ligas_config.py` | **Configuración compartida** (vive aquí, fuera de las subcarpetas, porque la usan todas): ligas, las 48 selecciones (español ↔ FBref), `ELO_RANKING`, `GRUPOS_MUNDIAL`, `PESOS_MODELO` y los lectores de grupos editables. |
+| `ligas_config.py` | **Configuración compartida** (vive aquí, fuera de las subcarpetas, porque la usan todas): ligas, las 48 selecciones (español ↔ FBref), `ELO_RANKING`, `GRUPOS_MUNDIAL`, `PESOS_MODELO`, `FACTOR_LOCAL` (localía por liga) y los lectores de grupos editables. `elo_de()` consulta ClubElo (`datos/club_elo.py`) como respaldo para clubes. |
 | `rutas.py` | Rutas absolutas a `data/` y a la raíz, calculadas desde la ubicación del archivo (no del directorio actual). |
 
 ## Cómo se resuelven los imports

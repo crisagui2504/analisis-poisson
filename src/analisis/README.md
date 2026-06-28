@@ -27,8 +27,11 @@ Football-Data.co.uk).
   (100% offline, sin FBref).
 - **`correr(df, ...)`** — predice cada partido **sin fuga de datos** y devuelve
   probabilidades del modelo vs mercado.
-- **`metricas(...)`** (log-loss/Brier/acierto), **`simular_roi(...)`** (ROI apostando
-  al "valor") y **`calibrar(dfs, rhos, ks)`** (barrido para encontrar el mejor `rho`/`k`).
+- **`metricas(...)`** (log-loss/Brier/**RPS**/acierto — RPS respeta el orden 1‑X‑2),
+  **`simular_roi(...)`** (ROI apostando al "valor") y **`calibrar(dfs, rhos, ks)`**
+  (barrido para encontrar el mejor `rho`/`k`).
+- Para comparar suavizados: `correr(df, suavizado="tiempo", half_life_dias=60)` vs
+  el default EWM, mirando el **RPS** resultante.
 
 ### `backtest.py` — backtest histórico + auditoría
 - **`correr_backtest(...)`** — calibra `rho`/`k` contra resultados históricos sin

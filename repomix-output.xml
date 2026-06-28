@@ -1,10 +1,10 @@
-This file is a merged representation of a subset of the codebase, containing files not matching ignore patterns, combined into a single document by Repomix.
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
 
 <file_summary>
 This section contains a summary of this file.
 
 <purpose>
-This file contains a packed representation of a subset of the repository's contents that is considered the most important context.
+This file contains a packed representation of the entire repository's contents.
 It is designed to be easily consumable by AI systems for analysis, code review,
 or other automated processes.
 </purpose>
@@ -32,7 +32,6 @@ The content is organized as follows:
 <notes>
 - Some files may have been excluded based on .gitignore rules and Repomix's configuration
 - Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
-- Files matching these patterns are excluded: data/base_mundial_2026.csv, data/montecarlo_resultados.csv, data/resultados_backtest.csv
 - Files matching patterns in .gitignore are excluded
 - Files matching default ignore patterns are excluded
 - Files are sorted by Git change count (files with more changes are at the bottom)
@@ -44,6 +43,8 @@ The content is organized as follows:
 .gitignore
 Abrir Predictor.bat
 apis.example.json
+data/base_mundial_2026.csv
+data/bracket_eliminatoria.json
 data/promedios_liga.json
 data/README.md
 README.md
@@ -55,7 +56,10 @@ src/analisis/montecarlo_mundial.py
 src/analisis/README.md
 src/datos/actualizar_datos.py
 src/datos/calcular_promedios_liga.py
+src/datos/club_elo.py
+src/datos/descargar_club_elo.py
 src/datos/descargar_datos.py
+src/datos/descargar_liga_csv.py
 src/datos/ingest_fbref.py
 src/datos/proveedores.py
 src/datos/README.md
@@ -76,6 +80,348 @@ src/rutas.py
 <files>
 This section contains the contents of the repository's files.
 
+<file path="data/bracket_eliminatoria.json">
+{
+  "tournament": "Mundial 2026 - Fase Eliminatoria",
+  "rounds": [
+    {
+      "round": "Dieciseisavos de final",
+      "matches": [
+        { "match_id": 73, "date": "2026-06-28", "venue": "Los Ángeles (SoFi Stadium)", "time": "Por confirmar", "team1": "Sudáfrica", "team2": "Canadá" },
+        { "match_id": 74, "date": "2026-06-29", "venue": "Boston (Gillette Stadium)", "time": "Por confirmar", "team1": "Alemania", "team2": "Paraguay" },
+        { "match_id": 75, "date": "2026-06-29", "venue": "Monterrey (Estadio BBVA)", "time": "Por confirmar", "team1": "Países Bajos", "team2": "Marruecos" },
+        { "match_id": 76, "date": "2026-06-29", "venue": "Houston (NRG Stadium)", "time": "Por confirmar", "team1": "Brasil", "team2": "Japón" },
+        { "match_id": 77, "date": "2026-06-30", "venue": "Nueva York/Nueva Jersey (MetLife Stadium)", "time": "Por confirmar", "team1": "Francia", "team2": "Suecia" },
+        { "match_id": 78, "date": "2026-06-30", "venue": "Dallas (AT&T Stadium)", "time": "Por confirmar", "team1": "Costa de Marfil", "team2": "Noruega" },
+        { "match_id": 79, "date": "2026-06-30", "venue": "Ciudad de México (Estadio Azteca)", "time": "Por confirmar", "team1": "México", "team2": "Ecuador" },
+        { "match_id": 80, "date": "2026-07-01", "venue": "Atlanta (Mercedes-Benz Stadium)", "time": "Por confirmar", "team1": "Inglaterra", "team2": "RD Congo" },
+        { "match_id": 81, "date": "2026-07-01", "venue": "Dallas (AT&T Stadium)", "time": "Por confirmar", "team1": "Estados Unidos", "team2": "Bosnia y Herzegovina" },
+        { "match_id": 82, "date": "2026-07-01", "venue": "Seattle (Lumen Field)", "time": "Por confirmar", "team1": "Bélgica", "team2": "Senegal" },
+        { "match_id": 83, "date": "2026-07-02", "venue": "Toronto (BMO Field)", "time": "Por confirmar", "team1": "Portugal", "team2": "Croacia" },
+        { "match_id": 84, "date": "2026-07-02", "venue": "Los Ángeles (SoFi Stadium)", "time": "Por confirmar", "team1": "España", "team2": "Austria" },
+        { "match_id": 85, "date": "2026-07-02", "venue": "San Francisco (Levi's Stadium)", "time": "Por confirmar", "team1": "Suiza", "team2": "Argelia" },
+        { "match_id": 86, "date": "2026-07-03", "venue": "Miami (Hard Rock Stadium)", "time": "Por confirmar", "team1": "Argentina", "team2": "Cabo Verde" },
+        { "match_id": 87, "date": "2026-07-03", "venue": "Kansas City (Arrowhead Stadium)", "time": "Por confirmar", "team1": "Colombia", "team2": "Ghana" },
+        { "match_id": 88, "date": "2026-07-03", "venue": "Vancouver (BC Place)", "time": "Por confirmar", "team1": "Australia", "team2": "Egipto" }
+      ]
+    },
+    {
+      "round": "Octavos de final",
+      "matches": [
+        { "match_id": 89, "date": "2026-07-04", "venue": "Filadelfia (Lincoln Financial Field)", "time": "Por confirmar", "team1": "W73", "team2": "W74" },
+        { "match_id": 90, "date": "2026-07-04", "venue": "Houston (NRG Stadium)", "time": "Por confirmar", "team1": "W75", "team2": "W76" },
+        { "match_id": 91, "date": "2026-07-05", "venue": "Nueva York/Nueva Jersey (MetLife Stadium)", "time": "Por confirmar", "team1": "W77", "team2": "W78" },
+        { "match_id": 92, "date": "2026-07-05", "venue": "Ciudad de México (Estadio Azteca)", "time": "Por confirmar", "team1": "W79", "team2": "W80" },
+        { "match_id": 93, "date": "2026-07-06", "venue": "Dallas (AT&T Stadium)", "time": "Por confirmar", "team1": "W81", "team2": "W82" },
+        { "match_id": 94, "date": "2026-07-06", "venue": "Seattle (Lumen Field)", "time": "Por confirmar", "team1": "W83", "team2": "W84" },
+        { "match_id": 95, "date": "2026-07-07", "venue": "Atlanta (Mercedes-Benz Stadium)", "time": "Por confirmar", "team1": "W85", "team2": "W86" },
+        { "match_id": 96, "date": "2026-07-07", "venue": "Vancouver (BC Place)", "time": "Por confirmar", "team1": "W87", "team2": "W88" }
+      ]
+    },
+    {
+      "round": "Cuartos de final",
+      "matches": [
+        { "match_id": 97, "date": "2026-07-09", "venue": "Boston (Gillette Stadium)", "time": "Por confirmar", "team1": "W89", "team2": "W90" },
+        { "match_id": 98, "date": "2026-07-10", "venue": "Los Ángeles (SoFi Stadium)", "time": "Por confirmar", "team1": "W91", "team2": "W92" },
+        { "match_id": 99, "date": "2026-07-11", "venue": "Miami (Hard Rock Stadium)", "time": "Por confirmar", "team1": "W93", "team2": "W94" },
+        { "match_id": 100, "date": "2026-07-11", "venue": "Kansas City (Arrowhead Stadium)", "time": "Por confirmar", "team1": "W95", "team2": "W96" }
+      ]
+    },
+    {
+      "round": "Semifinales",
+      "matches": [
+        { "match_id": 101, "date": "2026-07-14", "venue": "Dallas (AT&T Stadium)", "time": "Por confirmar", "team1": "W97", "team2": "W98" },
+        { "match_id": 102, "date": "2026-07-15", "venue": "Atlanta (Mercedes-Benz Stadium)", "time": "Por confirmar", "team1": "W99", "team2": "W100" }
+      ]
+    },
+    {
+      "round": "Tercer lugar",
+      "matches": [
+        { "match_id": 103, "date": "2026-07-18", "venue": "Miami (Hard Rock Stadium)", "time": "Por confirmar", "team1": "L101", "team2": "L102" }
+      ]
+    },
+    {
+      "round": "Final",
+      "matches": [
+        { "match_id": 104, "date": "2026-07-19", "venue": "Nueva York/Nueva Jersey (MetLife Stadium)", "time": "15:00 EDT", "team1": "W101", "team2": "W102" }
+      ]
+    }
+  ]
+}
+</file>
+
+<file path="src/datos/club_elo.py">
+"""
+Elo de clubes desde ClubElo (http://api.clubelo.com).
+
+Cierra el "punto ciego" del modelo en ligas de clubes: sin esto, `elo_de()`
+devolvia ELO_REFERENCIA para todos los clubes, apagando la ponderacion por
+fuerza del rival (SoS) y el empuje por jerarquia (peso_elo) en feature_engineering
+y calcular_lambdas.
+
+Arquitectura (espejo de la del Mundial, para mantener el flujo de prediccion
+100% offline):
+  - `descargar_club_elo()` baja UN snapshot de todos los clubes y lo cachea en
+    data/club_elo.csv. Es un paso EXPLICITO (ejecuta descargar_club_elo.py),
+    igual que descargar_datos.py para el Mundial.
+  - `elo_club(nombre)` lee SOLO del cache local (sin red) y casa el nombre de
+    FBref con el de ClubElo via normalizacion + alias. Devuelve None si no lo
+    encuentra (el llamador usa entonces ELO_REFERENCIA).
+
+LIMITACION: ClubElo solo cubre ligas EUROPEAS. Liga MX (y cualquier liga no
+europea) no esta; esos clubes devuelven None y caen al Elo de respaldo.
+"""
+import datetime as _dt
+import os
+import re
+import unicodedata
+
+import pandas as pd
+
+from rutas import data
+
+CLUB_ELO_CSV = data("club_elo.csv")
+_API = "http://api.clubelo.com/{fecha}"
+
+# Tokens genericos de nombre de club que se eliminan al normalizar (prefijos y
+# sufijos societarios). NO incluimos palabras distintivas (real, athletic,
+# stade, olympique, borussia...) porque diferencian clubes.
+_STOP = {
+    "fc", "cf", "afc", "sc", "ssc", "ac", "as", "us", "rc", "rcd", "cd", "ud",
+    "sd", "ca", "cp", "sv", "vfb", "vfl", "tsg", "ogc", "calcio", "club",
+}
+
+# Alias para los casos en que la normalizacion no basta (ClubElo abrevia muy
+# distinto a FBref). Clave = nombre estilo FBref/soccerdata; valor = nombre
+# EXACTO como aparece en ClubElo. Ambos se normalizan al cargar, asi que pequenas
+# variantes de mayusculas/acentos/puntuacion tambien casan.
+_ALIAS_RAW = {
+    # ── Premier League ──
+    "Manchester City": "Man City", "Manchester Utd": "Man United",
+    "Manchester United": "Man United", "Newcastle Utd": "Newcastle",
+    "Newcastle United": "Newcastle", "Nott'ham Forest": "Forest",
+    "Nottingham Forest": "Forest", "Leeds United": "Leeds",
+    "Tottenham Hotspur": "Tottenham", "Spurs": "Tottenham",
+    "Brighton & Hove Albion": "Brighton", "Brighton and Hove Albion": "Brighton",
+    "West Ham United": "West Ham", "Wolverhampton Wanderers": "Wolves",
+    "Wolverhampton": "Wolves",
+    # ── La Liga ──
+    "Atlético Madrid": "Atletico", "Atletico Madrid": "Atletico",
+    "Atlético de Madrid": "Atletico", "Real Betis": "Betis",
+    "Athletic Club": "Bilbao", "Athletic Bilbao": "Bilbao",
+    "Celta Vigo": "Celta", "Celta de Vigo": "Celta", "Real Sociedad": "Sociedad",
+    "Deportivo Alavés": "Alaves", "Alavés": "Alaves", "Real Oviedo": "Oviedo",
+    # ── Bundesliga ──
+    "Bayern Munich": "Bayern", "Bayern München": "Bayern",
+    "Bayer Leverkusen": "Leverkusen", "Borussia Dortmund": "Dortmund",
+    "Eintracht Frankfurt": "Frankfurt", "Werder Bremen": "Werder",
+    "Mainz 05": "Mainz", "Borussia Mönchengladbach": "Gladbach",
+    "Mönchengladbach": "Gladbach", "M'Gladbach": "Gladbach",
+    "1. FC Köln": "Koeln", "Köln": "Koeln", "Cologne": "Koeln",
+    "Hamburger SV": "Hamburg", "St. Pauli": "St Pauli", "Heidenheim": "Heidenheim",
+    "RB Leipzig": "RB Leipzig",
+    # ── Serie A ──
+    "Internazionale": "Inter", "Inter Milan": "Inter", "AC Milan": "Milan",
+    "Hellas Verona": "Verona",
+    # ── Ligue 1 ──
+    "Paris Saint-Germain": "Paris SG", "Paris S-G": "Paris SG",
+    "Paris Saint Germain": "Paris SG", "Olympique Marseille": "Marseille",
+    "Olympique de Marseille": "Marseille", "Olympique Lyonnais": "Lyon",
+    "Stade Rennais": "Rennes", "Stade Brestois": "Brest",
+    "RC Strasbourg Alsace": "Strasbourg",
+}
+
+# Cache en memoria: {nombre_normalizado_clubelo: elo}. Se carga una vez.
+_elo_por_norm = None
+_alias_norm = None
+
+
+def _norm(s):
+    """Normaliza un nombre de club: sin acentos, minusculas, sin tokens genericos."""
+    if not isinstance(s, str):
+        return ""
+    s = unicodedata.normalize("NFKD", s)
+    s = "".join(c for c in s if not unicodedata.combining(c))
+    s = s.lower().replace("&", " and ")
+    s = re.sub(r"[^a-z0-9 ]", " ", s)
+    toks = [t for t in s.split() if t and t not in _STOP]
+    if not toks:  # no dejes la cadena vacia por culpa del filtro
+        toks = [t for t in s.split() if t]
+    return " ".join(toks)
+
+
+def descargar_club_elo(fecha=None, ruta=CLUB_ELO_CSV):
+    """
+    Baja el snapshot de Elo de TODOS los clubes para `fecha` (hoy por defecto)
+    desde la API de ClubElo y lo guarda en `ruta` (data/club_elo.csv).
+
+    Es un paso explicito: el flujo de prediccion NO descarga, solo lee el cache.
+    Devuelve el DataFrame descargado.
+    """
+    if fecha is None:
+        fecha = _dt.date.today().isoformat()
+    url = _API.format(fecha=fecha)
+    df = pd.read_csv(url)
+    df = df[df["Elo"].notna()].copy()
+    df.to_csv(ruta, index=False, encoding="utf-8")
+    print(f"ClubElo: {len(df)} clubes guardados en '{ruta}' (fecha {fecha}).")
+    return df
+
+
+def _cargar():
+    """Carga el cache local en memoria (una sola vez). Sin red."""
+    global _elo_por_norm, _alias_norm
+    if _elo_por_norm is not None:
+        return
+    _alias_norm = {_norm(k): _norm(v) for k, v in _ALIAS_RAW.items()}
+    _elo_por_norm = {}
+    if not os.path.exists(CLUB_ELO_CSV):
+        return  # sin cache: elo_club() devolvera None hasta que se descargue
+    try:
+        df = pd.read_csv(CLUB_ELO_CSV)
+    except Exception:
+        return
+    for _, fila in df.iterrows():
+        _elo_por_norm[_norm(fila["Club"])] = float(fila["Elo"])
+
+
+def elo_club(nombre):
+    """
+    Devuelve el Elo de ClubElo para un club (nombre estilo FBref) o None si no
+    esta en el cache (club no europeo, cache no descargado, o nombre sin alias).
+    """
+    _cargar()
+    if not _elo_por_norm:
+        return None
+    n = _norm(nombre)
+    n = _alias_norm.get(n, n)  # aplica alias si existe
+    return _elo_por_norm.get(n)
+
+
+def diagnosticar(nombres):
+    """
+    Dada una lista de nombres de equipo (estilo FBref), devuelve los que NO se
+    pudieron casar con ClubElo. Util para completar _ALIAS_RAW con tus ligas:
+    pasa los equipos reales de una liga y revisa que falto.
+    """
+    return [nm for nm in nombres if elo_club(nm) is None]
+
+
+def recargar():
+    """Fuerza recargar el cache en memoria (tras una descarga nueva)."""
+    global _elo_por_norm
+    _elo_por_norm = None
+    _cargar()
+</file>
+
+<file path="src/datos/descargar_club_elo.py">
+"""
+Descarga el snapshot de Elo de clubes de ClubElo y lo cachea en
+data/club_elo.csv. Ejecutalo cuando quieras refrescar la fuerza de los clubes
+(p. ej. una vez por semana durante la temporada).
+
+Uso:
+    py -3.11 descargar_club_elo.py            # snapshot de hoy
+    py -3.11 descargar_club_elo.py 2026-01-15 # snapshot de una fecha
+"""
+# ── Bootstrap de rutas: permite ejecutar este script directamente ──
+import os as _os, sys as _sys
+_SRC = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
+for _sub in ("", "modelo", "datos", "interfaz", "analisis"):
+    _ruta = _os.path.join(_SRC, _sub)
+    if _ruta not in _sys.path:
+        _sys.path.insert(0, _ruta)
+
+import sys
+
+from club_elo import descargar_club_elo
+
+if __name__ == "__main__":
+    fecha = sys.argv[1] if len(sys.argv) > 1 else None
+    try:
+        descargar_club_elo(fecha)
+    except Exception as e:
+        raise SystemExit(f"No se pudo descargar ClubElo: {e}")
+</file>
+
+<file path="src/datos/descargar_liga_csv.py">
+"""
+Genera (o actualiza) el CSV maestro de una liga de CLUBES, igual que
+descargar_datos.py hace para el Mundial. Tras esto, la app predice esa liga
+100% offline y al instante (sin volver a parsear FBref).
+
+Uso:
+    py -3.11 descargar_liga_csv.py                       # lista las ligas
+    py -3.11 descargar_liga_csv.py "ENG-Premier League"  # codigo FBref
+    py -3.11 descargar_liga_csv.py "La Liga (España)"    # nombre de la app
+    py -3.11 descargar_liga_csv.py "ITA-Serie A" 2025-2026 30
+    py -3.11 descargar_liga_csv.py "ENG-Premier League" 2025-2026 20 sin-previa
+
+El 2do argumento (opcional) es la temporada; el 3ro, la pausa en segundos entre
+equipos (anti-bloqueo de FBref; sube a 30-45 si te bloquean en la 1a carga).
+
+Por defecto aplica "arranque en frio": a los equipos con pocos partidos en la
+temporada actual les concatena la temporada anterior (misma liga) para que el
+shrinkage no los trate como promedio. Pasa 'sin-previa' como ultimo argumento
+para desactivarlo.
+"""
+# ── Bootstrap de rutas: permite ejecutar este script directamente ──
+import os as _os, sys as _sys
+_SRC = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
+for _sub in ("", "modelo", "datos", "interfaz", "analisis"):
+    _ruta = _os.path.join(_SRC, _sub)
+    if _ruta not in _sys.path:
+        _sys.path.insert(0, _ruta)
+
+import sys
+
+from ligas_config import LIGAS, TEMPORADAS
+from ingest_fbref import actualizar_liga_csv, ruta_csv_liga
+
+
+def _resolver(arg):
+    """Acepta el nombre de la app ('La Liga (España)') o el codigo FBref
+    ('ESP-La Liga') y devuelve (codigo, temporada_por_defecto)."""
+    if arg in LIGAS:                       # nombre de la app
+        return LIGAS[arg], TEMPORADAS[arg]
+    for nombre, codigo in LIGAS.items():   # codigo FBref
+        if codigo == arg:
+            return codigo, TEMPORADAS[nombre]
+    return arg, None                       # codigo desconocido: temporada obligatoria
+
+
+if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print("Ligas disponibles:")
+        for nombre, codigo in LIGAS.items():
+            if codigo == "INT-World Cup":
+                continue  # el Mundial usa descargar_datos.py
+            print(f"  {codigo:22} {nombre}  (temporada {TEMPORADAS[nombre]})")
+        raise SystemExit("\nPasa una liga como argumento.")
+
+    args = sys.argv[1:]
+    sin_previa = "sin-previa" in args
+    args = [a for a in args if a != "sin-previa"]
+
+    liga, temporada_def = _resolver(args[0])
+    temporada = args[1] if len(args) > 1 else temporada_def
+    pausa = float(args[2]) if len(args) > 2 else 20.0
+
+    if temporada is None:
+        raise SystemExit(f"Indica la temporada para '{liga}' (ej. 2025-2026).")
+
+    previa = None if sin_previa else "auto"
+    print(f"Generando CSV maestro de {liga} ({temporada}) -> {ruta_csv_liga(liga, temporada)}")
+    print(f"Pausa de {pausa:g}s entre equipos | arranque en frio: "
+          f"{'desactivado' if sin_previa else 'activado'}\n")
+    try:
+        actualizar_liga_csv(liga, temporada, pausa=pausa, verbose=True,
+                            temporada_previa=previa)
+    except Exception as e:
+        raise SystemExit(f"No se pudo generar el CSV de la liga: {e}")
+    print("\nListo. La app ya predice esta liga offline.")
+</file>
+
 <file path="apis.example.json">
 {
   "_instrucciones": "Copia este archivo como 'apis.local.json' y pega tus API keys. apis.local.json NO se sube a git. Tambien puedes usar variables de entorno (FOOTBALL_DATA_ORG_KEY). Deja una clave vacia para desactivar ese proveedor.",
@@ -84,11 +430,802 @@ This section contains the contents of the repository's files.
 }
 </file>
 
+<file path="data/base_mundial_2026.csv">
+Date,Team,Result,Opponent,Venue,GF,GA,Sh,SoT,xG,xGA,Poss,Fls,CrdY,CrdR
+2023-11-16,Algeria,W,so Somalia,Home,3.0,1.0,,,,,0,,0,0
+2023-11-19,Algeria,W,mz Mozambique,Away,2.0,0.0,,,,,0,,2,0
+2024-06-06,Algeria,L,gn Guinea,Home,1.0,2.0,,,,,0,,2,0
+2024-06-10,Algeria,W,ug Uganda,Away,2.0,1.0,,,,,0,,3,0
+2025-03-21,Algeria,W,bw Botswana,Away,3.0,1.0,,,,,0,,1,0
+2025-03-25,Algeria,W,mz Mozambique,Home,5.0,1.0,,,,,0,,1,0
+2025-09-04,Algeria,W,bw Botswana,Home,3.0,1.0,,,,,0,,4,0
+2025-09-08,Algeria,D,gn Guinea,Neutral,0.0,0.0,,,,,0,,1,0
+2025-10-09,Algeria,W,so Somalia,Neutral,3.0,0.0,,,,,0,,1,0
+2025-10-14,Algeria,W,ug Uganda,Home,2.0,1.0,,,,,0,,1,0
+2026-03-27,Algeria,W,gt Guatemala,Neutral,7.0,0.0,,,,,0,,0,0
+2026-03-31,Algeria,D,uy Uruguay,Neutral,0.0,0.0,,,,,0,,4,0
+2026-06-03,Algeria,W,nl Netherlands,Away,1.0,0.0,,,,,0,,0,0
+2026-06-10,Algeria,W,bo Bolivia,Neutral,4.0,0.0,,,,,0,,2,0
+2026-06-16,Algeria,L,ar Argentina,Neutral,0.0,3.0,7.0,0.0,,,0,8.0,0,0
+2026-06-17,Algeria,L,Argentina,Away,0.0,3.0,0.0,0.0,,,0,0.0,0,0
+2026-06-23,Algeria,W,Jordan,Away,2.0,1.0,0.0,0.0,,,0,0.0,0,0
+2023-09-07,Argentina,W,ec Ecuador,Home,1.0,0.0,13.0,4.0,,,0,9.0,1,0
+2023-09-12,Argentina,W,bo Bolivia,Away,3.0,0.0,15.0,8.0,,,0,10.0,0,0
+2023-10-12,Argentina,W,py Paraguay,Home,1.0,0.0,15.0,4.0,,,0,10.0,1,0
+2023-10-17,Argentina,W,pe Peru,Away,2.0,0.0,10.0,6.0,,,0,10.0,0,0
+2023-11-16,Argentina,L,uy Uruguay,Home,0.0,2.0,12.0,3.0,,,0,11.0,4,0
+2023-11-21,Argentina,W,br Brazil,Away,1.0,0.0,8.0,2.0,,,0,16.0,0,0
+2024-09-05,Argentina,W,cl Chile,Home,3.0,0.0,16.0,8.0,,,0,8.0,2,0
+2024-09-10,Argentina,L,co Colombia,Away,1.0,2.0,13.0,1.0,,,0,10.0,2,0
+2024-10-10,Argentina,D,ve Venezuela,Away,1.0,1.0,8.0,4.0,,,0,13.0,1,0
+2024-10-15,Argentina,W,bo Bolivia,Home,6.0,0.0,14.0,10.0,,,0,10.0,0,0
+2024-11-14,Argentina,L,py Paraguay,Away,1.0,2.0,9.0,1.0,,,0,9.0,1,0
+2024-11-19,Argentina,W,pe Peru,Home,1.0,0.0,10.0,3.0,,,0,10.0,0,0
+2025-03-21,Argentina,W,uy Uruguay,Away,1.0,0.0,12.0,4.0,,,0,11.0,1,1
+2025-03-25,Argentina,W,br Brazil,Home,4.0,1.0,12.0,7.0,,,0,12.0,5,0
+2025-06-05,Argentina,W,cl Chile,Away,1.0,0.0,10.0,4.0,,,0,9.0,2,0
+2025-06-10,Argentina,D,co Colombia,Home,1.0,1.0,10.0,3.0,,,0,16.0,2,1
+2025-09-04,Argentina,W,ve Venezuela,Home,3.0,0.0,17.0,9.0,,,0,9.0,1,0
+2025-09-09,Argentina,L,ec Ecuador,Away,0.0,1.0,8.0,0.0,,,0,10.0,3,1
+2026-03-27,Argentina,W,mr Mauritania,Home,2.0,1.0,,,,,0,,1,0
+2026-03-31,Argentina,W,zm Zambia,Home,5.0,0.0,,,,,0,,0,0
+2026-06-06,Argentina,W,hn Honduras,Neutral,2.0,0.0,,,,,0,,4,0
+2026-06-09,Argentina,W,is Iceland,Neutral,3.0,0.0,,,,,0,,2,0
+2026-06-16,Argentina,W,dz Algeria,Neutral,3.0,0.0,10.0,6.0,,,0,13.0,0,0
+2026-06-17,Argentina,W,Algeria,Home,3.0,0.0,0.0,0.0,,,0,0.0,0,0
+2026-06-22,Argentina,W,Austria,Home,2.0,0.0,0.0,0.0,,,0,0.0,0,0
+2023-11-16,Australia,W,bd Bangladesh,Home,7.0,0.0,,,,,0,,1,0
+2023-11-21,Australia,W,ps Palestine,Neutral,1.0,0.0,,,,,0,,1,0
+2024-03-21,Australia,W,lb Lebanon,Home,2.0,0.0,,,,,0,,2,0
+2024-03-26,Australia,W,lb Lebanon,Neutral,5.0,0.0,,,,,0,,1,0
+2024-06-06,Australia,W,bd Bangladesh,Away,2.0,0.0,,,,,0,,0,0
+2024-06-11,Australia,W,ps Palestine,Home,5.0,0.0,,,,,0,,3,0
+2024-09-05,Australia,L,bh Bahrain,Home,0.0,1.0,11.0,4.0,,,0,13.0,3,1
+2024-09-10,Australia,D,id Indonesia,Away,0.0,0.0,19.0,5.0,,,0,7.0,3,0
+2024-10-10,Australia,W,cn China PR,Home,3.0,1.0,18.0,4.0,,,0,9.0,0,0
+2024-10-15,Australia,D,jp Japan,Away,1.0,1.0,1.0,0.0,,,0,9.0,4,0
+2024-11-14,Australia,D,sa Saudi Arabia,Home,0.0,0.0,13.0,2.0,,,0,10.0,2,0
+2024-11-19,Australia,D,bh Bahrain,Away,2.0,2.0,8.0,4.0,,,0,10.0,1,0
+2025-03-20,Australia,W,id Indonesia,Home,5.0,1.0,9.0,7.0,,,0,11.0,0,0
+2025-03-25,Australia,W,cn China PR,Away,2.0,0.0,7.0,2.0,,,0,3.0,0,0
+2025-06-05,Australia,W,jp Japan,Home,1.0,0.0,6.0,3.0,,,0,8.0,0,0
+2025-06-10,Australia,W,sa Saudi Arabia,Away,2.0,1.0,4.0,3.0,,,0,10.0,1,0
+2026-05-30,Australia,L,mx Mexico,Neutral,0.0,1.0,,,,,0,,1,0
+2026-06-06,Australia,D,ch Switzerland,Neutral,1.0,1.0,,,,,0,,2,0
+2026-06-13,Australia,W,tr Türkiye,Neutral,2.0,0.0,9.0,4.0,,,0,12.0,0,0
+2026-06-14,Australia,W,Turkey,Home,2.0,0.0,0.0,0.0,,,0,0.0,0,0
+2026-06-19,Australia,L,United States,Away,0.0,2.0,0.0,0.0,,,0,0.0,0,0
+2025-06-07,Austria,W,ro Romania,Home,2.0,1.0,14.0,9.0,,,0,11.0,1,0
+2025-06-10,Austria,W,sm San Marino,Away,4.0,0.0,22.0,13.0,,,0,15.0,2,0
+2025-09-06,Austria,W,cy Cyprus,Home,1.0,0.0,10.0,3.0,,,0,14.0,1,0
+2025-09-09,Austria,W,ba Bosnia & Herz.,Away,2.0,1.0,11.0,5.0,,,0,21.0,5,1
+2025-10-09,Austria,W,sm San Marino,Home,10.0,0.0,25.0,14.0,,,0,14.0,1,0
+2025-10-12,Austria,L,ro Romania,Away,0.0,1.0,3.0,1.0,,,0,17.0,4,0
+2025-11-15,Austria,W,cy Cyprus,Away,2.0,0.0,12.0,6.0,,,0,15.0,0,0
+2025-11-18,Austria,D,ba Bosnia & Herz.,Home,1.0,1.0,10.0,3.0,,,0,8.0,1,0
+2026-03-27,Austria,W,gh Ghana,Home,5.0,1.0,,,,,0,,1,0
+2026-03-31,Austria,W,kr Korea Republic,Home,1.0,0.0,,,,,0,,1,0
+2026-06-01,Austria,W,tn Tunisia,Home,1.0,0.0,,,,,0,,2,1
+2026-06-16,Austria,W,jo Jordan,Neutral,3.0,1.0,11.0,4.0,,,0,12.0,1,0
+2026-06-17,Austria,W,Jordan,Home,3.0,1.0,0.0,0.0,,,0,0.0,0,0
+2026-06-22,Austria,L,Argentina,Away,0.0,2.0,0.0,0.0,,,0,0.0,0,0
+2025-06-06,Belgium,D,mk N. Macedonia,Away,1.0,1.0,17.0,4.0,,,0,11.0,1,0
+2025-06-09,Belgium,W,wls Wales,Home,4.0,3.0,18.0,4.0,,,0,13.0,3,0
+2025-09-04,Belgium,W,li Liechtenstein,Away,6.0,0.0,24.0,9.0,,,0,12.0,0,0
+2025-09-07,Belgium,W,kz Kazakhstan,Home,6.0,0.0,35.0,15.0,,,0,6.0,0,0
+2025-10-10,Belgium,D,mk N. Macedonia,Home,0.0,0.0,25.0,5.0,,,0,15.0,3,0
+2025-10-13,Belgium,W,wls Wales,Away,4.0,2.0,16.0,6.0,,,0,6.0,1,0
+2025-11-15,Belgium,D,kz Kazakhstan,Away,1.0,1.0,20.0,8.0,,,0,5.0,1,0
+2025-11-18,Belgium,W,li Liechtenstein,Home,7.0,0.0,23.0,13.0,,,0,9.0,0,0
+2026-03-28,Belgium,W,us United States,Away,5.0,2.0,,,,,0,,0,0
+2026-03-31,Belgium,D,mx Mexico,Neutral,1.0,1.0,,,,,0,,3,0
+2026-06-02,Belgium,W,hr Croatia,Away,2.0,0.0,,,,,0,,2,0
+2026-06-06,Belgium,W,tn Tunisia,Home,5.0,0.0,,,,,0,,2,0
+2026-06-15,Belgium,D,Egypt,Home,1.0,1.0,0.0,0.0,,,0,0.0,0,0
+2026-06-21,Belgium,D,Iran,Home,0.0,0.0,0.0,0.0,,,0,0.0,0,0
+2025-03-21,Bosnia & Herz.,W,ro Romania,Away,1.0,0.0,5.0,1.0,,,0,25.0,3,0
+2025-03-24,Bosnia & Herz.,W,cy Cyprus,Home,2.0,1.0,14.0,6.0,,,0,14.0,2,0
+2025-06-07,Bosnia & Herz.,W,sm San Marino,Home,1.0,0.0,21.0,6.0,,,0,21.0,1,0
+2025-09-06,Bosnia & Herz.,W,sm San Marino,Away,6.0,0.0,22.0,10.0,,,0,20.0,2,0
+2025-09-09,Bosnia & Herz.,L,at Austria,Home,1.0,2.0,16.0,3.0,,,0,16.0,2,0
+2025-10-09,Bosnia & Herz.,D,cy Cyprus,Away,2.0,2.0,13.0,5.0,,,0,19.0,4,0
+2025-11-15,Bosnia & Herz.,W,ro Romania,Home,3.0,1.0,16.0,4.0,,,0,15.0,5,0
+2025-11-18,Bosnia & Herz.,D,at Austria,Away,1.0,1.0,8.0,1.0,,,0,9.0,2,0
+2026-05-29,Bosnia & Herz.,D,mk N. Macedonia,Home,0.0,0.0,,,,,0,,0,0
+2026-06-06,Bosnia & Herz.,D,pa Panama,Neutral,1.0,1.0,,,,,0,,0,0
+2026-06-12,Bosnia & Herz.,D,Canada,Away,1.0,1.0,0.0,0.0,,,0,0.0,0,0
+2026-06-18,Bosnia & Herz.,L,Switzerland,Away,1.0,4.0,0.0,0.0,,,0,0.0,0,0
+2023-09-08,Brazil,W,bo Bolivia,Home,5.0,1.0,21.0,11.0,,,0,6.0,1,0
+2023-09-12,Brazil,W,pe Peru,Away,1.0,0.0,9.0,3.0,,,0,14.0,2,0
+2023-10-12,Brazil,D,ve Venezuela,Home,1.0,1.0,15.0,6.0,,,0,13.0,2,0
+2023-10-17,Brazil,L,uy Uruguay,Away,0.0,2.0,2.0,0.0,,,0,16.0,5,0
+2023-11-16,Brazil,L,co Colombia,Away,1.0,2.0,12.0,3.0,,,0,12.0,2,0
+2023-11-21,Brazil,L,ar Argentina,Home,0.0,1.0,8.0,4.0,,,0,26.0,3,1
+2024-09-06,Brazil,W,ec Ecuador,Home,1.0,0.0,10.0,3.0,,,0,8.0,1,0
+2024-09-10,Brazil,L,py Paraguay,Away,0.0,1.0,9.0,3.0,,,0,8.0,2,0
+2024-10-10,Brazil,W,cl Chile,Away,2.0,1.0,14.0,3.0,,,0,12.0,2,0
+2024-10-15,Brazil,W,pe Peru,Home,4.0,0.0,18.0,8.0,,,0,10.0,1,0
+2024-11-14,Brazil,D,ve Venezuela,Away,1.0,1.0,13.0,3.0,,,0,12.0,2,0
+2024-11-19,Brazil,D,uy Uruguay,Home,1.0,1.0,18.0,3.0,,,0,15.0,3,0
+2025-03-20,Brazil,W,co Colombia,Home,2.0,1.0,17.0,7.0,,,0,15.0,3,0
+2025-03-25,Brazil,L,ar Argentina,Away,1.0,4.0,3.0,1.0,,,0,19.0,5,0
+2025-06-05,Brazil,D,ec Ecuador,Away,0.0,0.0,3.0,2.0,,,0,9.0,0,0
+2025-06-10,Brazil,W,py Paraguay,Home,1.0,0.0,11.0,4.0,,,0,11.0,2,0
+2025-09-04,Brazil,W,cl Chile,Home,3.0,0.0,22.0,7.0,,,0,14.0,1,0
+2025-09-09,Brazil,L,bo Bolivia,Away,0.0,1.0,10.0,3.0,,,0,9.0,2,0
+2026-03-26,Brazil,L,fr France,Neutral,1.0,2.0,,,,,0,,4,0
+2026-03-31,Brazil,W,hr Croatia,Neutral,3.0,1.0,,,,,0,,1,0
+2026-05-31,Brazil,W,pa Panama,Home,6.0,2.0,,,,,0,,0,0
+2026-06-06,Brazil,W,eg Egypt,Neutral,2.0,1.0,,,,,0,,1,0
+2026-06-13,Brazil,D,Morocco,Home,1.0,1.0,0.0,0.0,,,0,0.0,0,0
+2026-06-19,Brazil,W,ht Haiti,Neutral,3.0,0.0,8.0,5.0,,,0,13.0,1,0
+2026-06-20,Brazil,W,Haiti,Home,3.0,0.0,0.0,0.0,,,0,0.0,0,0
+2023-11-16,Cabo Verde,D,ao Angola,Home,0.0,0.0,,,,,0,,0,0
+2023-11-21,Cabo Verde,W,sz Eswatini,Neutral,2.0,0.0,,,,,0,,1,0
+2024-06-08,Cabo Verde,L,cm Cameroon,Away,1.0,4.0,,,,,0,,0,0
+2024-06-11,Cabo Verde,W,ly Libya,Home,1.0,0.0,,,,,0,,2,0
+2025-03-20,Cabo Verde,W,mu Mauritius,Home,1.0,0.0,,,,,0,,2,0
+2025-03-25,Cabo Verde,W,ao Angola,Away,2.0,1.0,,,,,0,,1,0
+2025-09-04,Cabo Verde,W,mu Mauritius,Away,2.0,0.0,,,,,0,,0,0
+2025-09-09,Cabo Verde,W,cm Cameroon,Home,1.0,0.0,,,,,0,,2,0
+2025-10-08,Cabo Verde,D,ly Libya,Away,3.0,3.0,,,,,0,,2,0
+2025-10-13,Cabo Verde,W,sz Eswatini,Home,3.0,0.0,,,,,0,,2,0
+2026-05-31,Cabo Verde,W,rs Serbia,Neutral,3.0,0.0,,,,,0,,3,0
+2026-06-06,Cabo Verde,W,bm Bermuda,Neutral,3.0,0.0,,,,,0,,1,0
+2026-06-15,Cabo Verde,D,Spain,Away,0.0,0.0,0.0,0.0,,,0,0.0,0,0
+2026-06-21,Cabo Verde,D,Uruguay,Away,2.0,2.0,0.0,0.0,,,0,0.0,0,0
+2026-03-28,Canada,D,is Iceland,Home,2.0,2.0,,,,,0,,0,1
+2026-03-31,Canada,D,tn Tunisia,Home,0.0,0.0,,,,,0,,4,0
+2026-06-01,Canada,W,uz Uzbekistan,Home,2.0,0.0,,,,,0,,2,0
+2026-06-05,Canada,D,ie Rep. of Ireland,Home,1.0,1.0,,,,,0,,3,0
+2026-06-12,Canada,D,Bosnia-Herzegovina,Home,1.0,1.0,0.0,0.0,,,0,0.0,0,0
+2026-06-18,Canada,W,Qatar,Home,6.0,0.0,0.0,0.0,,,0,0.0,0,0
+2026-06-24,Canada,L,Switzerland,Away,1.0,2.0,0.0,0.0,,,0,0.0,0,0
+2023-09-07,Colombia,W,ve Venezuela,Home,1.0,0.0,13.0,4.0,,,0,13.0,0,0
+2023-09-12,Colombia,D,cl Chile,Away,0.0,0.0,8.0,2.0,,,0,19.0,5,0
+2023-10-12,Colombia,D,uy Uruguay,Home,2.0,2.0,14.0,4.0,,,0,17.0,2,1
+2023-10-17,Colombia,D,ec Ecuador,Away,0.0,0.0,8.0,3.0,,,0,17.0,4,0
+2023-11-16,Colombia,W,br Brazil,Home,2.0,1.0,23.0,10.0,,,0,16.0,1,0
+2023-11-21,Colombia,W,py Paraguay,Away,1.0,0.0,12.0,4.0,,,0,15.0,4,0
+2024-09-06,Colombia,D,pe Peru,Away,1.0,1.0,16.0,5.0,,,0,13.0,2,0
+2024-09-10,Colombia,W,ar Argentina,Home,2.0,1.0,9.0,5.0,,,0,8.0,2,0
+2024-10-10,Colombia,L,bo Bolivia,Away,0.0,1.0,20.0,9.0,,,0,8.0,1,0
+2024-10-15,Colombia,W,cl Chile,Home,4.0,0.0,18.0,9.0,,,0,16.0,2,0
+2024-11-15,Colombia,L,uy Uruguay,Away,2.0,3.0,10.0,4.0,,,0,14.0,2,0
+2024-11-19,Colombia,L,ec Ecuador,Home,0.0,1.0,25.0,7.0,,,0,12.0,3,0
+2025-03-20,Colombia,L,br Brazil,Away,1.0,2.0,10.0,3.0,,,0,24.0,1,0
+2025-03-25,Colombia,D,py Paraguay,Home,2.0,2.0,10.0,5.0,,,0,13.0,2,0
+2025-06-06,Colombia,D,pe Peru,Home,0.0,0.0,15.0,0.0,,,0,10.0,1,0
+2025-06-10,Colombia,D,ar Argentina,Away,1.0,1.0,11.0,5.0,,,0,12.0,3,0
+2025-09-04,Colombia,W,bo Bolivia,Home,3.0,0.0,12.0,8.0,,,0,10.0,1,0
+2025-09-09,Colombia,W,ve Venezuela,Away,6.0,3.0,13.0,9.0,,,0,16.0,0,0
+2026-03-26,Colombia,L,hr Croatia,Neutral,1.0,2.0,,,,,0,,0,0
+2026-03-29,Colombia,L,fr France,Neutral,1.0,3.0,,,,,0,,1,0
+2026-06-01,Colombia,W,cr Costa Rica,Home,3.0,1.0,,,,,0,,2,0
+2026-06-07,Colombia,W,jo Jordan,Neutral,2.0,0.0,,,,,0,,0,0
+2026-06-17,Colombia,W,uz Uzbekistan,Neutral,3.0,1.0,15.0,4.0,,,0,11.0,1,0
+2026-06-18,Colombia,W,Uzbekistan,Away,3.0,1.0,0.0,0.0,,,0,0.0,0,0
+2023-11-15,Congo DR,W,mr Mauritania,Home,2.0,0.0,,,,,0,,2,0
+2023-11-19,Congo DR,L,sd Sudan,Neutral,0.0,1.0,,,,,0,,1,0
+2024-06-06,Congo DR,D,sn Senegal,Away,1.0,1.0,,,,,0,,1,0
+2024-06-09,Congo DR,W,tg Togo,Home,1.0,0.0,,,,,0,,1,0
+2025-03-21,Congo DR,W,ss South Sudan,Home,1.0,0.0,,,,,0,,1,0
+2025-03-25,Congo DR,W,mr Mauritania,Away,2.0,0.0,,,,,0,,0,0
+2025-09-05,Congo DR,W,ss South Sudan,Away,4.0,1.0,,,,,0,,0,0
+2025-09-09,Congo DR,L,sn Senegal,Home,2.0,3.0,,,,,0,,0,0
+2025-10-10,Congo DR,W,tg Togo,Away,1.0,0.0,,,,,0,,2,0
+2025-10-14,Congo DR,W,sd Sudan,Home,1.0,0.0,,,,,0,,2,0
+2025-11-13,Congo DR,W,cm Cameroon,Neutral,1.0,0.0,,,,,0,,1,0
+2026-03-31,Congo DR,W,jm Jamaica,Neutral,1.0,0.0,,,,,0,,0,0
+2026-06-03,Congo DR,D,dk Denmark,Neutral,0.0,0.0,,,,,0,,0,0
+2026-06-09,Congo DR,L,cl Chile,Neutral,1.0,2.0,,,,,0,,0,0
+2026-06-17,Congo DR,D,Portugal,Away,1.0,1.0,0.0,0.0,,,0,0.0,0,0
+2025-06-06,Croatia,W,gi Gibraltar,Away,7.0,0.0,30.0,13.0,,,0,10.0,1,0
+2025-06-09,Croatia,W,cz Czechia,Home,5.0,1.0,18.0,11.0,,,0,3.0,0,0
+2025-09-05,Croatia,W,fo Faroe Islands,Away,1.0,0.0,26.0,8.0,,,0,8.0,1,0
+2025-09-08,Croatia,W,me Montenegro,Home,4.0,0.0,32.0,13.0,,,0,10.0,1,0
+2025-10-09,Croatia,D,cz Czechia,Away,0.0,0.0,10.0,2.0,,,0,8.0,2,0
+2025-10-12,Croatia,W,gi Gibraltar,Home,3.0,0.0,28.0,10.0,,,0,7.0,0,0
+2025-11-14,Croatia,W,fo Faroe Islands,Home,3.0,1.0,20.0,4.0,,,0,9.0,0,0
+2025-11-17,Croatia,W,me Montenegro,Away,3.0,2.0,17.0,7.0,,,0,16.0,1,0
+2026-03-26,Croatia,W,co Colombia,Neutral,2.0,1.0,,,,,0,,3,0
+2026-03-31,Croatia,L,br Brazil,Neutral,1.0,3.0,,,,,0,,3,0
+2026-06-02,Croatia,L,be Belgium,Home,0.0,2.0,,,,,0,,2,0
+2026-06-07,Croatia,W,si Slovenia,Home,2.0,1.0,,,,,0,,0,0
+2026-06-17,Croatia,L,England,Away,2.0,4.0,0.0,0.0,,,0,0.0,0,0
+2024-06-06,Curaçao,W,bb Barbados,Home,4.0,1.0,,,,,0,,2,0
+2024-06-08,Curaçao,W,aw Aruba,Away,2.0,0.0,,,,,0,,0,0
+2025-06-06,Curaçao,W,lc St. Lucia,Home,4.0,0.0,,,,,0,,1,0
+2025-06-11,Curaçao,W,ht Haiti,Away,5.0,1.0,,,,,0,,1,0
+2025-09-05,Curaçao,D,tt Trin & Tobago,Away,0.0,0.0,,,,,0,,1,0
+2025-09-09,Curaçao,W,bm Bermuda,Home,3.0,2.0,,,,,0,,2,0
+2025-10-10,Curaçao,W,jm Jamaica,Home,2.0,0.0,,,,,0,,0,0
+2025-10-14,Curaçao,D,tt Trin & Tobago,Home,1.0,1.0,,,,,0,,3,0
+2025-11-13,Curaçao,W,bm Bermuda,Away,7.0,0.0,,,,,0,,1,0
+2025-11-18,Curaçao,D,jm Jamaica,Away,0.0,0.0,,,,,0,,2,0
+2026-05-30,Curaçao,L,sct Scotland,Away,1.0,4.0,,,,,0,,2,1
+2026-06-06,Curaçao,W,aw Aruba,Home,4.0,0.0,,,,,0,,2,0
+2026-06-14,Curaçao,L,Germany,Away,1.0,7.0,0.0,0.0,,,0,0.0,0,0
+2026-06-20,Curaçao,D,ec Ecuador,Neutral,0.0,0.0,10.0,3.0,,,0,10.0,5,0
+2026-06-21,Curaçao,D,Ecuador,Away,0.0,0.0,0.0,0.0,,,0,0.0,0,0
+2025-03-22,Czechia,W,fo Faroe Islands,Home,2.0,1.0,16.0,7.0,,,0,12.0,1,0
+2025-03-25,Czechia,W,gi Gibraltar,Away,4.0,0.0,29.0,11.0,,,0,10.0,1,0
+2025-06-06,Czechia,W,me Montenegro,Home,2.0,0.0,13.0,7.0,,,0,23.0,1,0
+2025-06-09,Czechia,L,hr Croatia,Away,1.0,5.0,14.0,5.0,,,0,11.0,2,0
+2025-09-05,Czechia,W,me Montenegro,Away,2.0,0.0,20.0,10.0,,,0,16.0,1,0
+2025-10-09,Czechia,D,hr Croatia,Home,0.0,0.0,11.0,2.0,,,0,17.0,0,0
+2025-10-12,Czechia,L,fo Faroe Islands,Away,1.0,2.0,15.0,1.0,,,0,13.0,1,0
+2025-11-17,Czechia,W,gi Gibraltar,Home,6.0,0.0,25.0,10.0,,,0,9.0,0,0
+2026-05-31,Czechia,W,xk Kosovo,Home,2.0,1.0,,,,,0,,0,0
+2026-06-04,Czechia,W,gt Guatemala,Neutral,3.0,1.0,,,,,0,,0,0
+2026-06-11,Czechia,L,kr Korea Republic,Neutral,1.0,2.0,7.0,4.0,,,0,16.0,0,0
+2026-06-12,Czechia,L,South Korea,Away,1.0,2.0,0.0,0.0,,,0,0.0,0,0
+2026-06-18,Czechia,D,South Africa,Home,1.0,1.0,0.0,0.0,,,0,0.0,0,0
+2023-11-17,Côte d'Ivoire,W,sc Seychelles,Home,9.0,0.0,,,,,0,,0,0
+2023-11-20,Côte d'Ivoire,W,gm Gambia,Neutral,2.0,0.0,,,,,0,,2,0
+2024-06-07,Côte d'Ivoire,W,ga Gabon,Home,1.0,0.0,,,,,0,,0,0
+2024-06-11,Côte d'Ivoire,D,ke Kenya,Neutral,0.0,0.0,,,,,0,,1,0
+2025-03-21,Côte d'Ivoire,W,bi Burundi,Neutral,1.0,0.0,,,,,0,,2,0
+2025-03-24,Côte d'Ivoire,W,gm Gambia,Home,1.0,0.0,,,,,0,,1,0
+2025-09-05,Côte d'Ivoire,W,bi Burundi,Home,1.0,0.0,,,,,0,,2,0
+2025-09-09,Côte d'Ivoire,D,ga Gabon,Away,0.0,0.0,,,,,0,,2,0
+2025-10-10,Côte d'Ivoire,W,sc Seychelles,Neutral,7.0,0.0,,,,,0,,0,0
+2025-10-14,Côte d'Ivoire,W,ke Kenya,Home,3.0,0.0,,,,,0,,1,0
+2026-03-28,Côte d'Ivoire,W,kr Korea Republic,Neutral,4.0,0.0,,,,,0,,0,0
+2026-03-31,Côte d'Ivoire,W,sct Scotland,Neutral,1.0,0.0,,,,,0,,0,0
+2026-06-04,Côte d'Ivoire,W,fr France,Away,2.0,1.0,,,,,0,,1,0
+2026-06-14,Côte d'Ivoire,W,Ecuador,Home,1.0,0.0,0.0,0.0,,,0,0.0,0,0
+2026-06-20,Côte d'Ivoire,L,Germany,Away,1.0,2.0,0.0,0.0,,,0,0.0,0,0
+2023-09-07,Ecuador,L,ar Argentina,Away,0.0,1.0,5.0,3.0,,,0,0.0,0,0
+2023-09-12,Ecuador,W,uy Uruguay,Home,2.0,1.0,15.0,4.0,,,0,0.0,0,0
+2023-10-12,Ecuador,W,bo Bolivia,Away,2.0,1.0,8.0,3.0,,,0,0.0,0,0
+2023-10-17,Ecuador,D,co Colombia,Home,0.0,0.0,10.0,3.0,,,0,0.0,0,0
+2023-11-16,Ecuador,D,ve Venezuela,Away,0.0,0.0,7.0,1.0,,,0,0.0,0,0
+2023-11-21,Ecuador,W,cl Chile,Home,1.0,0.0,14.0,5.0,,,0,0.0,0,0
+2024-09-06,Ecuador,L,br Brazil,Away,0.0,1.0,9.0,2.0,,,0,0.0,0,0
+2024-09-10,Ecuador,W,pe Peru,Home,1.0,0.0,10.0,4.0,,,0,0.0,0,0
+2024-10-10,Ecuador,D,py Paraguay,Home,0.0,0.0,15.0,5.0,,,0,0.0,0,0
+2024-10-15,Ecuador,D,uy Uruguay,Away,0.0,0.0,8.0,4.0,,,0,0.0,0,0
+2024-11-14,Ecuador,W,bo Bolivia,Home,4.0,0.0,29.0,15.0,,,0,0.0,0,0
+2024-11-19,Ecuador,W,co Colombia,Away,1.0,0.0,4.0,1.0,,,0,0.0,0,0
+2025-03-21,Ecuador,W,ve Venezuela,Home,2.0,1.0,16.0,6.0,,,0,0.0,0,0
+2025-03-25,Ecuador,D,cl Chile,Away,0.0,0.0,7.0,2.0,,,0,0.0,0,0
+2025-06-05,Ecuador,D,br Brazil,Home,0.0,0.0,7.0,3.0,,,0,0.0,0,0
+2025-06-10,Ecuador,D,pe Peru,Away,0.0,0.0,10.0,3.0,,,0,0.0,0,0
+2025-09-04,Ecuador,D,py Paraguay,Away,0.0,0.0,6.0,1.0,,,0,0.0,0,0
+2025-09-09,Ecuador,W,ar Argentina,Home,1.0,0.0,11.0,4.0,,,0,0.0,0,0
+2026-03-27,Ecuador,D,ma Morocco,Neutral,1.0,1.0,,,,,0,0.0,0,0
+2026-03-31,Ecuador,D,nl Netherlands,Away,1.0,1.0,,,,,0,0.0,0,0
+2026-05-30,Ecuador,W,sa Saudi Arabia,Neutral,2.0,1.0,,,,,0,0.0,0,0
+2026-06-07,Ecuador,W,gt Guatemala,Neutral,3.0,0.0,,,,,0,0.0,0,0
+2026-06-14,Ecuador,L,Ivory Coast,Away,0.0,1.0,0.0,0.0,,,0,0.0,0,0
+2026-06-20,Ecuador,D,cw Curaçao,Neutral,0.0,0.0,27.0,15.0,,,0,0.0,0,0
+2026-06-21,Ecuador,D,Curaçao,Home,0.0,0.0,0.0,0.0,,,0,0.0,0,0
+2026-06-25,Ecuador,W,Germany,Home,2.0,1.0,0.0,0.0,,,0,0.0,0,0
+2023-11-16,Egypt,W,dj Djibouti,Home,6.0,0.0,,,,,0,,1,0
+2023-11-19,Egypt,W,sl Sierra Leone,Neutral,2.0,0.0,,,,,0,,1,0
+2024-06-06,Egypt,W,bf Burkina Faso,Home,2.0,1.0,,,,,0,,2,0
+2024-06-10,Egypt,D,gw Guinea-Bissau,Away,1.0,1.0,,,,,0,,2,0
+2025-03-21,Egypt,W,et Ethiopia,Neutral,2.0,0.0,,,,,0,,0,0
+2025-03-25,Egypt,W,sl Sierra Leone,Home,1.0,0.0,,,,,0,,1,0
+2025-09-05,Egypt,W,et Ethiopia,Home,2.0,0.0,,,,,0,,2,0
+2025-09-09,Egypt,D,bf Burkina Faso,Away,0.0,0.0,,,,,0,,1,0
+2025-10-08,Egypt,W,dj Djibouti,Away,3.0,0.0,,,,,0,,2,0
+2025-10-12,Egypt,W,gw Guinea-Bissau,Home,1.0,0.0,,,,,0,,2,0
+2026-03-27,Egypt,W,sa Saudi Arabia,Away,4.0,0.0,,,,,0,,0,0
+2026-03-31,Egypt,D,es Spain,Away,0.0,0.0,,,,,0,,5,1
+2026-05-28,Egypt,W,ru Russia,Home,1.0,0.0,,,,,0,,1,0
+2026-06-06,Egypt,L,br Brazil,Neutral,1.0,2.0,,,,,0,,1,0
+2026-06-15,Egypt,D,Belgium,Away,1.0,1.0,0.0,0.0,,,0,0.0,0,0
+2026-06-22,Egypt,W,New Zealand,Away,3.0,1.0,0.0,0.0,,,0,0.0,0,0
+2025-03-21,England,W,al Albania,Home,2.0,0.0,12.0,6.0,,,0,9.0,0,0
+2025-03-24,England,W,lv Latvia,Home,3.0,0.0,27.0,8.0,,,0,11.0,1,0
+2025-06-07,England,W,ad Andorra,Away,1.0,0.0,20.0,10.0,,,0,8.0,0,0
+2025-09-06,England,W,ad Andorra,Home,2.0,0.0,11.0,7.0,,,0,10.0,1,0
+2025-09-09,England,W,rs Serbia,Away,5.0,0.0,24.0,12.0,,,0,10.0,1,0
+2025-10-14,England,W,lv Latvia,Away,5.0,0.0,24.0,7.0,,,0,5.0,1,0
+2025-11-13,England,W,rs Serbia,Home,2.0,0.0,19.0,6.0,,,0,13.0,0,0
+2025-11-16,England,W,al Albania,Away,2.0,0.0,14.0,7.0,,,0,10.0,2,0
+2026-03-27,England,D,uy Uruguay,Home,1.0,1.0,,,,,0,,1,0
+2026-03-31,England,L,jp Japan,Home,0.0,1.0,,,,,0,,0,0
+2026-06-06,England,W,nz New Zealand,Neutral,1.0,0.0,,,,,0,,0,0
+2026-06-10,England,W,cr Costa Rica,Neutral,3.0,0.0,,,,,0,,0,0
+2026-06-17,England,W,Croatia,Home,4.0,2.0,0.0,0.0,,,0,0.0,0,0
+2026-06-23,England,D,Ghana,Home,0.0,0.0,0.0,0.0,,,0,0.0,0,0
+2025-09-05,France,W,ua Ukraine,Away,2.0,0.0,16.0,6.0,,,0,8.0,0,0
+2025-09-09,France,W,is Iceland,Home,2.0,1.0,20.0,8.0,,,0,12.0,3,1
+2025-10-10,France,W,az Azerbaijan,Home,3.0,0.0,33.0,9.0,,,0,8.0,1,0
+2025-10-13,France,D,is Iceland,Away,2.0,2.0,20.0,9.0,,,0,12.0,1,0
+2025-11-13,France,W,ua Ukraine,Home,4.0,0.0,25.0,10.0,,,0,9.0,1,0
+2025-11-16,France,W,az Azerbaijan,Away,3.0,1.0,17.0,4.0,,,0,12.0,0,0
+2026-03-26,France,W,br Brazil,Neutral,2.0,1.0,,,,,0,,3,1
+2026-03-29,France,W,co Colombia,Neutral,3.0,1.0,,,,,0,,3,0
+2026-06-04,France,L,ci Côte d'Ivoire,Home,1.0,2.0,,,,,0,,0,0
+2026-06-08,France,W,nir Northern Ireland,Home,3.0,1.0,,,,,0,,0,0
+2026-06-16,France,W,Senegal,Home,3.0,1.0,0.0,0.0,,,0,0.0,0,0
+2026-06-22,France,W,Iraq,Home,3.0,0.0,0.0,0.0,,,0,0.0,0,0
+2025-09-04,Germany,L,sk Slovakia,Away,0.0,2.0,14.0,4.0,,,0,18.0,2,0
+2025-09-07,Germany,W,nir Northern Ireland,Home,3.0,1.0,11.0,6.0,,,0,9.0,1,0
+2025-10-10,Germany,W,lu Luxembourg,Home,4.0,0.0,31.0,8.0,,,0,10.0,0,0
+2025-10-13,Germany,W,nir Northern Ireland,Away,1.0,0.0,11.0,2.0,,,0,14.0,2,0
+2025-11-14,Germany,W,lu Luxembourg,Away,2.0,0.0,14.0,7.0,,,0,10.0,2,0
+2025-11-17,Germany,W,sk Slovakia,Home,6.0,0.0,22.0,10.0,,,0,11.0,1,0
+2026-03-27,Germany,W,ch Switzerland,Away,4.0,3.0,,,,,0,,0,0
+2026-03-30,Germany,W,gh Ghana,Home,2.0,1.0,,,,,0,,1,0
+2026-05-31,Germany,W,fi Finland,Home,4.0,0.0,,,,,0,,0,0
+2026-06-06,Germany,W,us United States,Away,2.0,1.0,,,,,0,,3,0
+2026-06-14,Germany,W,Curaçao,Home,7.0,1.0,0.0,0.0,,,0,0.0,0,0
+2026-06-20,Germany,W,Ivory Coast,Home,2.0,1.0,0.0,0.0,,,0,0.0,0,0
+2023-11-17,Ghana,W,mg Madagascar,Home,1.0,0.0,,,,,0,,1,0
+2023-11-21,Ghana,L,km Comoros,Away,0.0,1.0,,,,,0,,0,0
+2024-06-06,Ghana,W,ml Mali,Away,2.0,1.0,,,,,0,,1,0
+2024-06-10,Ghana,W,cf CAR,Home,4.0,3.0,,,,,0,,2,0
+2025-03-21,Ghana,W,td Chad,Home,5.0,0.0,,,,,0,,0,0
+2025-03-24,Ghana,W,mg Madagascar,Neutral,3.0,0.0,,,,,0,,1,0
+2025-09-04,Ghana,D,td Chad,Away,1.0,1.0,,,,,0,,1,0
+2025-09-08,Ghana,W,ml Mali,Home,1.0,0.0,,,,,0,,2,0
+2025-10-08,Ghana,W,cf CAR,Neutral,5.0,0.0,,,,,0,,1,0
+2025-10-12,Ghana,W,km Comoros,Home,1.0,0.0,,,,,0,,2,0
+2026-03-27,Ghana,L,at Austria,Away,1.0,5.0,,,,,0,,2,0
+2026-03-30,Ghana,L,de Germany,Away,1.0,2.0,,,,,0,,3,0
+2026-05-22,Ghana,L,mx Mexico,Away,0.0,2.0,,,,,0,,1,0
+2026-06-02,Ghana,D,wls Wales,Away,1.0,1.0,,,,,0,,2,0
+2026-06-17,Ghana,W,Panama,Home,1.0,0.0,0.0,0.0,,,0,0.0,0,0
+2024-06-06,Haiti,W,lc St. Lucia,Home,2.0,1.0,,,,,0,,2,0
+2024-06-09,Haiti,W,bb Barbados,Away,3.0,1.0,,,,,0,,1,0
+2025-06-07,Haiti,W,aw Aruba,Away,5.0,0.0,,,,,0,,0,0
+2025-06-11,Haiti,L,cw Curaçao,Home,1.0,5.0,,,,,0,,0,0
+2025-09-05,Haiti,D,hn Honduras,Home,0.0,0.0,,,,,0,,0,0
+2025-09-09,Haiti,D,cr Costa Rica,Away,3.0,3.0,,,,,0,,3,0
+2025-10-09,Haiti,W,ni Nicaragua,Away,3.0,0.0,,,,,0,,2,0
+2025-10-13,Haiti,L,hn Honduras,Away,0.0,3.0,,,,,0,,0,0
+2025-11-13,Haiti,W,cr Costa Rica,Home,1.0,0.0,,,,,0,,2,0
+2025-11-18,Haiti,W,ni Nicaragua,Home,2.0,0.0,,,,,0,,4,0
+2026-03-28,Haiti,L,tn Tunisia,Neutral,0.0,1.0,,,,,0,,4,1
+2026-03-31,Haiti,D,is Iceland,Neutral,1.0,1.0,,,,,0,,2,0
+2026-06-02,Haiti,W,nz New Zealand,Neutral,4.0,0.0,,,,,0,,0,0
+2026-06-05,Haiti,L,pe Peru,Neutral,1.0,2.0,,,,,0,,1,0
+2026-06-13,Haiti,L,sct Scotland,Neutral,0.0,1.0,15.0,2.0,,,0,23.0,1,0
+2026-06-14,Haiti,L,Scotland,Home,0.0,1.0,0.0,0.0,,,0,0.0,0,0
+2026-06-19,Haiti,L,br Brazil,Neutral,0.0,3.0,7.0,3.0,,,0,14.0,3,0
+2026-06-20,Haiti,L,Brazil,Away,0.0,3.0,0.0,0.0,,,0,0.0,0,0
+2023-11-16,IR Iran,W,hk Hong Kong,Home,4.0,0.0,,,,,0,,1,0
+2023-11-21,IR Iran,D,uz Uzbekistan,Away,2.0,2.0,,,,,0,,2,0
+2024-03-21,IR Iran,W,tm Turkmenistan,Home,5.0,0.0,,,,,0,,1,0
+2024-03-26,IR Iran,W,tm Turkmenistan,Away,1.0,0.0,,,,,0,,2,0
+2024-06-06,IR Iran,W,hk Hong Kong,Away,4.0,2.0,,,,,0,,1,0
+2024-06-11,IR Iran,D,uz Uzbekistan,Home,0.0,0.0,,,,,0,,1,0
+2024-09-05,IR Iran,W,kg Kyrgyz Republic,Home,1.0,0.0,20.0,3.0,,,0,5.0,0,0
+2024-09-10,IR Iran,W,ae UAE,Away,1.0,0.0,12.0,3.0,,,0,7.0,5,0
+2024-10-10,IR Iran,D,uz Uzbekistan,Away,0.0,0.0,10.0,5.0,,,0,5.0,1,1
+2024-10-15,IR Iran,W,qa Qatar,Neutral,4.0,1.0,15.0,7.0,,,0,12.0,3,0
+2024-11-14,IR Iran,W,kp Korea DPR,Neutral,3.0,2.0,19.0,13.0,,,0,7.0,1,1
+2024-11-19,IR Iran,W,kg Kyrgyz Republic,Away,3.0,2.0,14.0,5.0,,,0,13.0,1,0
+2025-03-20,IR Iran,W,ae UAE,Home,2.0,0.0,15.0,8.0,,,0,12.0,1,0
+2025-03-25,IR Iran,D,uz Uzbekistan,Home,2.0,2.0,20.0,8.0,,,0,13.0,0,0
+2025-06-05,IR Iran,L,qa Qatar,Away,0.0,1.0,6.0,3.0,,,0,19.0,4,1
+2025-06-10,IR Iran,W,kp Korea DPR,Home,3.0,0.0,25.0,8.0,,,0,8.0,1,0
+2026-05-29,IR Iran,W,gm Gambia,Neutral,3.0,1.0,,,,,0,,1,0
+2026-06-15,IR Iran,D,nz New Zealand,Neutral,2.0,2.0,17.0,4.0,,,0,10.0,1,0
+2026-06-16,IR Iran,D,New Zealand,Home,2.0,2.0,0.0,0.0,,,0,0.0,0,0
+2026-06-21,IR Iran,D,Belgium,Away,0.0,0.0,0.0,0.0,,,0,0.0,0,0
+2023-11-16,Iraq,W,id Indonesia,Home,5.0,1.0,,,,,0,,0,0
+2023-11-21,Iraq,W,vn Vietnam,Away,1.0,0.0,,,,,0,,1,0
+2024-03-21,Iraq,W,ph Philippines,Home,1.0,0.0,,,,,0,,1,0
+2024-03-26,Iraq,W,ph Philippines,Away,5.0,0.0,,,,,0,,0,0
+2024-06-06,Iraq,W,id Indonesia,Away,2.0,0.0,,,,,0,,1,0
+2024-06-11,Iraq,W,vn Vietnam,Home,3.0,1.0,,,,,0,,1,0
+2024-09-05,Iraq,W,om Oman,Home,1.0,0.0,7.0,3.0,,,0,16.0,1,0
+2024-09-10,Iraq,D,kw Kuwait,Away,0.0,0.0,10.0,2.0,,,0,7.0,1,1
+2024-10-10,Iraq,W,ps Palestine,Home,1.0,0.0,6.0,2.0,,,0,15.0,2,0
+2024-10-15,Iraq,L,kr Korea Republic,Away,2.0,3.0,8.0,2.0,,,0,8.0,2,0
+2024-11-14,Iraq,D,jo Jordan,Home,0.0,0.0,10.0,2.0,,,0,10.0,2,0
+2024-11-19,Iraq,W,om Oman,Away,1.0,0.0,5.0,3.0,,,0,26.0,3,0
+2025-03-20,Iraq,D,kw Kuwait,Home,2.0,2.0,18.0,7.0,,,0,9.0,2,0
+2025-03-25,Iraq,L,ps Palestine,Away,1.0,2.0,13.0,3.0,,,0,13.0,3,0
+2025-06-05,Iraq,L,kr Korea Republic,Home,0.0,2.0,5.0,2.0,,,0,8.0,1,1
+2025-06-10,Iraq,W,jo Jordan,Away,1.0,0.0,7.0,4.0,,,0,10.0,1,0
+2025-10-11,Iraq,W,id Indonesia,Home,1.0,0.0,7.0,2.0,,,0,6.0,2,1
+2025-10-14,Iraq,D,sa Saudi Arabia,Away,0.0,0.0,4.0,1.0,,,0,13.0,2,0
+2025-11-13,Iraq,D,ae UAE,Away,1.0,1.0,10.0,5.0,,,0,11.0,1,0
+2025-11-18,Iraq,W,ae UAE,Home,2.0,1.0,10.0,2.0,,,0,8.0,1,0
+2026-03-31,Iraq,W,bo Bolivia,Neutral,2.0,1.0,,,,,0,,3,0
+2026-05-29,Iraq,W,ad Andorra,Neutral,1.0,0.0,,,,,0,,0,0
+2026-06-04,Iraq,D,es Spain,Away,1.0,1.0,,,,,0,,2,0
+2026-06-09,Iraq,L,ve Venezuela,Neutral,0.0,2.0,,,,,0,,1,1
+2026-06-16,Iraq,L,Norway,Home,1.0,4.0,0.0,0.0,,,0,0.0,0,0
+2023-11-16,Japan,W,mm Myanmar,Home,5.0,0.0,,,,,0,,0,0
+2023-11-21,Japan,W,sy Syria,Away,5.0,0.0,,,,,0,,0,0
+2024-03-21,Japan,W,kp Korea DPR,Home,1.0,0.0,,,,,0,,1,0
+2024-06-06,Japan,W,mm Myanmar,Away,5.0,0.0,,,,,0,,1,0
+2024-06-11,Japan,W,sy Syria,Home,5.0,0.0,,,,,0,,1,0
+2024-09-05,Japan,W,cn China PR,Home,7.0,0.0,17.0,9.0,,,0,20.0,0,0
+2024-09-10,Japan,W,bh Bahrain,Away,5.0,0.0,14.0,9.0,,,0,11.0,0,0
+2024-10-10,Japan,W,sa Saudi Arabia,Away,2.0,0.0,7.0,3.0,,,0,12.0,2,0
+2024-10-15,Japan,D,au Australia,Home,1.0,1.0,12.0,3.0,,,0,12.0,0,0
+2024-11-15,Japan,W,id Indonesia,Away,4.0,0.0,12.0,7.0,,,0,6.0,1,0
+2024-11-19,Japan,W,cn China PR,Away,3.0,1.0,11.0,5.0,,,0,10.0,1,0
+2025-03-20,Japan,W,bh Bahrain,Home,2.0,0.0,12.0,4.0,,,0,18.0,1,0
+2025-03-25,Japan,D,sa Saudi Arabia,Home,0.0,0.0,12.0,2.0,,,0,10.0,0,0
+2025-06-05,Japan,L,au Australia,Away,0.0,1.0,13.0,1.0,,,0,13.0,0,0
+2025-06-10,Japan,W,id Indonesia,Home,6.0,0.0,22.0,10.0,,,0,6.0,0,0
+2026-03-28,Japan,W,sct Scotland,Away,1.0,0.0,,,,,0,,2,0
+2026-03-31,Japan,W,eng England,Away,1.0,0.0,,,,,0,,2,0
+2026-05-31,Japan,W,is Iceland,Home,1.0,0.0,,,,,0,,0,0
+2026-06-14,Japan,D,Netherlands,Away,2.0,2.0,0.0,0.0,,,0,0.0,0,0
+2026-06-21,Japan,W,Tunisia,Away,4.0,0.0,0.0,0.0,,,0,0.0,0,0
+2023-11-16,Jordan,D,tj Tajikistan,Away,1.0,1.0,,,,,0,,2,0
+2023-11-21,Jordan,L,sa Saudi Arabia,Home,0.0,2.0,,,,,0,,3,0
+2024-03-21,Jordan,W,pk Pakistan,Away,3.0,0.0,,,,,0,,1,0
+2024-03-26,Jordan,W,pk Pakistan,Home,7.0,0.0,,,,,0,,1,0
+2024-06-06,Jordan,W,tj Tajikistan,Home,3.0,0.0,,,,,0,,1,0
+2024-06-11,Jordan,W,sa Saudi Arabia,Away,2.0,1.0,,,,,0,,2,0
+2024-09-05,Jordan,D,kw Kuwait,Home,1.0,1.0,16.0,3.0,,,0,19.0,1,0
+2024-09-10,Jordan,W,ps Palestine,Neutral,3.0,1.0,17.0,5.0,,,0,8.0,0,0
+2024-10-10,Jordan,L,kr Korea Republic,Home,0.0,2.0,13.0,2.0,,,0,12.0,1,0
+2024-10-15,Jordan,W,om Oman,Home,4.0,0.0,16.0,8.0,,,0,16.0,0,0
+2024-11-14,Jordan,D,iq Iraq,Away,0.0,0.0,9.0,4.0,,,0,14.0,2,0
+2024-11-19,Jordan,D,kw Kuwait,Away,1.0,1.0,11.0,4.0,,,0,10.0,1,0
+2025-03-20,Jordan,W,ps Palestine,Home,3.0,1.0,10.0,5.0,,,0,14.0,1,0
+2025-03-25,Jordan,D,kr Korea Republic,Away,1.0,1.0,11.0,3.0,,,0,9.0,2,0
+2025-06-05,Jordan,W,om Oman,Away,3.0,0.0,9.0,4.0,,,0,13.0,1,0
+2025-06-10,Jordan,L,iq Iraq,Home,0.0,1.0,9.0,0.0,,,0,13.0,2,0
+2026-05-31,Jordan,L,ch Switzerland,Away,1.0,4.0,,,,,0,,0,0
+2026-06-07,Jordan,L,co Colombia,Neutral,0.0,2.0,,,,,0,,2,1
+2026-06-16,Jordan,L,at Austria,Neutral,1.0,3.0,11.0,4.0,,,0,7.0,0,0
+2026-06-17,Jordan,L,Austria,Away,1.0,3.0,0.0,0.0,,,0,0.0,0,0
+2023-11-16,Korea Republic,W,sg Singapore,Home,5.0,0.0,,,,,0,,1,0
+2023-11-21,Korea Republic,W,cn China PR,Away,3.0,0.0,,,,,0,,1,0
+2024-03-21,Korea Republic,D,th Thailand,Home,1.0,1.0,,,,,0,,0,0
+2024-03-26,Korea Republic,W,th Thailand,Away,3.0,0.0,,,,,0,,1,0
+2024-06-06,Korea Republic,W,sg Singapore,Away,7.0,0.0,,,,,0,,0,0
+2024-06-11,Korea Republic,W,cn China PR,Home,1.0,0.0,,,,,0,,1,0
+2024-09-05,Korea Republic,D,ps Palestine,Home,0.0,0.0,16.0,5.0,,,0,12.0,1,0
+2024-09-10,Korea Republic,W,om Oman,Away,3.0,1.0,16.0,8.0,,,0,11.0,2,0
+2024-10-10,Korea Republic,W,jo Jordan,Away,2.0,0.0,12.0,5.0,,,0,7.0,0,0
+2024-10-15,Korea Republic,W,iq Iraq,Home,3.0,2.0,7.0,3.0,,,0,7.0,3,0
+2024-11-14,Korea Republic,W,kw Kuwait,Away,3.0,1.0,14.0,4.0,,,0,10.0,1,0
+2024-11-19,Korea Republic,D,ps Palestine,Neutral,1.0,1.0,16.0,6.0,,,0,6.0,0,0
+2025-03-20,Korea Republic,D,om Oman,Home,1.0,1.0,11.0,3.0,,,0,9.0,0,0
+2025-03-25,Korea Republic,D,jo Jordan,Home,1.0,1.0,12.0,3.0,,,0,12.0,0,0
+2025-06-05,Korea Republic,W,iq Iraq,Away,2.0,0.0,13.0,7.0,,,0,12.0,4,0
+2025-06-10,Korea Republic,W,kw Kuwait,Home,4.0,0.0,25.0,8.0,,,0,12.0,1,0
+2026-03-28,Korea Republic,L,ci Côte d'Ivoire,Neutral,0.0,4.0,,,,,0,,0,0
+2026-03-31,Korea Republic,L,at Austria,Away,0.0,1.0,,,,,0,,0,0
+2026-05-30,Korea Republic,W,tt Trin & Tobago,Neutral,5.0,0.0,,,,,0,,1,0
+2026-06-03,Korea Republic,W,sv El Salvador,Neutral,1.0,0.0,,,,,0,,4,0
+2026-06-11,Korea Republic,W,cz Czechia,Neutral,2.0,1.0,15.0,6.0,,,0,9.0,1,0
+2026-06-12,Korea Republic,W,Czechia,Home,2.0,1.0,0.0,0.0,,,0,0.0,0,0
+2026-06-18,Korea Republic,L,mx Mexico,Neutral,0.0,1.0,9.0,2.0,,,0,7.0,2,0
+2026-06-19,Korea Republic,L,Mexico,Away,0.0,1.0,0.0,0.0,,,0,0.0,0,0
+2026-03-28,Mexico,D,pt Portugal,Home,0.0,0.0,,,,,0,,1,0
+2026-03-31,Mexico,D,be Belgium,Neutral,1.0,1.0,,,,,0,,2,0
+2026-05-22,Mexico,W,gh Ghana,Home,2.0,0.0,,,,,0,,1,0
+2026-05-30,Mexico,W,au Australia,Neutral,1.0,0.0,,,,,0,,1,0
+2026-06-04,Mexico,W,rs Serbia,Home,5.0,1.0,,,,,0,,2,0
+2026-06-11,Mexico,W,South Africa,Home,2.0,0.0,0.0,0.0,,,0,0.0,0,0
+2026-06-18,Mexico,W,kr Korea Republic,Neutral,1.0,0.0,8.0,4.0,,,0,9.0,0,0
+2026-06-19,Mexico,W,South Korea,Home,1.0,0.0,0.0,0.0,,,0,0.0,0,0
+2026-06-25,Mexico,W,Czechia,Away,3.0,0.0,0.0,0.0,,,0,0.0,0,0
+2023-11-21,Morocco,W,tz Tanzania,Away,2.0,0.0,,,,,0,,4,0
+2024-06-07,Morocco,W,zm Zambia,Home,2.0,1.0,,,,,0,,0,0
+2024-06-11,Morocco,W,cg Congo,Neutral,6.0,0.0,,,,,0,,0,0
+2025-03-21,Morocco,W,ne Niger,Neutral,2.0,1.0,,,,,0,,2,0
+2025-03-25,Morocco,W,tz Tanzania,Home,2.0,0.0,,,,,0,,0,0
+2025-09-05,Morocco,W,ne Niger,Home,5.0,0.0,,,,,0,,0,0
+2025-09-08,Morocco,W,zm Zambia,Away,2.0,0.0,,,,,0,,4,0
+2025-10-14,Morocco,W,cg Congo,Home,1.0,0.0,,,,,0,,1,0
+2026-03-27,Morocco,D,ec Ecuador,Neutral,1.0,1.0,,,,,0,,1,0
+2026-03-31,Morocco,W,py Paraguay,Neutral,2.0,1.0,,,,,0,,3,0
+2026-06-02,Morocco,W,mg Madagascar,Home,4.0,0.0,,,,,0,,2,0
+2026-06-07,Morocco,D,no Norway,Neutral,1.0,1.0,,,,,0,,1,0
+2026-06-13,Morocco,D,Brazil,Away,1.0,1.0,0.0,0.0,,,0,0.0,0,0
+2026-06-19,Morocco,W,Scotland,Away,1.0,0.0,0.0,0.0,,,0,0.0,0,0
+2025-06-07,Netherlands,W,fi Finland,Away,2.0,0.0,17.0,6.0,,,0,9.0,2,0
+2025-06-10,Netherlands,W,mt Malta,Home,8.0,0.0,27.0,9.0,,,0,12.0,1,0
+2025-09-04,Netherlands,D,pl Poland,Home,1.0,1.0,14.0,5.0,,,0,11.0,0,0
+2025-09-07,Netherlands,W,lt Lithuania,Away,3.0,2.0,14.0,7.0,,,0,10.0,0,0
+2025-10-09,Netherlands,W,mt Malta,Away,4.0,0.0,22.0,8.0,,,0,6.0,2,0
+2025-10-12,Netherlands,W,fi Finland,Home,4.0,0.0,17.0,6.0,,,0,8.0,0,0
+2025-11-14,Netherlands,D,pl Poland,Away,1.0,1.0,8.0,3.0,,,0,14.0,1,0
+2025-11-17,Netherlands,W,lt Lithuania,Home,4.0,0.0,20.0,8.0,,,0,10.0,0,0
+2026-03-27,Netherlands,W,no Norway,Home,2.0,1.0,,,,,0,,0,0
+2026-03-31,Netherlands,D,ec Ecuador,Home,1.0,1.0,,,,,0,,0,1
+2026-06-03,Netherlands,L,dz Algeria,Home,0.0,1.0,,,,,0,,0,0
+2026-06-08,Netherlands,W,uz Uzbekistan,Neutral,2.0,1.0,,,,,0,,1,1
+2026-06-14,Netherlands,D,Japan,Home,2.0,2.0,0.0,0.0,,,0,0.0,0,0
+2026-06-20,Netherlands,W,Sweden,Home,5.0,1.0,0.0,0.0,,,0,0.0,0,0
+2024-10-11,New Zealand,W,pf Tahiti,Neutral,3.0,0.0,,,,,0,,1,0
+2024-11-15,New Zealand,W,vu Vanuatu,Neutral,8.0,1.0,,,,,0,,0,0
+2024-11-18,New Zealand,W,ws Samoa,Neutral,8.0,0.0,,,,,0,,0,0
+2025-03-21,New Zealand,W,fj Fiji,Neutral,7.0,0.0,,,,,0,,0,0
+2025-03-24,New Zealand,W,nc New Caledonia,Neutral,3.0,0.0,,,,,0,,0,0
+2026-06-02,New Zealand,L,ht Haiti,Neutral,0.0,4.0,,,,,0,,1,0
+2026-06-06,New Zealand,L,eng England,Neutral,0.0,1.0,,,,,0,,0,0
+2026-06-15,New Zealand,D,ir IR Iran,Neutral,2.0,2.0,14.0,8.0,,,0,8.0,0,0
+2026-06-16,New Zealand,D,Iran,Away,2.0,2.0,0.0,0.0,,,0,0.0,0,0
+2026-06-22,New Zealand,L,Egypt,Home,1.0,3.0,0.0,0.0,,,0,0.0,0,0
+2025-03-22,Norway,W,md Moldova,Away,5.0,0.0,24.0,8.0,,,0,9.0,1,0
+2025-03-25,Norway,W,il Israel,Away,4.0,2.0,23.0,12.0,,,0,9.0,2,0
+2025-06-06,Norway,W,it Italy,Home,3.0,0.0,8.0,4.0,,,0,11.0,2,0
+2025-06-09,Norway,W,ee Estonia,Away,1.0,0.0,19.0,3.0,,,0,9.0,1,0
+2025-09-09,Norway,W,md Moldova,Home,11.0,1.0,34.0,18.0,,,0,6.0,0,0
+2025-10-11,Norway,W,il Israel,Home,5.0,0.0,16.0,5.0,,,0,10.0,0,0
+2025-11-13,Norway,W,ee Estonia,Home,4.0,1.0,18.0,7.0,,,0,9.0,0,0
+2025-11-16,Norway,W,it Italy,Away,4.0,1.0,13.0,5.0,,,0,8.0,2,0
+2026-03-27,Norway,L,nl Netherlands,Away,1.0,2.0,,,,,0,,1,0
+2026-03-31,Norway,D,ch Switzerland,Home,0.0,0.0,,,,,0,,0,0
+2026-06-01,Norway,W,se Sweden,Home,3.0,1.0,,,,,0,,0,0
+2026-06-07,Norway,D,ma Morocco,Neutral,1.0,1.0,,,,,0,,1,0
+2026-06-16,Norway,W,Iraq,Away,4.0,1.0,0.0,0.0,,,0,0.0,0,0
+2026-06-23,Norway,W,Senegal,Home,3.0,2.0,0.0,0.0,,,0,0.0,0,0
+2024-06-06,Panama,W,gy Guyana,Home,2.0,0.0,,,,,0,,3,0
+2024-06-09,Panama,W,ms Montserrat,Away,3.0,1.0,,,,,0,,0,0
+2025-06-07,Panama,W,bz Belize,Away,2.0,0.0,,,,,0,,3,0
+2025-06-10,Panama,W,ni Nicaragua,Home,3.0,0.0,,,,,0,,1,0
+2025-09-04,Panama,D,sr Suriname,Away,0.0,0.0,,,,,0,,1,0
+2025-09-08,Panama,D,gt Guatemala,Home,1.0,1.0,,,,,0,,3,0
+2025-10-10,Panama,W,sv El Salvador,Away,1.0,0.0,,,,,0,,0,0
+2025-10-14,Panama,D,sr Suriname,Home,1.0,1.0,,,,,0,,0,0
+2025-11-13,Panama,W,gt Guatemala,Away,3.0,2.0,,,,,0,,2,0
+2025-11-18,Panama,W,sv El Salvador,Home,3.0,0.0,,,,,0,,1,0
+2026-03-27,Panama,D,za South Africa,Away,1.0,1.0,,,,,0,,2,0
+2026-03-31,Panama,W,za South Africa,Away,2.0,1.0,,,,,0,,4,0
+2026-05-31,Panama,L,br Brazil,Away,2.0,6.0,,,,,0,,1,0
+2026-06-03,Panama,W,do Dominican Rep.,Home,4.0,2.0,,,,,0,,1,0
+2026-06-06,Panama,D,ba Bosnia & Herz.,Neutral,1.0,1.0,,,,,0,,1,0
+2026-06-17,Panama,L,Ghana,Away,0.0,1.0,0.0,0.0,,,0,0.0,0,0
+2023-09-07,Paraguay,D,pe Peru,Home,0.0,0.0,19.0,6.0,,,0,19.0,0,0
+2023-09-12,Paraguay,L,ve Venezuela,Away,0.0,1.0,18.0,5.0,,,0,14.0,4,0
+2023-10-12,Paraguay,L,ar Argentina,Away,0.0,1.0,4.0,1.0,,,0,19.0,2,0
+2023-10-17,Paraguay,W,bo Bolivia,Home,1.0,0.0,13.0,7.0,,,0,12.0,2,0
+2023-11-16,Paraguay,D,cl Chile,Away,0.0,0.0,11.0,3.0,,,0,18.0,3,1
+2023-11-21,Paraguay,L,co Colombia,Home,0.0,1.0,13.0,2.0,,,0,10.0,2,0
+2024-09-06,Paraguay,D,uy Uruguay,Away,0.0,0.0,8.0,2.0,,,0,11.0,2,0
+2024-09-10,Paraguay,W,br Brazil,Home,1.0,0.0,7.0,2.0,,,0,13.0,4,0
+2024-10-10,Paraguay,D,ec Ecuador,Away,0.0,0.0,3.0,2.0,,,0,10.0,1,0
+2024-10-15,Paraguay,W,ve Venezuela,Home,2.0,1.0,13.0,6.0,,,0,10.0,2,0
+2024-11-14,Paraguay,W,ar Argentina,Home,2.0,1.0,8.0,2.0,,,0,17.0,3,0
+2024-11-19,Paraguay,D,bo Bolivia,Away,2.0,2.0,13.0,4.0,,,0,10.0,0,1
+2025-03-20,Paraguay,W,cl Chile,Home,1.0,0.0,16.0,5.0,,,0,10.0,0,0
+2025-03-25,Paraguay,D,co Colombia,Away,2.0,2.0,21.0,6.0,,,0,13.0,4,0
+2025-06-05,Paraguay,W,uy Uruguay,Home,2.0,0.0,12.0,5.0,,,0,18.0,2,0
+2025-06-10,Paraguay,L,br Brazil,Away,0.0,1.0,5.0,1.0,,,0,16.0,1,0
+2025-09-04,Paraguay,D,ec Ecuador,Home,0.0,0.0,7.0,3.0,,,0,15.0,3,0
+2025-09-09,Paraguay,W,pe Peru,Away,1.0,0.0,7.0,5.0,,,0,12.0,1,0
+2026-03-27,Paraguay,W,gr Greece,Away,1.0,0.0,,,,,0,,0,0
+2026-03-31,Paraguay,L,ma Morocco,Neutral,1.0,2.0,,,,,0,,6,0
+2026-06-05,Paraguay,W,ni Nicaragua,Home,4.0,0.0,,,,,0,,0,0
+2026-06-12,Paraguay,L,us United States,Neutral,1.0,4.0,9.0,1.0,,,0,17.0,5,0
+2026-06-13,Paraguay,L,United States,Away,1.0,4.0,0.0,0.0,,,0,0.0,0,0
+2026-06-19,Paraguay,W,tr Türkiye,Neutral,1.0,0.0,7.0,2.0,,,0,15.0,1,1
+2026-06-20,Paraguay,W,Turkey,Away,1.0,0.0,0.0,0.0,,,0,0.0,0,0
+2025-09-06,Portugal,W,am Armenia,Away,5.0,0.0,24.0,9.0,,,0,7.0,0,0
+2025-09-09,Portugal,W,hu Hungary,Away,3.0,2.0,15.0,7.0,,,0,9.0,2,0
+2025-10-11,Portugal,W,ie Rep. of Ireland,Home,1.0,0.0,30.0,6.0,,,0,6.0,2,0
+2025-10-14,Portugal,D,hu Hungary,Home,2.0,2.0,20.0,8.0,,,0,7.0,2,0
+2025-11-13,Portugal,L,ie Rep. of Ireland,Away,0.0,2.0,27.0,5.0,,,0,6.0,2,1
+2025-11-16,Portugal,W,am Armenia,Home,9.0,1.0,34.0,15.0,,,0,7.0,0,0
+2026-03-28,Portugal,D,mx Mexico,Away,0.0,0.0,,,,,0,,1,0
+2026-03-31,Portugal,W,us United States,Away,2.0,0.0,,,,,0,,1,0
+2026-06-06,Portugal,W,cl Chile,Home,2.0,1.0,,,,,0,,0,1
+2026-06-10,Portugal,W,ng Nigeria,Home,2.0,1.0,,,,,0,,2,0
+2026-06-17,Portugal,D,Congo DR,Home,1.0,1.0,0.0,0.0,,,0,0.0,0,0
+2023-11-16,Qatar,W,af Afghanistan,Home,8.0,1.0,,,,,0,,0,0
+2023-11-21,Qatar,W,in India,Away,3.0,0.0,,,,,0,,0,0
+2024-03-21,Qatar,W,kw Kuwait,Home,3.0,0.0,,,,,0,,0,0
+2024-03-26,Qatar,W,kw Kuwait,Away,2.0,1.0,,,,,0,,2,0
+2024-06-06,Qatar,D,af Afghanistan,Neutral,0.0,0.0,,,,,0,,3,0
+2024-06-11,Qatar,W,in India,Home,2.0,1.0,,,,,0,,2,0
+2024-09-05,Qatar,L,ae UAE,Home,1.0,3.0,8.0,1.0,,,0,16.0,2,0
+2024-09-10,Qatar,D,kp Korea DPR,Neutral,2.0,2.0,23.0,6.0,,,0,14.0,2,0
+2024-10-10,Qatar,W,kg Kyrgyz Republic,Home,3.0,1.0,30.0,8.0,,,0,4.0,2,0
+2024-10-15,Qatar,L,ir IR Iran,Neutral,1.0,4.0,11.0,1.0,,,0,3.0,0,0
+2024-11-14,Qatar,W,uz Uzbekistan,Home,3.0,2.0,10.0,7.0,,,0,10.0,2,0
+2024-11-19,Qatar,L,ae UAE,Away,0.0,5.0,9.0,0.0,,,0,19.0,3,0
+2025-03-20,Qatar,W,kp Korea DPR,Home,5.0,1.0,12.0,9.0,,,0,10.0,1,0
+2025-03-25,Qatar,L,kg Kyrgyz Republic,Away,1.0,3.0,9.0,4.0,,,0,7.0,1,1
+2025-06-05,Qatar,W,ir IR Iran,Home,1.0,0.0,6.0,3.0,,,0,15.0,3,0
+2025-06-10,Qatar,L,uz Uzbekistan,Away,0.0,3.0,1.0,0.0,,,0,12.0,5,0
+2025-10-08,Qatar,D,om Oman,Away,0.0,0.0,13.0,2.0,,,0,9.0,2,0
+2025-10-14,Qatar,W,ae UAE,Home,2.0,1.0,7.0,3.0,,,0,7.0,2,1
+2026-05-28,Qatar,L,ie Rep. of Ireland,Away,0.0,1.0,,,,,0,,0,1
+2026-06-06,Qatar,D,sv El Salvador,Neutral,0.0,0.0,,,,,0,,1,0
+2026-06-13,Qatar,D,Switzerland,Home,1.0,1.0,0.0,0.0,,,0,0.0,0,0
+2026-06-18,Qatar,L,Canada,Away,0.0,6.0,0.0,0.0,,,0,0.0,0,0
+2023-11-16,Saudi Arabia,W,pk Pakistan,Home,4.0,0.0,,,,,0,,1,0
+2023-11-21,Saudi Arabia,W,jo Jordan,Away,2.0,0.0,,,,,0,,1,0
+2024-03-21,Saudi Arabia,W,tj Tajikistan,Home,1.0,0.0,,,,,0,,2,0
+2024-03-26,Saudi Arabia,D,tj Tajikistan,Away,1.0,1.0,,,,,0,,1,0
+2024-06-06,Saudi Arabia,W,pk Pakistan,Away,3.0,0.0,,,,,0,,0,0
+2024-06-11,Saudi Arabia,L,jo Jordan,Home,1.0,2.0,,,,,0,,3,0
+2024-09-05,Saudi Arabia,D,id Indonesia,Home,1.0,1.0,18.0,4.0,,,0,6.0,2,0
+2024-09-10,Saudi Arabia,W,cn China PR,Away,2.0,1.0,11.0,3.0,,,0,9.0,3,1
+2024-10-10,Saudi Arabia,L,jp Japan,Home,0.0,2.0,13.0,2.0,,,0,8.0,1,0
+2024-10-15,Saudi Arabia,D,bh Bahrain,Home,0.0,0.0,13.0,4.0,,,0,9.0,1,0
+2024-11-14,Saudi Arabia,D,au Australia,Away,0.0,0.0,3.0,1.0,,,0,8.0,2,0
+2024-11-19,Saudi Arabia,L,id Indonesia,Away,0.0,2.0,23.0,3.0,,,0,4.0,3,0
+2025-03-20,Saudi Arabia,W,cn China PR,Home,1.0,0.0,19.0,7.0,,,0,4.0,0,0
+2025-03-25,Saudi Arabia,D,jp Japan,Away,0.0,0.0,1.0,0.0,,,0,3.0,0,0
+2025-06-05,Saudi Arabia,W,bh Bahrain,Away,2.0,0.0,10.0,3.0,,,0,10.0,2,0
+2025-06-10,Saudi Arabia,L,au Australia,Home,1.0,2.0,14.0,6.0,,,0,13.0,1,0
+2025-10-08,Saudi Arabia,W,id Indonesia,Away,3.0,2.0,17.0,10.0,,,0,9.0,3,1
+2025-10-14,Saudi Arabia,D,iq Iraq,Home,0.0,0.0,15.0,4.0,,,0,13.0,4,0
+2026-03-27,Saudi Arabia,L,eg Egypt,Home,0.0,4.0,,,,,0,,2,0
+2026-03-31,Saudi Arabia,L,rs Serbia,Away,1.0,2.0,,,,,0,,2,0
+2026-05-30,Saudi Arabia,L,ec Ecuador,Neutral,1.0,2.0,,,,,0,,1,0
+2026-06-05,Saudi Arabia,W,pr Puerto Rico,Neutral,3.0,0.0,,,,,0,,0,0
+2026-06-09,Saudi Arabia,D,sn Senegal,Neutral,0.0,0.0,,,,,0,,3,0
+2026-06-15,Saudi Arabia,D,Uruguay,Home,1.0,1.0,0.0,0.0,,,0,0.0,0,0
+2026-06-21,Saudi Arabia,L,Spain,Away,0.0,4.0,0.0,0.0,,,0,0.0,0,0
+2025-09-05,Scotland,D,dk Denmark,Away,0.0,0.0,11.0,1.0,,,0,15.0,5,0
+2025-09-08,Scotland,W,by Belarus,Away,2.0,0.0,14.0,8.0,,,0,10.0,1,0
+2025-10-09,Scotland,W,gr Greece,Home,3.0,1.0,8.0,3.0,,,0,12.0,2,0
+2025-10-12,Scotland,W,by Belarus,Home,2.0,1.0,12.0,6.0,,,0,10.0,0,0
+2025-11-15,Scotland,L,gr Greece,Away,2.0,3.0,12.0,6.0,,,0,14.0,3,0
+2025-11-18,Scotland,W,dk Denmark,Home,4.0,2.0,10.0,5.0,,,0,15.0,1,0
+2026-03-28,Scotland,L,jp Japan,Home,0.0,1.0,,,,,0,,0,0
+2026-03-31,Scotland,L,ci Côte d'Ivoire,Neutral,0.0,1.0,,,,,0,,0,0
+2026-05-30,Scotland,W,cw Curaçao,Home,4.0,1.0,,,,,0,,2,0
+2026-06-06,Scotland,W,bo Bolivia,Neutral,4.0,0.0,,,,,0,,1,0
+2026-06-13,Scotland,W,ht Haiti,Neutral,1.0,0.0,9.0,2.0,,,0,21.0,3,0
+2026-06-14,Scotland,W,Haiti,Away,1.0,0.0,0.0,0.0,,,0,0.0,0,0
+2026-06-19,Scotland,L,Morocco,Home,0.0,1.0,0.0,0.0,,,0,0.0,0,0
+2023-11-18,Senegal,W,ss South Sudan,Home,4.0,0.0,,,,,0,,0,0
+2023-11-21,Senegal,D,tg Togo,Away,0.0,0.0,,,,,0,,2,0
+2024-06-06,Senegal,D,cd Congo DR,Home,1.0,1.0,,,,,0,,2,0
+2024-06-09,Senegal,W,mr Mauritania,Away,1.0,0.0,,,,,0,,1,0
+2025-03-22,Senegal,D,sd Sudan,Neutral,0.0,0.0,,,,,0,,1,0
+2025-03-25,Senegal,W,tg Togo,Home,2.0,0.0,,,,,0,,0,0
+2025-09-05,Senegal,W,sd Sudan,Home,2.0,0.0,,,,,0,,1,0
+2025-09-09,Senegal,W,cd Congo DR,Away,3.0,2.0,,,,,0,,2,0
+2025-10-10,Senegal,W,ss South Sudan,Away,5.0,0.0,,,,,0,,0,0
+2025-10-14,Senegal,W,mr Mauritania,Home,4.0,0.0,,,,,0,,1,0
+2026-03-28,Senegal,W,pe Peru,Neutral,2.0,0.0,,,,,0,,1,0
+2026-03-31,Senegal,W,gm Gambia,Home,3.0,1.0,,,,,0,,1,0
+2026-05-31,Senegal,L,us United States,Away,2.0,3.0,,,,,0,,0,0
+2026-06-09,Senegal,D,sa Saudi Arabia,Neutral,0.0,0.0,,,,,0,,3,1
+2026-06-16,Senegal,L,France,Away,1.0,3.0,0.0,0.0,,,0,0.0,0,0
+2023-11-18,South Africa,W,bj Benin,Home,2.0,1.0,,,,,0,,1,0
+2023-11-21,South Africa,L,rw Rwanda,Away,0.0,2.0,,,,,0,,0,0
+2024-06-07,South Africa,D,ng Nigeria,Away,1.0,1.0,,,,,0,,3,0
+2024-06-11,South Africa,W,zw Zimbabwe,Home,3.0,1.0,,,,,0,,1,0
+2025-03-21,South Africa,L,ls Lesotho,Home,0.0,3.0,,,,,0,,1,0
+2025-03-25,South Africa,W,bj Benin,Neutral,2.0,0.0,,,,,0,,0,0
+2025-09-05,South Africa,W,ls Lesotho,Neutral,3.0,0.0,,,,,0,,1,0
+2025-09-09,South Africa,D,ng Nigeria,Home,1.0,1.0,,,,,0,,3,0
+2025-10-10,South Africa,D,zw Zimbabwe,Neutral,0.0,0.0,,,,,0,,3,1
+2025-10-14,South Africa,W,rw Rwanda,Home,3.0,0.0,,,,,0,,3,0
+2026-03-27,South Africa,D,pa Panama,Home,1.0,1.0,,,,,0,,1,0
+2026-03-31,South Africa,L,pa Panama,Home,1.0,2.0,,,,,0,,3,0
+2026-05-29,South Africa,D,ni Nicaragua,Home,0.0,0.0,,,,,0,,0,0
+2026-06-11,South Africa,L,Mexico,Away,0.0,2.0,0.0,0.0,,,0,0.0,0,0
+2026-06-18,South Africa,D,Czechia,Away,1.0,1.0,0.0,0.0,,,0,0.0,0,0
+2026-06-25,South Africa,W,South Korea,Home,1.0,0.0,0.0,0.0,,,0,0.0,0,0
+2025-09-04,Spain,W,bg Bulgaria,Away,3.0,0.0,24.0,12.0,,,0,17.0,1,0
+2025-09-07,Spain,W,tr Türkiye,Away,6.0,0.0,21.0,12.0,,,0,9.0,0,0
+2025-10-11,Spain,W,ge Georgia,Home,2.0,0.0,24.0,7.0,,,0,12.0,1,0
+2025-10-14,Spain,W,bg Bulgaria,Home,4.0,0.0,33.0,11.0,,,0,7.0,0,0
+2025-11-15,Spain,W,ge Georgia,Away,4.0,0.0,14.0,7.0,,,0,9.0,1,0
+2025-11-18,Spain,D,tr Türkiye,Home,2.0,2.0,21.0,9.0,,,0,5.0,1,0
+2026-03-27,Spain,W,rs Serbia,Home,3.0,0.0,,,,,0,,0,0
+2026-03-31,Spain,D,eg Egypt,Home,0.0,0.0,,,,,0,,0,0
+2026-06-04,Spain,D,iq Iraq,Home,1.0,1.0,,,,,0,,2,0
+2026-06-08,Spain,W,pe Peru,Neutral,3.0,1.0,,,,,0,,0,0
+2026-06-15,Spain,D,Cape Verde Islands,Home,0.0,0.0,0.0,0.0,,,0,0.0,0,0
+2026-06-21,Spain,W,Saudi Arabia,Home,4.0,0.0,0.0,0.0,,,0,0.0,0,0
+2025-09-05,Sweden,D,si Slovenia,Away,2.0,2.0,6.0,2.0,,,0,21.0,2,0
+2025-09-08,Sweden,L,xk Kosovo,Away,0.0,2.0,13.0,4.0,,,0,12.0,4,0
+2025-10-10,Sweden,L,ch Switzerland,Home,0.0,2.0,7.0,0.0,,,0,13.0,1,0
+2025-10-13,Sweden,L,xk Kosovo,Home,0.0,1.0,13.0,4.0,,,0,16.0,0,0
+2025-11-15,Sweden,L,ch Switzerland,Away,1.0,4.0,6.0,3.0,,,0,18.0,4,0
+2025-11-18,Sweden,D,si Slovenia,Home,1.0,1.0,11.0,2.0,,,0,6.0,2,0
+2026-03-26,Sweden,W,ua Ukraine,Neutral,3.0,1.0,10.0,4.0,,,0,10.0,1,0
+2026-03-31,Sweden,W,pl Poland,Home,3.0,2.0,9.0,5.0,,,0,15.0,2,0
+2026-06-01,Sweden,L,no Norway,Away,1.0,3.0,,,,,0,,1,0
+2026-06-04,Sweden,D,gr Greece,Home,2.0,2.0,,,,,0,,0,0
+2026-06-14,Sweden,W,tn Tunisia,Neutral,5.0,1.0,13.0,7.0,,,0,10.0,0,0
+2026-06-15,Sweden,W,Tunisia,Home,5.0,1.0,0.0,0.0,,,0,0.0,0,0
+2026-06-20,Sweden,L,Netherlands,Away,1.0,5.0,0.0,0.0,,,0,0.0,0,0
+2025-09-05,Switzerland,W,xk Kosovo,Home,4.0,0.0,10.0,5.0,,,0,11.0,2,0
+2025-09-08,Switzerland,W,si Slovenia,Home,3.0,0.0,12.0,6.0,,,0,10.0,0,0
+2025-10-10,Switzerland,W,se Sweden,Away,2.0,0.0,17.0,8.0,,,0,10.0,1,0
+2025-10-13,Switzerland,D,si Slovenia,Away,0.0,0.0,11.0,3.0,,,0,5.0,0,0
+2025-11-15,Switzerland,W,se Sweden,Home,4.0,1.0,9.0,7.0,,,0,13.0,1,0
+2025-11-18,Switzerland,D,xk Kosovo,Away,1.0,1.0,6.0,3.0,,,0,9.0,0,0
+2026-03-27,Switzerland,L,de Germany,Home,3.0,4.0,,,,,0,,0,0
+2026-03-31,Switzerland,D,no Norway,Away,0.0,0.0,,,,,0,,0,0
+2026-05-31,Switzerland,W,jo Jordan,Home,4.0,1.0,,,,,0,,0,0
+2026-06-06,Switzerland,D,au Australia,Neutral,1.0,1.0,,,,,0,,3,0
+2026-06-13,Switzerland,D,Qatar,Away,1.0,1.0,0.0,0.0,,,0,0.0,0,0
+2026-06-18,Switzerland,W,Bosnia-Herzegovina,Home,4.0,1.0,0.0,0.0,,,0,0.0,0,0
+2023-11-17,Tunisia,W,st São Tomé,Home,4.0,0.0,,,,,0,,2,0
+2023-11-21,Tunisia,W,mw Malawi,Away,1.0,0.0,,,,,0,,1,0
+2024-06-05,Tunisia,W,gq Equ. Guinea,Home,1.0,0.0,,,,,0,,5,0
+2024-06-09,Tunisia,D,na Namibia,Neutral,0.0,0.0,,,,,0,,0,0
+2025-03-19,Tunisia,W,lr Liberia,Away,1.0,0.0,,,,,0,,1,0
+2025-03-24,Tunisia,W,mw Malawi,Home,2.0,0.0,,,,,0,,2,0
+2025-09-04,Tunisia,W,lr Liberia,Home,3.0,0.0,,,,,0,,1,0
+2025-09-08,Tunisia,W,gq Equ. Guinea,Away,1.0,0.0,,,,,0,,5,0
+2025-10-10,Tunisia,W,st São Tomé,Neutral,6.0,0.0,,,,,0,,1,0
+2025-10-13,Tunisia,W,na Namibia,Home,3.0,0.0,,,,,0,,1,0
+2026-03-28,Tunisia,W,ht Haiti,Neutral,1.0,0.0,,,,,0,,2,0
+2026-03-31,Tunisia,D,ca Canada,Away,0.0,0.0,,,,,0,,2,0
+2026-06-01,Tunisia,L,at Austria,Away,0.0,1.0,,,,,0,,1,0
+2026-06-06,Tunisia,L,be Belgium,Away,0.0,5.0,,,,,0,,2,1
+2026-06-14,Tunisia,L,se Sweden,Neutral,1.0,5.0,6.0,2.0,,,0,8.0,1,0
+2026-06-15,Tunisia,L,Sweden,Away,1.0,5.0,0.0,0.0,,,0,0.0,0,0
+2026-06-21,Tunisia,L,Japan,Home,0.0,4.0,0.0,0.0,,,0,0.0,0,0
+2025-09-04,Türkiye,W,ge Georgia,Away,3.0,2.0,6.0,3.0,,,0,14.0,3,1
+2025-09-07,Türkiye,L,es Spain,Home,0.0,6.0,11.0,2.0,,,0,6.0,0,0
+2025-10-11,Türkiye,W,bg Bulgaria,Away,6.0,1.0,18.0,8.0,,,0,4.0,1,0
+2025-10-14,Türkiye,W,ge Georgia,Home,4.0,1.0,10.0,6.0,,,0,14.0,1,0
+2025-11-15,Türkiye,W,bg Bulgaria,Home,2.0,0.0,19.0,6.0,,,0,11.0,3,0
+2025-11-18,Türkiye,D,es Spain,Away,2.0,2.0,13.0,7.0,,,0,8.0,5,0
+2026-03-26,Türkiye,W,ro Romania,Neutral,1.0,0.0,16.0,2.0,,,0,7.0,2,0
+2026-03-31,Türkiye,W,xk Kosovo,Away,1.0,0.0,12.0,3.0,,,0,10.0,5,0
+2026-06-01,Türkiye,W,mk N. Macedonia,Home,4.0,0.0,,,,,0,,0,0
+2026-06-06,Türkiye,W,ve Venezuela,Neutral,2.0,1.0,,,,,0,,1,0
+2026-06-13,Türkiye,L,au Australia,Neutral,0.0,2.0,30.0,8.0,,,0,4.0,1,0
+2026-06-14,Türkiye,L,Australia,Away,0.0,2.0,0.0,0.0,,,0,0.0,0,0
+2026-06-19,Türkiye,L,py Paraguay,Neutral,0.0,1.0,32.0,5.0,,,0,14.0,2,0
+2026-06-20,Türkiye,L,Paraguay,Home,0.0,1.0,0.0,0.0,,,0,0.0,0,0
+2026-03-28,United States,L,be Belgium,Home,2.0,5.0,,,,,0,,2,0
+2026-03-31,United States,L,pt Portugal,Home,0.0,2.0,,,,,0,,1,0
+2026-05-31,United States,W,sn Senegal,Home,3.0,2.0,,,,,0,,1,0
+2026-06-06,United States,L,de Germany,Home,1.0,2.0,,,,,0,,1,0
+2026-06-12,United States,W,py Paraguay,Neutral,4.0,1.0,16.0,6.0,,,0,13.0,1,0
+2026-06-13,United States,W,Paraguay,Home,4.0,1.0,0.0,0.0,,,0,0.0,0,0
+2026-06-19,United States,W,Australia,Home,2.0,0.0,0.0,0.0,,,0,0.0,0,0
+2023-09-08,Uruguay,W,cl Chile,Home,3.0,1.0,18.0,7.0,,,0,17.0,4,0
+2023-09-12,Uruguay,L,ec Ecuador,Away,1.0,2.0,5.0,2.0,,,0,18.0,3,0
+2023-10-12,Uruguay,D,co Colombia,Away,2.0,2.0,15.0,6.0,,,0,10.0,0,0
+2023-10-17,Uruguay,W,br Brazil,Home,2.0,0.0,5.0,2.0,,,0,18.0,3,0
+2023-11-16,Uruguay,W,ar Argentina,Away,2.0,0.0,6.0,2.0,,,0,22.0,3,0
+2023-11-21,Uruguay,W,bo Bolivia,Home,3.0,0.0,18.0,4.0,,,0,10.0,0,0
+2024-09-06,Uruguay,D,py Paraguay,Home,0.0,0.0,11.0,1.0,,,0,13.0,4,0
+2024-09-10,Uruguay,D,ve Venezuela,Away,0.0,0.0,8.0,2.0,,,0,17.0,4,0
+2024-10-11,Uruguay,L,pe Peru,Away,0.0,1.0,8.0,3.0,,,0,6.0,1,0
+2024-10-15,Uruguay,D,ec Ecuador,Home,0.0,0.0,11.0,4.0,,,0,14.0,1,0
+2024-11-15,Uruguay,W,co Colombia,Home,3.0,2.0,10.0,5.0,,,0,18.0,4,0
+2024-11-19,Uruguay,D,br Brazil,Away,1.0,1.0,8.0,2.0,,,0,11.0,2,0
+2025-03-21,Uruguay,L,ar Argentina,Home,0.0,1.0,6.0,2.0,,,0,11.0,2,0
+2025-03-25,Uruguay,D,bo Bolivia,Away,0.0,0.0,11.0,0.0,,,0,5.0,2,0
+2025-06-05,Uruguay,L,py Paraguay,Away,0.0,2.0,5.0,1.0,,,0,10.0,0,0
+2025-06-10,Uruguay,W,ve Venezuela,Home,2.0,0.0,12.0,5.0,,,0,15.0,2,0
+2025-09-04,Uruguay,W,pe Peru,Home,3.0,0.0,24.0,7.0,,,0,8.0,2,0
+2025-09-09,Uruguay,D,cl Chile,Away,0.0,0.0,6.0,3.0,,,0,14.0,1,0
+2026-03-27,Uruguay,D,eng England,Away,1.0,1.0,,,,,0,,2,0
+2026-03-31,Uruguay,D,dz Algeria,Neutral,0.0,0.0,,,,,0,,3,0
+2026-06-15,Uruguay,D,Saudi Arabia,Away,1.0,1.0,0.0,0.0,,,0,0.0,0,0
+2026-06-21,Uruguay,D,Cape Verde Islands,Home,2.0,2.0,0.0,0.0,,,0,0.0,0,0
+2023-11-16,Uzbekistan,W,tm Turkmenistan,Away,3.0,1.0,,,,,0,,1,0
+2023-11-21,Uzbekistan,D,ir IR Iran,Home,2.0,2.0,,,,,0,,3,0
+2024-03-21,Uzbekistan,W,hk Hong Kong,Away,2.0,0.0,,,,,0,,0,0
+2024-03-26,Uzbekistan,W,hk Hong Kong,Home,3.0,0.0,,,,,0,,2,0
+2024-06-06,Uzbekistan,W,tm Turkmenistan,Home,3.0,1.0,,,,,0,,2,0
+2024-06-11,Uzbekistan,D,ir IR Iran,Away,0.0,0.0,,,,,0,,1,0
+2024-09-05,Uzbekistan,W,kp Korea DPR,Home,1.0,0.0,13.0,4.0,,,0,11.0,0,0
+2024-09-10,Uzbekistan,W,kg Kyrgyz Republic,Away,3.0,2.0,17.0,9.0,,,0,8.0,2,0
+2024-10-10,Uzbekistan,D,ir IR Iran,Home,0.0,0.0,10.0,1.0,,,0,19.0,3,0
+2024-10-15,Uzbekistan,W,ae UAE,Home,1.0,0.0,24.0,4.0,,,0,9.0,1,0
+2024-11-14,Uzbekistan,L,qa Qatar,Away,2.0,3.0,19.0,8.0,,,0,7.0,1,0
+2024-11-19,Uzbekistan,W,kp Korea DPR,Neutral,1.0,0.0,16.0,2.0,,,0,9.0,1,1
+2025-03-20,Uzbekistan,W,kg Kyrgyz Republic,Home,1.0,0.0,26.0,9.0,,,0,13.0,4,0
+2025-03-25,Uzbekistan,D,ir IR Iran,Away,2.0,2.0,13.0,4.0,,,0,11.0,0,0
+2025-06-05,Uzbekistan,D,ae UAE,Away,0.0,0.0,4.0,0.0,,,0,13.0,1,0
+2025-06-10,Uzbekistan,W,qa Qatar,Home,3.0,0.0,18.0,8.0,,,0,11.0,2,0
+2026-06-01,Uzbekistan,L,ca Canada,Away,0.0,2.0,,,,,0,,2,0
+2026-06-08,Uzbekistan,L,nl Netherlands,Neutral,1.0,2.0,,,,,0,,1,0
+2026-06-17,Uzbekistan,L,co Colombia,Neutral,1.0,3.0,8.0,2.0,,,0,14.0,1,0
+2026-06-18,Uzbekistan,L,Colombia,Home,1.0,3.0,0.0,0.0,,,0,0.0,0,0
+</file>
+
 <file path="data/promedios_liga.json">
 {
-  "xg_favor": 1.9565,
-  "xg_contra": 0.8272,
-  "sot": 8.7169
+  "xg_favor": 1.9474,
+  "xg_contra": 0.8302,
+  "sot": 8.7596
 }
 </file>
 
@@ -103,6 +1240,9 @@ Archivos de datos que el programa lee y escribe. Las rutas se resuelven con
 | `base_mundial_2026.csv` | **Base maestra** del Mundial: historial limpio y normalizado de las 48 selecciones. El predictor la lee directamente → 100% offline. La genera/actualiza `src/datos/`. | ✅ sí |
 | `promedios_liga.json` | Promedios del torneo (xG favor/contra, tiros) que usa el shrinkage. | ✅ sí |
 | `grupos_mundial.json` | Grupos del Mundial editados desde la app (✏️ Editar grupos). Tiene prioridad sobre `GRUPOS_MUNDIAL`. Se crea al guardar. | ❌ local |
+| `bracket_eliminatoria.json` | Cuadro de eliminatorias confirmado (cruces reales). Si existe, el Monte Carlo simula desde estos cruces en vez de sembrar los grupos. | ✅ sí |
+| `club_elo.csv` | Cache del Elo de clubes (ClubElo). Lo genera `src/datos/descargar_club_elo.py`. Solo ligas europeas. Regenerable. | ❌ ignorado |
+| `liga_<liga>_<temporada>.csv` | **Base maestra por liga de clubes** (mismo esquema que `base_mundial`). La genera `src/datos/descargar_liga_csv.py`; si existe, la predicción de esa liga es offline e instantánea. Regenerable. | ❌ ignorado |
 | `montecarlo_resultados.csv` | Salida de la simulación (% de título por selección). Regenerable. | ❌ ignorado |
 | `resultados_backtest.csv` | Salida de la calibración `rho`/`k`. Regenerable. | ❌ ignorado |
 
@@ -809,230 +1949,6 @@ Presiona Enter para cerrar...
 py -c "import time; t0=time.time(); from predecir_partido import predecir_partido; print('Predicting...'); res = predecir_partido('Argentina', 'Brazil', 'INT-World Cup', '2026', no_cache=False); print('Probabilidad Argentina:', res['prob_local']); print('Time taken:', time.time()-t0, 'seconds')"
 </file>
 
-<file path="src/analisis/backtest_cuotas.py">
-"""
-Backtest del modelo contra las CUOTAS REALES del mercado (Football-Data.co.uk).
-
-Mide si el modelo Poisson/Dixon-Coles le gana o iguala a las casas de apuestas:
-  - Compara su log-loss / Brier / acierto contra las cuotas de cierre de Pinnacle
-    (la casa más "sharp"), que son el patrón a vencer.
-  - Simula el ROI de apostar solo cuando el modelo detecta "valor".
-
-Clave: el CSV de Football-Data ya trae los goles de cada partido, así que el
-historial de cada equipo se construye del MISMO archivo. 100% offline tras la
-descarga, sin FBref ni mapeo de nombres. Backtest SIN fuga de datos: cada partido
-se predice usando solo los partidos anteriores.
-
-Uso:
-    py -3.11 backtest_cuotas.py            # Premier League 2024-25
-    py -3.11 backtest_cuotas.py SP1 2425   # La Liga 2024-25
-"""
-# ── Bootstrap de rutas: permite ejecutar este script directamente ──
-import os as _os, sys as _sys
-_SRC = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
-for _sub in ("", "modelo", "datos", "interfaz", "analisis"):
-    _ruta = _os.path.join(_SRC, _sub)
-    if _ruta not in _sys.path:
-        _sys.path.insert(0, _ruta)
-
-import sys
-
-import numpy as np
-import pandas as pd
-from sklearn.metrics import log_loss
-
-from feature_engineering import procesar_equipo, ultima_fila_valida
-from calcular_lambdas import calcular_lambdas
-from matriz_poisson import generar_matriz_poisson
-
-# Códigos de liga de Football-Data.co.uk
-LIGAS_FD = {
-    "E0": "Premier League (Inglaterra)", "SP1": "La Liga (España)",
-    "I1": "Serie A (Italia)", "D1": "Bundesliga (Alemania)", "F1": "Ligue 1 (Francia)",
-}
-BASE_URL = "https://www.football-data.co.uk/mmz4281"
-
-
-def descargar_cuotas(codigo: str = "E0", temporada: str = "2425") -> pd.DataFrame:
-    """Descarga el CSV de resultados + cuotas de una liga/temporada."""
-    url = f"{BASE_URL}/{temporada}/{codigo}.csv"
-    df = pd.read_csv(url)
-    df["Date"] = pd.to_datetime(df["Date"], dayfirst=True, errors="coerce")
-    return df.dropna(subset=["Date", "HomeTeam", "AwayTeam", "FTHG", "FTAG", "FTR"])
-
-
-def historial_desde_cuotas(df: pd.DataFrame) -> pd.DataFrame:
-    """Construye el historial por equipo (esquema del modelo) desde el CSV."""
-    filas = []
-    for _, m in df.iterrows():
-        gh, ga = int(m["FTHG"]), int(m["FTAG"])
-        base = {"Poss": np.nan, "Sh": np.nan, "SoT": np.nan, "xG": np.nan,
-                "xGA": np.nan, "Fls": np.nan, "CrdY": 0, "CrdR": 0}
-        filas.append({"Date": m["Date"], "Team": m["HomeTeam"], "Opponent": m["AwayTeam"],
-                      "Venue": "Home", "Result": "W" if gh > ga else "D" if gh == ga else "L",
-                      "GF": gh, "GA": ga, **base})
-        filas.append({"Date": m["Date"], "Team": m["AwayTeam"], "Opponent": m["HomeTeam"],
-                      "Venue": "Away", "Result": "W" if ga > gh else "D" if gh == ga else "L",
-                      "GF": ga, "GA": gh, **base})
-    return pd.DataFrame(filas).sort_values("Date").reset_index(drop=True)
-
-
-def _devig(oh, od, oa):
-    """Cuotas decimales -> probabilidades sin margen de la casa (de-vig)."""
-    if any(pd.isna(x) or x <= 1 for x in (oh, od, oa)):
-        return None
-    imp = np.array([1 / oh, 1 / od, 1 / oa])
-    return imp / imp.sum()
-
-
-def _cuotas_cierre(m):
-    """Cuotas de cierre por prioridad: Pinnacle -> Bet365 -> promedio."""
-    for h, d, a in [("PSCH", "PSCD", "PSCA"), ("B365CH", "B365CD", "B365CA"),
-                    ("AvgCH", "AvgCD", "AvgCA"), ("B365H", "B365D", "B365A")]:
-        if all(c in m and not pd.isna(m[c]) for c in (h, d, a)):
-            return float(m[h]), float(m[d]), float(m[a])
-    return None
-
-
-def correr(df_cuotas, rho=-0.05, k=2, min_previos=5, suavizado="ewm", ewm_span=10,
-           splits=False):  # rho/k calibrados contra el mercado; splits off (empeoran)
-    """
-    Predice cada partido sin fuga de datos y devuelve arrays alineados:
-    probs_modelo, probs_mercado, cuotas, y (0=local,1=empate,2=visitante).
-    """
-    hist = historial_desde_cuotas(df_cuotas)
-    df = df_cuotas.sort_values("Date").reset_index(drop=True)
-
-    pm_modelo, pm_mercado, cuotas, ys = [], [], [], []
-    for _, m in df.iterrows():
-        oc = _cuotas_cierre(m)
-        merc = _devig(*oc) if oc else None
-        if merc is None:
-            continue
-
-        local, visit, fecha = m["HomeTeam"], m["AwayTeam"], m["Date"]
-        h_loc = hist[(hist["Team"] == local) & (hist["Date"] < fecha)]
-        h_vis = hist[(hist["Team"] == visit) & (hist["Date"] < fecha)]
-        if len(h_loc) < min_previos or len(h_vis) < min_previos:
-            continue
-
-        prom_gf = hist[hist["Date"] < fecha]["GF"].mean()  # ~media de goles de local
-        v_loc, v_vis = ("Home", "Away") if splits else (None, None)
-        f_loc = ultima_fila_valida(procesar_equipo(
-            h_loc, prom_gf, prom_gf, 4.5, k_shrinkage=k, suavizado=suavizado,
-            ewm_span=ewm_span, venue=v_loc))
-        f_vis = ultima_fila_valida(procesar_equipo(
-            h_vis, prom_gf, prom_gf, 4.5, k_shrinkage=k, suavizado=suavizado,
-            ewm_span=ewm_span, venue=v_vis))
-        if f_loc is None or f_vis is None:
-            continue
-
-        # Clubes: SÍ aplica ventaja de localía (neutral=False), sin Elo.
-        lam_l, lam_v = calcular_lambdas(f_loc, f_vis, neutral=False)
-        mat = generar_matriz_poisson(lam_l, lam_v, rho=rho)
-        probs = [float(np.sum(np.tril(mat, -1))), float(np.sum(np.diag(mat))),
-                 float(np.sum(np.triu(mat, 1)))]
-
-        y = 0 if m["FTR"] == "H" else 1 if m["FTR"] == "D" else 2
-        pm_modelo.append(probs)
-        pm_mercado.append(list(merc))
-        cuotas.append(oc)
-        ys.append(y)
-
-    return (np.array(pm_modelo), np.array(pm_mercado),
-            np.array(cuotas), np.array(ys))
-
-
-def calibrar(dfs, rhos=(-0.20, -0.15, -0.13, -0.10, -0.05, 0.0),
-             ks=(3, 5, 8, 12), min_previos=5):
-    """
-    Barrido de rho y k sobre uno o varios DataFrames de cuotas (varias ligas
-    para no sobreajustar). Minimiza el log_loss contra los RESULTADOS reales,
-    sin fuga de datos. Las lambdas dependen de k, así que se calculan una sola
-    vez por k y luego se reusa al barrer rho (barato). Devuelve un DataFrame
-    ordenado por log_loss.
-    """
-    datos = {k: [] for k in ks}  # k -> [(lam_l, lam_v, y)]
-    for df in dfs:
-        hist = historial_desde_cuotas(df)
-        dfo = df.sort_values("Date").reset_index(drop=True)
-        for _, m in dfo.iterrows():
-            local, visit, fecha = m["HomeTeam"], m["AwayTeam"], m["Date"]
-            h_loc = hist[(hist["Team"] == local) & (hist["Date"] < fecha)]
-            h_vis = hist[(hist["Team"] == visit) & (hist["Date"] < fecha)]
-            if len(h_loc) < min_previos or len(h_vis) < min_previos:
-                continue
-            prom = hist[hist["Date"] < fecha]["GF"].mean()
-            y = 0 if m["FTR"] == "H" else 1 if m["FTR"] == "D" else 2
-            for k in ks:
-                f_loc = ultima_fila_valida(procesar_equipo(h_loc, prom, prom, 4.5, k_shrinkage=k))
-                f_vis = ultima_fila_valida(procesar_equipo(h_vis, prom, prom, 4.5, k_shrinkage=k))
-                if f_loc is None or f_vis is None:
-                    continue
-                lam_l, lam_v = calcular_lambdas(f_loc, f_vis, neutral=False)
-                datos[k].append((lam_l, lam_v, y))
-
-    filas = []
-    for rho in rhos:
-        for k in ks:
-            probs, ys = [], []
-            for lam_l, lam_v, y in datos[k]:
-                mat = generar_matriz_poisson(lam_l, lam_v, rho=rho)
-                probs.append([float(np.sum(np.tril(mat, -1))), float(np.sum(np.diag(mat))),
-                              float(np.sum(np.triu(mat, 1)))])
-                ys.append(y)
-            if probs:
-                filas.append({"rho": rho, "k": k, "n": len(ys),
-                              "log_loss": log_loss(ys, probs, labels=[0, 1, 2])})
-    return pd.DataFrame(filas).sort_values("log_loss").reset_index(drop=True)
-
-
-def metricas(probs, y):
-    """Calidad de unas probabilidades vs el resultado real: log_loss, Brier y
-    % de acierto. `probs` es Nx3 (local/empate/visitante), `y` el indice real."""
-    onehot = np.eye(3)[y]
-    return {"log_loss": log_loss(y, probs, labels=[0, 1, 2]),
-            "brier": float(np.mean(np.sum((probs - onehot) ** 2, axis=1))),
-            "acierto": float(np.mean(np.argmax(probs, axis=1) == y))}
-
-
-def simular_roi(probs, cuotas, y, umbral=0.05, stake=1.0):
-    """Apuesta 1 unidad a cada resultado donde prob_modelo*cuota > 1+umbral."""
-    ganancia, n = 0.0, 0
-    for p, o, real in zip(probs, cuotas, y):
-        for k in range(3):
-            if p[k] * o[k] > 1 + umbral:  # valor esperado positivo
-                n += 1
-                ganancia += (o[k] - 1) * stake if real == k else -stake
-    roi = (ganancia / (n * stake)) if n else 0.0
-    return {"apuestas": n, "ganancia": ganancia, "roi": roi}
-
-
-if __name__ == "__main__":
-    codigo = sys.argv[1] if len(sys.argv) > 1 else "E0"
-    temporada = sys.argv[2] if len(sys.argv) > 2 else "2425"
-    print(f"Liga: {LIGAS_FD.get(codigo, codigo)} · temporada {temporada}")
-
-    df = descargar_cuotas(codigo, temporada)
-    print(f"Partidos descargados: {len(df)}")
-
-    pm, mk, od, y = correr(df)
-    print(f"Partidos evaluados (con historial suficiente): {len(y)}\n")
-
-    mo, me = metricas(pm, y), metricas(mk, y)
-    print(f"{'':12}{'log_loss':>10}{'brier':>9}{'acierto':>9}")
-    print(f"{'MERCADO':12}{me['log_loss']:>10.4f}{me['brier']:>9.4f}{me['acierto']*100:>8.1f}%")
-    print(f"{'MODELO':12}{mo['log_loss']:>10.4f}{mo['brier']:>9.4f}{mo['acierto']*100:>8.1f}%")
-    print("  (menor log_loss/brier = mejor; el mercado es muy dificil de batir)\n")
-
-    roi = simular_roi(pm, od, y)
-    print(f"Simulador de ROI (apostando al 'valor' del modelo):")
-    print(f"  apuestas con valor: {roi['apuestas']}")
-    print(f"  ganancia neta: {roi['ganancia']:+.2f} unidades")
-    print(f"  ROI: {roi['roi']*100:+.1f}%")
-    print("  (ROI>0 sería ganarle al mercado; lo normal es negativo por el margen)")
-</file>
-
 <file path="src/analisis/backtest.py">
 """
 Fase 6: Backtest / calibración de rho (Dixon-Coles) y k (shrinkage).
@@ -1256,6 +2172,1068 @@ if __name__ == "__main__":
     print("y df_liga_completo_df tiene el historial de TODOS los equipos de la liga.")
 </file>
 
+<file path="src/analisis/README.md">
+# 📊 `src/analisis/` — Simulación y validación
+
+Herramientas que van más allá de un partido: simular el torneo completo y medir
+qué tan bueno es el modelo.
+
+## Módulos
+
+### `montecarlo_mundial.py` — simulación del torneo
+Juega el Mundial completo miles de veces y estima la probabilidad de título.
+- **`correr(n_sim, semilla, grupos)`** — devuelve un DataFrame con % de
+  campeón/final/semis/cuartos por selección y lo guarda en
+  `data/montecarlo_resultados.csv`.
+- **`construir_modelo(grupos)`** — calcula las features de cada selección **una sola
+  vez** (clave del rendimiento).
+- **`crear_sampler(...)`** — memoriza la distribución de marcadores de cada cruce.
+- **`simular_torneo(rng, dist, grupos)`** — juega grupos (con empates) +
+  eliminatorias (empate → penales 50/50) y decide con `numpy.random.choice` para
+  permitir sorpresas.
+- Lee los grupos de `data/grupos_mundial.json` si existe (editable desde la app),
+  con respaldo a `GRUPOS_MUNDIAL`.
+
+### `backtest_cuotas.py` — ¿le gana al mercado?
+Backtest contra las **cuotas de cierre reales** (Pinnacle/Bet365 de
+Football-Data.co.uk).
+- **`descargar_cuotas(liga, temporada)`** — baja el CSV de resultados + cuotas.
+- **`historial_desde_cuotas(df)`** — reconstruye el historial **del mismo CSV**
+  (100% offline, sin FBref).
+- **`correr(df, ...)`** — predice cada partido **sin fuga de datos** y devuelve
+  probabilidades del modelo vs mercado.
+- **`metricas(...)`** (log-loss/Brier/**RPS**/acierto — RPS respeta el orden 1‑X‑2),
+  **`simular_roi(...)`** (ROI apostando al "valor") y **`calibrar(dfs, rhos, ks)`**
+  (barrido para encontrar el mejor `rho`/`k`).
+- Para comparar suavizados: `correr(df, suavizado="tiempo", half_life_dias=60)` vs
+  el default EWM, mirando el **RPS** resultante.
+
+### `backtest.py` — backtest histórico + auditoría
+- **`correr_backtest(...)`** — calibra `rho`/`k` contra resultados históricos sin
+  fuga de datos.
+- **`auditar_ewm_sin_fuga()`** — verifica que el suavizado `.shift(1).ewm().mean()`
+  es causal: no filtra datos del partido actual ni del futuro.
+
+> Ejecutables: `py -3.11 src/analisis/montecarlo_mundial.py 10000` ·
+> `py -3.11 src/analisis/backtest_cuotas.py SP1 2425`
+</file>
+
+<file path="src/datos/actualizar_datos.py">
+"""
+Actualizacion INCREMENTAL de la base del Mundial.
+
+A diferencia de descargar_datos.py (que descarga todo de cero), este script trae
+los partidos recientes de FBref y los fusiona con base_mundial_2026.csv SIN
+borrarlo: agrega unicamente los partidos nuevos.
+
+IMPORTANTE sobre el tiempo: FBref no permite pedir "solo lo nuevo"; cada equipo
+baja su temporada completa, y FBref limita a los scrapers (soccerdata espacia las
+peticiones). Por eso actualizar las 48 selecciones tarda varios minutos. Si solo
+jugaron unos pocos equipos, actualiza SOLO esos pasandolos como argumento:
+
+    py -3.11 actualizar_datos.py                       # las 48 (lento)
+    py -3.11 actualizar_datos.py Spain Brazil Mexico   # solo esos (rapido)
+"""
+# ── Bootstrap de rutas: permite ejecutar este script directamente ──
+import os as _os, sys as _sys
+_SRC = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
+for _sub in ("", "modelo", "datos", "interfaz", "analisis"):
+    _ruta = _os.path.join(_SRC, _sub)
+    if _ruta not in _sys.path:
+        _sys.path.insert(0, _ruta)
+
+import sys
+
+import soccerdata as sd
+
+from ingest_fbref import actualizar_csv_maestro, CSV_MAESTRO_MUNDIAL
+from ligas_config import EQUIPOS_MUNDIAL
+
+# Equipos a actualizar: los pasados por argumento, o las 48 si no se pasa ninguno.
+equipos = sys.argv[1:] if len(sys.argv) > 1 else EQUIPOS_MUNDIAL
+
+desconocidos = [e for e in equipos if e not in EQUIPOS_MUNDIAL]
+if desconocidos:
+    print(f"Aviso: estos nombres no estan en la lista del Mundial (revisa "
+          f"el nombre exacto de FBref): {desconocidos}")
+
+# Sin equipos pasados -> actualizacion completa, con pausa anti-bloqueo.
+# Con pocos equipos -> sin pausa, es rapido.
+pausa = 6 if equipos is EQUIPOS_MUNDIAL else 0
+
+print("Actualizacion incremental del Mundial 2026")
+print(f"Equipos a actualizar: {len(equipos)}"
+      + (" (TODOS, puede tardar varios minutos)" if pausa else ""))
+
+# no_cache=True para que FBref traiga los partidos mas recientes, no la copia vieja.
+fbref = sd.FBref(leagues="INT-World Cup", seasons="2026", no_cache=True)
+resumen = actualizar_csv_maestro(fbref, equipos, pausa=pausa, verbose=True)
+
+print("\nResumen:")
+print(f"  Partidos nuevos agregados: {resumen['partidos_nuevos']}")
+print(f"  Total de partidos ahora:   {resumen['filas_despues']}")
+print(f"  Equipos en la base:        {resumen['equipos']}")
+print(f"\nListo. '{CSV_MAESTRO_MUNDIAL}' actualizado. Abre la app normalmente.")
+input("Presiona Enter para cerrar...")
+</file>
+
+<file path="src/datos/descargar_datos.py">
+"""
+Descarga MASIVA del Mundial (equipo por equipo, con pausas anti-bloqueo) y al
+terminar regenera el CSV maestro. Tarda varios minutos; para mantener al dia usa
+mejor actualizar_datos.py (incremental).
+"""
+# ── Bootstrap de rutas: permite ejecutar este script directamente ──
+import os as _os, sys as _sys
+_SRC = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
+for _sub in ("", "modelo", "datos", "interfaz", "analisis"):
+    _ruta = _os.path.join(_SRC, _sub)
+    if _ruta not in _sys.path:
+        _sys.path.insert(0, _ruta)
+
+import soccerdata as sd
+import time
+import pandas as pd
+
+PAUSA = 45  # segundos entre cada equipo (evita bloqueo de FBref)
+
+print("Iniciando descarga por equipos...")
+fbref = sd.FBref(leagues="INT-World Cup", seasons="2026")
+
+from ligas_config import EQUIPOS_MUNDIAL
+equipos = EQUIPOS_MUNDIAL
+print(f"  {len(equipos)} equipos a descargar: {equipos[:5]}...")
+
+tiros_lista = []
+misc_lista  = []
+total = len(equipos)
+
+for i, equipo in enumerate(equipos, 1):
+    print(f"\n[{i}/{total}] {equipo}...")
+    
+    try:
+        t = fbref.read_team_match_stats(stat_type='shooting', team=equipo)
+        tiros_lista.append(t)
+        print(f"  tiros OK ({len(t)} partidos)")
+    except Exception as e:
+        print(f"  tiros FALLÓ: {e}")
+
+    time.sleep(8)
+
+    try:
+        m = fbref.read_team_match_stats(stat_type='misc', team=equipo)
+        misc_lista.append(m)
+        print(f"  misc OK ({len(m)} partidos)")
+    except Exception as e:
+        print(f"  misc FALLÓ: {e}")
+
+    if i < total:
+        print(f"  Pausa de {PAUSA}s antes del siguiente equipo...")
+        time.sleep(PAUSA)
+
+print("\n¡Descarga completada!")
+
+# Exportar un CSV maestro limpio y normalizado. A partir de aqui el predictor
+# lee este archivo directamente: 100% offline, rapido y sin depender del cache
+# interno de soccerdata.
+from ingest_fbref import exportar_historiales_csv, CSV_MAESTRO_MUNDIAL
+
+print(f"\nGenerando archivo maestro '{CSV_MAESTRO_MUNDIAL}'...")
+try:
+    exportar_historiales_csv(fbref, equipos)
+except Exception as e:
+    print(f"No se pudo generar el CSV maestro: {e}")
+
+print("Ahora abre app_gui.py normalmente.")
+input("Presiona Enter para cerrar...")
+</file>
+
+<file path="src/datos/README.md">
+# 🗄️ `src/datos/` — Ingesta y fuentes de datos
+
+Todo lo que trae y normaliza los datos de los partidos. El esquema normalizado
+(columnas `Date, Team, Opponent, Venue, Result, GF, GA, Poss, Sh, SoT, xG, xGA,
+Fls, CrdY, CrdR`) es el contrato que consume el modelo.
+
+## Módulos
+
+### `ingest_fbref.py`
+Núcleo de la ingesta desde FBref (vía `soccerdata`) y de la base maestra.
+- **`construir_historial_equipo_directo(fbref, equipo)`** — lee shooting + misc de
+  un equipo y normaliza columnas (sin `read_schedule`).
+- **`construir_historial_equipo(df, equipo)`** — filtra un equipo de un DataFrame
+  ya cargado (lo usa la base maestra del Mundial).
+- **`cargar_historial_csv()` / `existe_csv_maestro()`** — leen `data/base_mundial_2026.csv`.
+- **`fusionar_historiales(viejo, nuevo)`** — fusión **incremental** sin duplicar
+  (dedup por `Team+Date+Opponent`; prevalece el dato nuevo).
+- **`actualizar_csv_maestro(...)` / `actualizar_mundial()`** — actualizan el CSV
+  agregando solo partidos nuevos.
+- **`exportar_historiales_csv(...)`** — genera la base maestra desde cero.
+
+### `proveedores.py` — capa de fuentes intercambiables (plug-in)
+- **`ProveedorDatos`** — contrato común. Cada API es una subclase independiente.
+  Incluidas: **`FBrefProvider`** (xG/tiros, sin clave) y **`FootballDataOrgProvider`**
+  (resultados del Mundial, requiere API key gratis).
+- **`historial_combinado(...)` / `actualizar_csv(...)`** — cruzan todas las fuentes
+  disponibles; si una falla, las demás siguen (aislamiento).
+- **`diagnostico()`** — imprime qué fuentes están activas.
+- Agregar otra API = una subclase nueva registrada en `PROVEEDORES`.
+
+### Scripts ejecutables
+- **`actualizar_datos.py`** — actualización **incremental** (recomendada). Pasa los
+  equipos que jugaron para que tarde segundos.
+- **`descargar_datos.py`** — descarga **completa** del Mundial (lenta, con pausas).
+- **`calcular_promedios_liga.py`** — genera `data/promedios_liga.json` desde el
+  caché HTML local de soccerdata (sin red).
+
+## API keys
+Copia `apis.example.json` (en la raíz) a **`apis.local.json`** y pega tu clave, o
+usa la variable de entorno `FOOTBALL_DATA_ORG_KEY`. `apis.local.json` **no se sube
+a git**.
+</file>
+
+<file path="src/interfaz/paleta.py">
+"""
+Paleta de colores y tipografia de la interfaz. Cambia aqui los colores y toda la
+app se actualiza (estilo "design tokens"). Tema oscuro moderno tipo dashboard.
+"""
+
+# ── Fondos ──────────────────────────────────────────────────────────────────
+BG        = "#0b1120"   # fondo de la ventana (azul noche profundo)
+PANEL     = "#141d31"   # barra lateral
+CARD      = "#0f1828"   # area de contenido
+CARD2     = "#1b2740"   # tarjetas elevadas
+BORDE     = "#27324d"   # bordes sutiles
+
+# ── Texto ───────────────────────────────────────────────────────────────────
+TEXTO     = "#eaf0fb"
+TEXTO_SEC = "#8b98b6"
+
+# ── Acentos ─────────────────────────────────────────────────────────────────
+ACENTO       = "#6366f1"   # indigo (color principal / botones)
+ACENTO_HOVER = "#7c83f8"
+CIAN         = "#22d3ee"
+
+# Degradado del encabezado
+GRAD1 = "#6366f1"   # indigo
+GRAD2 = "#a855f7"   # violeta
+
+# Semaforo de resultados
+VERDE    = "#34d399"   # victoria (emerald)
+AMARILLO = "#fbbf24"   # empate (amber)
+ROJO     = "#fb7185"   # derrota (rose)
+
+# Tipografia
+FUENTE = "Segoe UI"     # fuente moderna nativa de Windows
+</file>
+
+<file path="src/interfaz/README.md">
+# 🖥️ `src/interfaz/` — La aplicación gráfica
+
+Interfaz de escritorio en **tkinter** con estilo moderno tipo dashboard. Es lo que
+abre `Abrir Predictor.bat`.
+
+## Módulos
+
+### `app_gui.py` — la aplicación principal
+La clase **`PredictorApp(tk.Tk)`** arma toda la ventana. Toda descarga/cálculo
+corre en un **hilo aparte** y las actualizaciones de UI pasan por `self.after(...)`,
+así la ventana nunca se congela.
+
+Componentes destacados:
+- **`Cabecera`, `Tarjeta`, `BarraProbabilidad`** — widgets de `Canvas` con esquinas
+  redondeadas, degradados y barras de probabilidad.
+- **`_iniciar_prediccion` / `_mostrar_resultado`** — predicen un partido y muestran
+  el panel en pestañas (Predicción / Análisis): tarjetas 1-X-2 con **cuota justa**,
+  mercados (incl. asiáticos), **Top 5 marcadores**, **radar de dominio** y mapa de
+  calor.
+- **`_iniciar_montecarlo` / `_mostrar_montecarlo`** — corren la simulación del
+  torneo y muestran el ranking de candidatos con gráfico de barras.
+- **`_abrir_editor_grupos`** — ventana para editar los 12 grupos (sorteo oficial),
+  con validación de 48 selecciones únicas; guarda en `data/grupos_mundial.json`.
+- **`_render_forma_sidebar`** — los círculos de forma (🟢W / ⚪D / 🔴L) y el descanso.
+
+### `paleta.py`
+**Design tokens**: todos los colores y la tipografía en un solo lugar. Cambia un
+color aquí y toda la app se actualiza.
+
+### `tema_oscuro.py`
+Estilo de los widgets `ttk` (combos, sliders, progreso, checks, pestañas) acorde a
+la paleta oscura. Se aplica con `aplicar_tema(root)`.
+
+> Ejecutar: `py -3.11 src/interfaz/app_gui.py` (o el `.bat`).
+</file>
+
+<file path="src/ligas_config.py">
+"""
+Configuracion central del proyecto: ligas, temporadas, las 48 selecciones del
+Mundial (nombre español <-> FBref), el ranking Elo, los grupos del torneo y el
+diccionario PESOS_MODELO con todos los pesos calibrables del modelo.
+
+Es el unico modulo "compartido" (vive en src/, fuera de las subcarpetas) porque
+lo consumen el modelo, los datos, la interfaz y el analisis.
+"""
+import json
+import os
+
+from rutas import data
+
+# ── Pesos y umbrales del modelo de lambdas ──────────────────────────────────
+# Centralizados aqui para poder calibrar el modelo sin tocar las formulas
+# matematicas en calcular_lambdas.py. Cambia un numero aqui y se aplica en
+# todo el calculo.
+PESOS_MODELO = {
+    # Localia (solo se aplica si neutral=False; el Mundial juega en sede neutral)
+    "factor_local": 1.10,
+
+    # Fatiga: si un equipo descanso poco y el rival mucho, penaliza su ataque
+    "factor_descanso": 0.95,
+    "umbral_descanso_bajo": 4,   # dias: menos que esto = poco descanso
+    "umbral_descanso_alto": 6,   # dias: mas que esto = bien descansado
+
+    # Forma reciente (puntos promedio por partido en la ventana)
+    "bonus_racha": 1.03,
+    "penal_racha": 0.97,
+    "umbral_racha_alta": 2.0,
+    "umbral_racha_baja": 1.0,
+
+    # Posesion: un equipo que controla mas el balon genera algo mas de peligro
+    "bonus_posesion": 1.02,
+    "umbral_posesion": 55,
+
+    # Tiros a puerta: ajuste CONTINUO (no escalon). lambda *= 1 + (ratio-1)*peso,
+    # donde ratio = tiros_puerta_adj / default_tiros (acotado).
+    "default_tiros": 8.5,
+    "peso_tiros": 0.10,
+
+    # Fuerza del Calendario (SoS): si el equipo viene de rivales fuertes (alto
+    # sos_prom vs ELO_REFERENCIA) sus stats valen mas; si de rivales debiles, menos.
+    "peso_sos": 0.06,          # se acota a +/-3%
+
+    # Tasa de conversion (goles por tiro a puerta): premia/penaliza eficiencia.
+    "default_conversion": 0.32,
+    "umbral_conversion": 1.15,  # >115% de la media = hiper-efectivo
+    "bonus_conversion": 1.02,
+
+    # Diferencial de xG (xGD = ataque - defensa): bono de "dominio".
+    "peso_xgd": 0.03,          # se acota a +/-3%
+
+    # Disciplina: un equipo indisciplinado concede algo mas al rival
+    "bonus_disciplina": 1.02,
+    "umbral_disciplina": 20,
+
+    # Diferencia de fuerza Elo entre los dos equipos del partido. Empuja los
+    # lambdas hacia el favorito segun la formula Elo (expectativa 0..1). 0 lo
+    # desactiva; ~0.65 hace que un gigante se imponga a un equipo chico aunque
+    # este venga en racha.
+    "peso_elo": 0.65,
+
+    # Valores por defecto cuando FBref no publica el dato (selecciones)
+    "default_racha": 1.5,
+    "default_posesion": 50,
+    "default_disciplina": 15,
+}
+
+
+# ── Ranking de fuerza (Elo) ──────────────────────────────────────────────────
+# Elo aproximado de cada seleccion. Se usa para ponderar los goles por la fuerza
+# del rival (Strength of Schedule): anotar a un gigante "infla" el valor, anotar
+# a un equipo debil lo "desinfla". Ajusta los numeros aqui para recalibrar.
+ELO_REFERENCIA = 1650  # rival "promedio"; factor = elo_rival / ELO_REFERENCIA
+
+ELO_RANKING = {
+    # Selecciones del Mundial 2026 (nombres tal como los devuelve FBref)
+    "Argentina": 2120, "France": 2110, "Spain": 2100, "England": 2070,
+    "Brazil": 2060, "Portugal": 2050, "Netherlands": 2040, "Germany": 2010,
+    "Belgium": 1990, "Colombia": 1990, "Uruguay": 1980, "Croatia": 1970,
+    "Morocco": 1970, "Senegal": 1930, "Switzerland": 1920, "Japan": 1920,
+    "Ecuador": 1900, "Mexico": 1900, "Norway": 1900, "Türkiye": 1900,
+    "United States": 1900, "Korea Republic": 1860, "Austria": 1860,
+    "Sweden": 1860, "Egypt": 1850, "Scotland": 1840, "IR Iran": 1840,
+    "Côte d'Ivoire": 1840, "Algeria": 1820, "Czechia": 1820, "Paraguay": 1820,
+    "Tunisia": 1820, "Canada": 1830, "Australia": 1810, "South Africa": 1780,
+    "Bosnia & Herz.": 1760, "Ghana": 1760, "Qatar": 1750, "Uzbekistan": 1750,
+    "Congo DR": 1740, "Saudi Arabia": 1740, "Iraq": 1720, "Panama": 1720,
+    "Jordan": 1700, "Cabo Verde": 1680, "New Zealand": 1650, "Curaçao": 1620,
+    "Haiti": 1600,
+    # Rivales frecuentes de clasificatorias (mejoran el calculo de SoS)
+    "Serbia": 1850, "Nigeria": 1850, "Poland": 1850, "Ukraine": 1850,
+    "Italy": 2000, "Denmark": 1900, "Peru": 1750, "Chile": 1820,
+    "Venezuela": 1700, "Bolivia": 1600, "Iceland": 1700, "Greece": 1800,
+    "Hungary": 1800, "Honduras": 1650, "Guatemala": 1550, "Zambia": 1600,
+    "Guinea": 1650, "Mozambique": 1450, "Uganda": 1500, "Botswana": 1450,
+    "Mauritania": 1500, "Somalia": 1300, "Bangladesh": 1300, "Palestine": 1450,
+    "Lebanon": 1500,
+}
+
+# Alias: nombre "limpio" del rival -> clave en ELO_RANKING (cuando difieren).
+ELO_ALIAS = {
+    "Iran": "IR Iran", "South Korea": "Korea Republic", "USA": "United States",
+    "Ivory Coast": "Côte d'Ivoire", "Turkey": "Türkiye", "Czech Republic": "Czechia",
+    "DR Congo": "Congo DR", "Bosnia": "Bosnia & Herz.", "Cape Verde": "Cabo Verde",
+}
+
+
+def _limpiar_nombre_rival(opponent: str) -> str:
+    """FBref antepone un codigo de pais ('sa Saudi Arabia'). Lo quitamos."""
+    if not isinstance(opponent, str):
+        return ""
+    partes = opponent.strip().split(" ", 1)
+    # Si el primer token es un codigo corto en minusculas, lo descartamos.
+    if len(partes) == 2 and partes[0].islower() and len(partes[0]) <= 3:
+        return partes[1].strip()
+    return opponent.strip()
+
+
+def elo_de(opponent: str, default: float = ELO_REFERENCIA) -> float:
+    """
+    Devuelve el Elo de un rival a partir del nombre que da FBref.
+
+    Orden: 1) selecciones del ranking nacional, 2) sus alias, 3) clubes via
+    ClubElo (cache local; solo ligas europeas), 4) ELO_REFERENCIA de respaldo.
+    El paso 3 usa import diferido para no crear dependencia circular ni tocar la
+    red: si no hay cache de ClubElo descargado, simplemente cae al default.
+    """
+    nombre = _limpiar_nombre_rival(opponent)
+    if nombre in ELO_RANKING:
+        return ELO_RANKING[nombre]
+    if nombre in ELO_ALIAS:
+        return ELO_RANKING[ELO_ALIAS[nombre]]
+    try:
+        from club_elo import elo_club
+        elo = elo_club(nombre)
+        if elo is not None:
+            return elo
+    except Exception:
+        pass
+    return default
+
+
+LIGAS = {
+    "Mundial 2026": "INT-World Cup",
+    "Premier League (Inglaterra)": "ENG-Premier League",
+    "La Liga (España)": "ESP-La Liga",
+    "Liga MX (México)": "MEX-Liga MX",
+    "Bundesliga (Alemania)": "GER-Bundesliga",
+    "Serie A (Italia)": "ITA-Serie A",
+    "Ligue 1 (Francia)": "FRA-Ligue 1",
+}
+
+TEMPORADAS = {
+    "Mundial 2026": "2026",
+    "Premier League (Inglaterra)": "2025-2026",
+    "La Liga (España)": "2025-2026",
+    "Liga MX (México)": "2025-2026",
+    "Bundesliga (Alemania)": "2025-2026",
+    "Serie A (Italia)": "2025-2026",
+    "Ligue 1 (Francia)": "2025-2026",
+}
+
+# Temporada por defecto de cada liga (por codigo FBref), derivada de TEMPORADAS.
+TEMPORADA_POR_LIGA = {codigo: TEMPORADAS[nombre] for nombre, codigo in LIGAS.items()}
+
+
+def temporada_de(liga: str, default: str = "2025-2026") -> str:
+    """Temporada por defecto de una liga (por su codigo FBref)."""
+    return TEMPORADA_POR_LIGA.get(liga, default)
+
+
+# Ventaja de localia por liga: multiplicador del lambda del equipo local (solo
+# se aplica cuando neutral=False, es decir en clubes; el Mundial juega en sede
+# neutral). La localia NO es universal: en Europa, con viajes cortos y canchas
+# parejas, ronda 1.05-1.08; en Liga MX (altitud, clima, viajes largos, afición)
+# es bastante mayor. Claves = codigo de liga FBref. Lo no listado usa el valor
+# generico de PESOS_MODELO["factor_local"].
+FACTOR_LOCAL = {
+    "ENG-Premier League": 1.06,
+    "ESP-La Liga": 1.08,
+    "ITA-Serie A": 1.08,
+    "GER-Bundesliga": 1.07,
+    "FRA-Ligue 1": 1.07,
+    "MEX-Liga MX": 1.16,
+}
+
+
+def factor_local_de(liga: str, default: float | None = None) -> float:
+    """Multiplicador de localia de una liga (default = PESOS_MODELO['factor_local'])."""
+    if default is None:
+        default = PESOS_MODELO["factor_local"]
+    return FACTOR_LOCAL.get(liga, default)
+
+
+# 48 equipos clasificados al Mundial 2026.
+# Los nombres apuntan a la forma inglesa/FBref mas probable. Si soccerdata
+# devuelve "No data found" para alguno, ajusta aqui el nombre exacto de FBref.
+EQUIPOS_MUNDIAL = [
+    "Algeria",
+    "Argentina",
+    "Australia",
+    "Austria",
+    "Belgium",
+    "Bosnia & Herz.",
+    "Brazil",
+    "Canada",
+    "Cabo Verde",
+    "Colombia",
+    "Croatia",
+    "Curaçao",
+    "Czechia",
+    "Congo DR",
+    "Ecuador",
+    "Egypt",
+    "England",
+    "France",
+    "Germany",
+    "Ghana",
+    "Haiti",
+    "IR Iran",
+    "Iraq",
+    "Côte d'Ivoire",
+    "Japan",
+    "Jordan",
+    "Korea Republic",
+    "Mexico",
+    "Morocco",
+    "Netherlands",
+    "New Zealand",
+    "Norway",
+    "Panama",
+    "Paraguay",
+    "Portugal",
+    "Qatar",
+    "Saudi Arabia",
+    "Scotland",
+    "Senegal",
+    "South Africa",
+    "Spain",
+    "Sweden",
+    "Switzerland",
+    "Tunisia",
+    "Türkiye",
+    "United States",
+    "Uruguay",
+    "Uzbekistan",
+]
+
+EQUIPOS_MUNDIAL.sort()
+assert len(EQUIPOS_MUNDIAL) == 48, f"Deberian ser 48 equipos, hay {len(EQUIPOS_MUNDIAL)}"
+
+# ── Cuadro del Mundial 2026: 12 grupos de 4 ─────────────────────────────────
+# IMPORTANTE: esta es una distribucion provisional, sembrada por Elo en bombos
+# (no es el sorteo oficial). EDITALA para reflejar los grupos reales: solo mueve
+# los nombres entre las listas. La simulacion (montecarlo_mundial.py) la lee tal
+# cual. Los nombres deben coincidir con los de FBref (los de EQUIPOS_MUNDIAL).
+GRUPOS_MUNDIAL = {
+    "A": ["Argentina", "Morocco", "Egypt", "Ghana"],
+    "B": ["France", "Senegal", "Scotland", "Qatar"],
+    "C": ["Spain", "Switzerland", "IR Iran", "Uzbekistan"],
+    "D": ["England", "Japan", "Côte d'Ivoire", "Congo DR"],
+    "E": ["Brazil", "Ecuador", "Canada", "Saudi Arabia"],
+    "F": ["Portugal", "Mexico", "Algeria", "Iraq"],
+    "G": ["Netherlands", "Norway", "Czechia", "Panama"],
+    "H": ["Germany", "Türkiye", "Paraguay", "Jordan"],
+    "I": ["Belgium", "United States", "Tunisia", "Cabo Verde"],
+    "J": ["Colombia", "Korea Republic", "Australia", "New Zealand"],
+    "K": ["Uruguay", "Austria", "South Africa", "Curaçao"],
+    "L": ["Croatia", "Sweden", "Bosnia & Herz.", "Haiti"],
+}
+
+# Los grupos se pueden editar desde la app y se guardan en este JSON, que tiene
+# prioridad sobre el GRUPOS_MUNDIAL de arriba (que queda como respaldo).
+GRUPOS_JSON_PATH = data("grupos_mundial.json")
+
+
+def cargar_grupos():
+    """Devuelve los grupos del JSON editable si existe; si no, los de respaldo."""
+    if os.path.exists(GRUPOS_JSON_PATH):
+        try:
+            with open(GRUPOS_JSON_PATH, "r", encoding="utf-8") as f:
+                grupos = json.load(f)
+            if grupos:
+                return grupos
+        except Exception:
+            pass
+    return GRUPOS_MUNDIAL
+
+
+def guardar_grupos(grupos):
+    """Guarda los grupos editados en el JSON (lo usa el editor de la app)."""
+    with open(GRUPOS_JSON_PATH, "w", encoding="utf-8") as f:
+        json.dump(grupos, f, ensure_ascii=False, indent=2)
+
+# Nombres para mostrar en la interfaz (espanol) -> nombre FBref.
+NOMBRE_DISPLAY = {
+    "Alemania": "Germany",
+    "Arabia Saudita": "Saudi Arabia",
+    "Argelia": "Algeria",
+    "Argentina": "Argentina",
+    "Australia": "Australia",
+    "Austria": "Austria",
+    "Bélgica": "Belgium",
+    "Bosnia y Herzegovina": "Bosnia & Herz.",
+    "Brasil": "Brazil",
+    "Cabo Verde": "Cabo Verde",
+    "Canadá": "Canada",
+    "Catar": "Qatar",
+    "Chequia": "Czechia",
+    "Colombia": "Colombia",
+    "Corea del Sur": "Korea Republic",
+    "Costa de Marfil": "Côte d'Ivoire",
+    "Croacia": "Croatia",
+    "Curazao": "Curaçao",
+    "Ecuador": "Ecuador",
+    "Egipto": "Egypt",
+    "Escocia": "Scotland",
+    "España": "Spain",
+    "Estados Unidos": "United States",
+    "Francia": "France",
+    "Ghana": "Ghana",
+    "Haití": "Haiti",
+    "Inglaterra": "England",
+    "Irak": "Iraq",
+    "Irán": "IR Iran",
+    "Japón": "Japan",
+    "Jordania": "Jordan",
+    "Marruecos": "Morocco",
+    "México": "Mexico",
+    "Noruega": "Norway",
+    "Nueva Zelanda": "New Zealand",
+    "Países Bajos": "Netherlands",
+    "Panamá": "Panama",
+    "Paraguay": "Paraguay",
+    "Portugal": "Portugal",
+    "RD Congo": "Congo DR",
+    "Senegal": "Senegal",
+    "Sudáfrica": "South Africa",
+    "Suecia": "Sweden",
+    "Suiza": "Switzerland",
+    "Túnez": "Tunisia",
+    "Turquía": "Türkiye",
+    "Uruguay": "Uruguay",
+    "Uzbekistán": "Uzbekistan",
+}
+
+EQUIPOS_MUNDIAL_ES = sorted(NOMBRE_DISPLAY.keys())
+</file>
+
+<file path="src/modelo/README.md">
+# 🧠 `src/modelo/` — El modelo matemático
+
+El corazón del predictor. Convierte el historial de dos equipos en
+probabilidades. Pipeline: **features → lambdas → matriz de Poisson → 1X2 + mercados**.
+
+## Módulos
+
+### `feature_engineering.py`
+Convierte el historial de un equipo en sus "características" predictivas.
+- **`procesar_equipo(df, ...)`** — calcula promedios con **decaimiento exponencial
+  (EWM, span=10)** de xG/goles a favor y en contra, tiros, posesión, disciplina,
+  forma y descanso. Aplica **shrinkage** (mezcla con el promedio del torneo según
+  cuántos partidos tiene), ponderación por **Elo del rival** (Strength of
+  Schedule), y deriva **xGD** y la **tasa de conversión**. Si falta xG (típico en
+  selecciones) usa goles reales. El `shift(1)` garantiza **cero fuga de datos**.
+  Soporta `venue="Home"/"Away"` para splits (apagado por defecto: medido, empeora).
+  Además del EWM admite **`suavizado="tiempo"`** (time-weighting de Dixon-Coles):
+  cada partido pesa `exp(-ξ·días)` según los **días reales** transcurridos, con
+  `ξ = ln(2)/half_life_dias`. Opt-in (default sigue siendo EWM); calíbralo con el
+  backtest y RPS.
+- **`ultima_fila_valida(df)`** — devuelve la fila más reciente con las features
+  imprescindibles no nulas (o `None`).
+- **`aplicar_shrinkage(...)`** — la fórmula de regularización hacia la media.
+
+### `calcular_lambdas.py`
+Convierte las features de los dos equipos en sus **goles esperados (λ)**.
+- **`calcular_lambdas(local, visitante, ...)`** — λ base = combinación de ataque
+  y defensa, y aplica ajustes acotados: localía, fatiga (descanso), forma,
+  posesión, **tiros** (continuo), **SoS**, **conversión**, **xGD**, disciplina y un
+  empuje **Elo head-to-head** hacia el favorito. Todos los pesos vienen de
+  `PESOS_MODELO`.
+
+### `matriz_poisson.py`
+- **`generar_matriz_poisson(λ_local, λ_visitante, rho)`** — matriz 6×6 con la
+  probabilidad de cada marcador exacto (producto de dos Poisson) y la
+  **corrección Dixon-Coles** en los marcadores de pocos goles. Siempre suma 1.
+- **`correccion_dixon_coles(...)`** — el ajuste de las celdas (0,0), (1,0), (0,1), (1,1).
+
+### `predecir_partido.py` — el orquestador
+- **`predecir_partido(local, visitante, liga, temporada, ...)`** — encadena todo
+  el pipeline y devuelve un dict con probabilidades 1X2, λ, la matriz, los
+  **mercados**, la **forma**, el **descanso** y las **métricas** para el radar.
+- **`predecir_partido_interligas(local, liga_local, visitante, liga_visitante, ...)`**
+  — cruces entre equipos de **ligas distintas** (Champions, Mundial de Clubes,
+  amistosos). Cada equipo se evalúa con los datos y promedios de su propia liga;
+  el **Elo de ClubElo** (comparable entre ligas europeas) hace de puente de fuerza.
+  Por defecto `neutral=True` y sin head-to-head. Devuelve el mismo dict.
+- **`calcular_mercados(matriz)`** — deriva BTTS, Over/Under 1.5/2.5/3.5 y portería
+  a cero sumando regiones de la matriz.
+- **`_factor_h2h(df, local, visitante)`** — historial directo (paternidad): inclina
+  los λ ±4% con normalización **simétrica** de nombres.
+
+> Para calibrar el comportamiento, edita `PESOS_MODELO` en `src/ligas_config.py`,
+> no las fórmulas de aquí.
+</file>
+
+<file path="src/README.md">
+# 📦 `src/` — Código fuente
+
+Todo el código del predictor, organizado por capas. Cada subcarpeta tiene su
+propio README con el detalle de sus módulos.
+
+| Carpeta / archivo | Qué contiene |
+|-------------------|--------------|
+| [`modelo/`](modelo/README.md) | El modelo matemático: features, lambdas, matriz de Poisson y el orquestador de la predicción. |
+| [`datos/`](datos/README.md) | Ingesta desde FBref, capa de fuentes intercambiables y scripts de descarga/actualización. |
+| [`interfaz/`](interfaz/README.md) | La aplicación gráfica (tkinter) y su estilo. |
+| [`analisis/`](analisis/README.md) | Simulación Monte Carlo del torneo y backtests contra el mercado. |
+| `ligas_config.py` | **Configuración compartida** (vive aquí, fuera de las subcarpetas, porque la usan todas): ligas, las 48 selecciones (español ↔ FBref), `ELO_RANKING`, `GRUPOS_MUNDIAL`, `PESOS_MODELO`, `FACTOR_LOCAL` (localía por liga) y los lectores de grupos editables. `elo_de()` consulta ClubElo (`datos/club_elo.py`) como respaldo para clubes. |
+| `rutas.py` | Rutas absolutas a `data/` y a la raíz, calculadas desde la ubicación del archivo (no del directorio actual). |
+
+## Cómo se resuelven los imports
+
+El proyecto usa imports planos (`from calcular_lambdas import ...`). Para que
+funcionen estando en subcarpetas, cada script **ejecutable** lleva al inicio un
+pequeño *bootstrap* que añade `src/` y todas sus subcarpetas a `sys.path`:
+
+```python
+import os as _os, sys as _sys
+_SRC = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
+for _sub in ("", "modelo", "datos", "interfaz", "analisis"):
+    _sys.path.insert(0, _os.path.join(_SRC, _sub))
+```
+
+Así puedes ejecutar cualquier script directamente desde la raíz del proyecto sin
+configurar `PYTHONPATH` ni instalar el paquete.
+</file>
+
+<file path="src/rutas.py">
+"""
+Rutas del proyecto.
+
+Centraliza la ubicacion de los archivos de datos y de configuracion. Las rutas
+se calculan a partir de la ubicacion de ESTE archivo (no del directorio actual),
+asi el programa funciona sin importar desde donde se ejecute.
+
+Estructura:
+    <raiz>/
+      ├── src/        <- codigo (aqui vive rutas.py)
+      └── data/       <- base_mundial_2026.csv, promedios_liga.json, salidas...
+"""
+import os
+
+SRC = os.path.dirname(os.path.abspath(__file__))   # .../src
+RAIZ = os.path.dirname(SRC)                          # .../mundial
+DATA = os.path.join(RAIZ, "data")
+
+
+def data(nombre: str) -> str:
+    """Ruta absoluta de un archivo dentro de la carpeta data/."""
+    return os.path.join(DATA, nombre)
+
+
+def raiz(nombre: str) -> str:
+    """Ruta absoluta de un archivo en la raiz del proyecto."""
+    return os.path.join(RAIZ, nombre)
+</file>
+
+<file path="Abrir Predictor.bat">
+@echo off
+REM ============================================================
+REM  Predictor de Futbol - Mundial 2026
+REM  Doble clic para abrir la aplicacion.
+REM ============================================================
+title Predictor de Futbol - Mundial 2026
+
+REM Ir a la carpeta donde esta este .bat (la del proyecto)
+cd /d "%~dp0"
+
+echo Abriendo el Predictor de Futbol...
+echo (Puedes cerrar esta ventana negra una vez que aparezca la aplicacion)
+echo.
+
+REM Usamos el lanzador "py" porque "python" en este equipo esta
+REM secuestrado por el atajo de la Microsoft Store y falla.
+py -3.11 src\interfaz\app_gui.py
+
+REM Si la app cierra por un error, la ventana queda abierta para leerlo.
+if errorlevel 1 (
+    echo.
+    echo ------------------------------------------------------------
+    echo La aplicacion se cerro con un error. Revisa el mensaje arriba.
+    echo ------------------------------------------------------------
+    pause
+)
+</file>
+
+<file path="src/analisis/backtest_cuotas.py">
+"""
+Backtest del modelo contra las CUOTAS REALES del mercado (Football-Data.co.uk).
+
+Mide si el modelo Poisson/Dixon-Coles le gana o iguala a las casas de apuestas:
+  - Compara su log-loss / Brier / acierto contra las cuotas de cierre de Pinnacle
+    (la casa más "sharp"), que son el patrón a vencer.
+  - Simula el ROI de apostar solo cuando el modelo detecta "valor".
+
+Clave: el CSV de Football-Data ya trae los goles de cada partido, así que el
+historial de cada equipo se construye del MISMO archivo. 100% offline tras la
+descarga, sin FBref ni mapeo de nombres. Backtest SIN fuga de datos: cada partido
+se predice usando solo los partidos anteriores.
+
+Uso:
+    py -3.11 backtest_cuotas.py            # Premier League 2024-25
+    py -3.11 backtest_cuotas.py SP1 2425   # La Liga 2024-25
+"""
+# ── Bootstrap de rutas: permite ejecutar este script directamente ──
+import os as _os, sys as _sys
+_SRC = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
+for _sub in ("", "modelo", "datos", "interfaz", "analisis"):
+    _ruta = _os.path.join(_SRC, _sub)
+    if _ruta not in _sys.path:
+        _sys.path.insert(0, _ruta)
+
+import sys
+
+import numpy as np
+import pandas as pd
+from sklearn.metrics import log_loss
+
+from feature_engineering import procesar_equipo, ultima_fila_valida
+from calcular_lambdas import calcular_lambdas
+from matriz_poisson import generar_matriz_poisson
+
+# Códigos de liga de Football-Data.co.uk
+LIGAS_FD = {
+    "E0": "Premier League (Inglaterra)", "SP1": "La Liga (España)",
+    "I1": "Serie A (Italia)", "D1": "Bundesliga (Alemania)", "F1": "Ligue 1 (Francia)",
+}
+BASE_URL = "https://www.football-data.co.uk/mmz4281"
+
+
+def descargar_cuotas(codigo: str = "E0", temporada: str = "2425") -> pd.DataFrame:
+    """Descarga el CSV de resultados + cuotas de una liga/temporada."""
+    url = f"{BASE_URL}/{temporada}/{codigo}.csv"
+    df = pd.read_csv(url)
+    df["Date"] = pd.to_datetime(df["Date"], dayfirst=True, errors="coerce")
+    return df.dropna(subset=["Date", "HomeTeam", "AwayTeam", "FTHG", "FTAG", "FTR"])
+
+
+def historial_desde_cuotas(df: pd.DataFrame) -> pd.DataFrame:
+    """Construye el historial por equipo (esquema del modelo) desde el CSV."""
+    filas = []
+    for _, m in df.iterrows():
+        gh, ga = int(m["FTHG"]), int(m["FTAG"])
+        base = {"Poss": np.nan, "Sh": np.nan, "SoT": np.nan, "xG": np.nan,
+                "xGA": np.nan, "Fls": np.nan, "CrdY": 0, "CrdR": 0}
+        filas.append({"Date": m["Date"], "Team": m["HomeTeam"], "Opponent": m["AwayTeam"],
+                      "Venue": "Home", "Result": "W" if gh > ga else "D" if gh == ga else "L",
+                      "GF": gh, "GA": ga, **base})
+        filas.append({"Date": m["Date"], "Team": m["AwayTeam"], "Opponent": m["HomeTeam"],
+                      "Venue": "Away", "Result": "W" if ga > gh else "D" if gh == ga else "L",
+                      "GF": ga, "GA": gh, **base})
+    return pd.DataFrame(filas).sort_values("Date").reset_index(drop=True)
+
+
+def _devig(oh, od, oa):
+    """Cuotas decimales -> probabilidades sin margen de la casa (de-vig)."""
+    if any(pd.isna(x) or x <= 1 for x in (oh, od, oa)):
+        return None
+    imp = np.array([1 / oh, 1 / od, 1 / oa])
+    return imp / imp.sum()
+
+
+def _cuotas_cierre(m):
+    """Cuotas de cierre por prioridad: Pinnacle -> Bet365 -> promedio."""
+    for h, d, a in [("PSCH", "PSCD", "PSCA"), ("B365CH", "B365CD", "B365CA"),
+                    ("AvgCH", "AvgCD", "AvgCA"), ("B365H", "B365D", "B365A")]:
+        if all(c in m and not pd.isna(m[c]) for c in (h, d, a)):
+            return float(m[h]), float(m[d]), float(m[a])
+    return None
+
+
+def correr(df_cuotas, rho=-0.05, k=2, min_previos=5, suavizado="ewm", ewm_span=10,
+           splits=False, half_life_dias=180):  # rho/k calibrados; splits off (empeoran)
+    """
+    Predice cada partido sin fuga de datos y devuelve arrays alineados:
+    probs_modelo, probs_mercado, cuotas, y (0=local,1=empate,2=visitante).
+    """
+    hist = historial_desde_cuotas(df_cuotas)
+    df = df_cuotas.sort_values("Date").reset_index(drop=True)
+
+    pm_modelo, pm_mercado, cuotas, ys = [], [], [], []
+    for _, m in df.iterrows():
+        oc = _cuotas_cierre(m)
+        merc = _devig(*oc) if oc else None
+        if merc is None:
+            continue
+
+        local, visit, fecha = m["HomeTeam"], m["AwayTeam"], m["Date"]
+        h_loc = hist[(hist["Team"] == local) & (hist["Date"] < fecha)]
+        h_vis = hist[(hist["Team"] == visit) & (hist["Date"] < fecha)]
+        if len(h_loc) < min_previos or len(h_vis) < min_previos:
+            continue
+
+        prom_gf = hist[hist["Date"] < fecha]["GF"].mean()  # ~media de goles de local
+        v_loc, v_vis = ("Home", "Away") if splits else (None, None)
+        f_loc = ultima_fila_valida(procesar_equipo(
+            h_loc, prom_gf, prom_gf, 4.5, k_shrinkage=k, suavizado=suavizado,
+            ewm_span=ewm_span, venue=v_loc, half_life_dias=half_life_dias))
+        f_vis = ultima_fila_valida(procesar_equipo(
+            h_vis, prom_gf, prom_gf, 4.5, k_shrinkage=k, suavizado=suavizado,
+            ewm_span=ewm_span, venue=v_vis, half_life_dias=half_life_dias))
+        if f_loc is None or f_vis is None:
+            continue
+
+        # Clubes: SÍ aplica ventaja de localía (neutral=False), sin Elo.
+        lam_l, lam_v = calcular_lambdas(f_loc, f_vis, neutral=False)
+        mat = generar_matriz_poisson(lam_l, lam_v, rho=rho)
+        probs = [float(np.sum(np.tril(mat, -1))), float(np.sum(np.diag(mat))),
+                 float(np.sum(np.triu(mat, 1)))]
+
+        y = 0 if m["FTR"] == "H" else 1 if m["FTR"] == "D" else 2
+        pm_modelo.append(probs)
+        pm_mercado.append(list(merc))
+        cuotas.append(oc)
+        ys.append(y)
+
+    return (np.array(pm_modelo), np.array(pm_mercado),
+            np.array(cuotas), np.array(ys))
+
+
+def calibrar(dfs, rhos=(-0.20, -0.15, -0.13, -0.10, -0.05, 0.0),
+             ks=(3, 5, 8, 12), min_previos=5):
+    """
+    Barrido de rho y k sobre uno o varios DataFrames de cuotas (varias ligas
+    para no sobreajustar). Minimiza el log_loss contra los RESULTADOS reales,
+    sin fuga de datos. Las lambdas dependen de k, así que se calculan una sola
+    vez por k y luego se reusa al barrer rho (barato). Devuelve un DataFrame
+    ordenado por log_loss.
+    """
+    datos = {k: [] for k in ks}  # k -> [(lam_l, lam_v, y)]
+    for df in dfs:
+        hist = historial_desde_cuotas(df)
+        dfo = df.sort_values("Date").reset_index(drop=True)
+        for _, m in dfo.iterrows():
+            local, visit, fecha = m["HomeTeam"], m["AwayTeam"], m["Date"]
+            h_loc = hist[(hist["Team"] == local) & (hist["Date"] < fecha)]
+            h_vis = hist[(hist["Team"] == visit) & (hist["Date"] < fecha)]
+            if len(h_loc) < min_previos or len(h_vis) < min_previos:
+                continue
+            prom = hist[hist["Date"] < fecha]["GF"].mean()
+            y = 0 if m["FTR"] == "H" else 1 if m["FTR"] == "D" else 2
+            for k in ks:
+                f_loc = ultima_fila_valida(procesar_equipo(h_loc, prom, prom, 4.5, k_shrinkage=k))
+                f_vis = ultima_fila_valida(procesar_equipo(h_vis, prom, prom, 4.5, k_shrinkage=k))
+                if f_loc is None or f_vis is None:
+                    continue
+                lam_l, lam_v = calcular_lambdas(f_loc, f_vis, neutral=False)
+                datos[k].append((lam_l, lam_v, y))
+
+    filas = []
+    for rho in rhos:
+        for k in ks:
+            probs, ys = [], []
+            for lam_l, lam_v, y in datos[k]:
+                mat = generar_matriz_poisson(lam_l, lam_v, rho=rho)
+                probs.append([float(np.sum(np.tril(mat, -1))), float(np.sum(np.diag(mat))),
+                              float(np.sum(np.triu(mat, 1)))])
+                ys.append(y)
+            if probs:
+                filas.append({"rho": rho, "k": k, "n": len(ys),
+                              "log_loss": log_loss(ys, probs, labels=[0, 1, 2])})
+    return pd.DataFrame(filas).sort_values("log_loss").reset_index(drop=True)
+
+
+def metricas(probs, y):
+    """Calidad de unas probabilidades vs el resultado real: log_loss, Brier, RPS
+    y % de acierto. `probs` es Nx3 (local/empate/visitante), `y` el indice real.
+
+    RPS (Ranked Probability Score) es la metrica idonea para 1X2 porque respeta
+    el ORDEN de los resultados: equivocarse prediciendo 'visitante' cuando gana el
+    'local' penaliza mas que predecir 'empate'. Menor = mejor (0 = perfecto)."""
+    probs = np.asarray(probs, dtype=float)
+    onehot = np.eye(3)[y]
+    cum_p = np.cumsum(probs, axis=1)
+    cum_o = np.cumsum(onehot, axis=1)
+    rps = float(np.mean(np.sum((cum_p - cum_o) ** 2, axis=1) / 2))
+    return {"log_loss": log_loss(y, probs, labels=[0, 1, 2]),
+            "brier": float(np.mean(np.sum((probs - onehot) ** 2, axis=1))),
+            "rps": rps,
+            "acierto": float(np.mean(np.argmax(probs, axis=1) == y))}
+
+
+def simular_roi(probs, cuotas, y, umbral=0.05, stake=1.0):
+    """Apuesta 1 unidad a cada resultado donde prob_modelo*cuota > 1+umbral."""
+    ganancia, n = 0.0, 0
+    for p, o, real in zip(probs, cuotas, y):
+        for k in range(3):
+            if p[k] * o[k] > 1 + umbral:  # valor esperado positivo
+                n += 1
+                ganancia += (o[k] - 1) * stake if real == k else -stake
+    roi = (ganancia / (n * stake)) if n else 0.0
+    return {"apuestas": n, "ganancia": ganancia, "roi": roi}
+
+
+def barrer_half_life(df_cuotas, half_lives=(45, 90, 180, 365),
+                     rho=-0.05, k=2, min_previos=5, incluir_ewm=True):
+    """
+    Compara el suavizado por tiempo (Dixon-Coles) con varias vidas medias,
+    midiendo el RPS contra los resultados reales (sin fuga de datos). Incluye el
+    EWM como linea base. Devuelve un DataFrame ordenado por RPS (menor = mejor).
+
+    Elige el half_life con menor RPS; si ninguno bate al EWM, tu suavizado actual
+    ya era suficiente.
+    """
+    filas = []
+    configs = ([("ewm", None)] if incluir_ewm else []) + \
+              [("tiempo", hl) for hl in half_lives]
+    for suav, hl in configs:
+        kw = {"half_life_dias": hl} if hl is not None else {}
+        pm, _, _, y = correr(df_cuotas, rho=rho, k=k, min_previos=min_previos,
+                             suavizado=suav, **kw)
+        if len(y):
+            m = metricas(pm, y)
+            filas.append({"suavizado": suav, "half_life": hl, "n": len(y),
+                          "rps": m["rps"], "log_loss": m["log_loss"],
+                          "acierto": m["acierto"]})
+    return pd.DataFrame(filas).sort_values("rps").reset_index(drop=True)
+
+
+if __name__ == "__main__":
+    codigo = sys.argv[1] if len(sys.argv) > 1 else "E0"
+    temporada = sys.argv[2] if len(sys.argv) > 2 else "2425"
+    print(f"Liga: {LIGAS_FD.get(codigo, codigo)} · temporada {temporada}")
+
+    df = descargar_cuotas(codigo, temporada)
+    print(f"Partidos descargados: {len(df)}")
+
+    pm, mk, od, y = correr(df)
+    print(f"Partidos evaluados (con historial suficiente): {len(y)}\n")
+
+    mo, me = metricas(pm, y), metricas(mk, y)
+    print(f"{'':12}{'log_loss':>10}{'brier':>9}{'rps':>9}{'acierto':>9}")
+    print(f"{'MERCADO':12}{me['log_loss']:>10.4f}{me['brier']:>9.4f}{me['rps']:>9.4f}{me['acierto']*100:>8.1f}%")
+    print(f"{'MODELO':12}{mo['log_loss']:>10.4f}{mo['brier']:>9.4f}{mo['rps']:>9.4f}{mo['acierto']*100:>8.1f}%")
+    print("  (menor log_loss/brier/rps = mejor; el mercado es muy dificil de batir)\n")
+
+    roi = simular_roi(pm, od, y)
+    print(f"Simulador de ROI (apostando al 'valor' del modelo):")
+    print(f"  apuestas con valor: {roi['apuestas']}")
+    print(f"  ganancia neta: {roi['ganancia']:+.2f} unidades")
+    print(f"  ROI: {roi['roi']*100:+.1f}%")
+    print("  (ROI>0 sería ganarle al mercado; lo normal es negativo por el margen)")
+
+    # Barrido opcional de half_life (suavizado por tiempo) por RPS:
+    #   py -3.11 src/analisis/backtest_cuotas.py E0 2425 barrido
+    if "barrido" in sys.argv:
+        print("\nBarrido de half_life (suavizado por tiempo) vs EWM, por RPS:")
+        tabla = barrer_half_life(df)
+        print(f"{'suavizado':12}{'half_life':>10}{'rps':>9}{'log_loss':>10}{'acierto':>9}")
+        for _, r in tabla.iterrows():
+            hl = "-" if pd.isna(r["half_life"]) else f"{int(r['half_life'])}d"
+            print(f"{r['suavizado']:12}{hl:>10}{r['rps']:>9.4f}"
+                  f"{r['log_loss']:>10.4f}{r['acierto']*100:>8.1f}%")
+        print("  (menor RPS = mejor; si ninguno bate al EWM, el EWM ya era suficiente)")
+</file>
+
 <file path="src/analisis/montecarlo_mundial.py">
 """
 Simulacion de Monte Carlo del Mundial 2026.
@@ -1280,13 +3258,15 @@ for _sub in ("", "modelo", "datos", "interfaz", "analisis"):
     if _ruta not in _sys.path:
         _sys.path.insert(0, _ruta)
 
+import json
+import os
 import sys
 
 import numpy as np
 import pandas as pd
 
 from rutas import data
-from ligas_config import GRUPOS_MUNDIAL, cargar_grupos, elo_de
+from ligas_config import GRUPOS_MUNDIAL, NOMBRE_DISPLAY, cargar_grupos, elo_de
 from ingest_fbref import cargar_historial_csv, construir_historial_equipo, existe_csv_maestro
 from feature_engineering import procesar_equipo, ultima_fila_valida
 from calcular_lambdas import calcular_lambdas
@@ -1296,41 +3276,79 @@ from predecir_partido import _cargar_promedios_liga
 RONDAS = ["16avos", "Octavos", "Cuartos", "Semis", "Final", "Campeon"]
 SALIDA_CSV = data("montecarlo_resultados.csv")
 
+# Bracket de eliminatorias confirmado (cruces reales). Si este JSON existe, la
+# simulacion lo usa en vez de sembrar las eliminatorias a partir de los grupos.
+BRACKET_JSON_PATH = data("bracket_eliminatoria.json")
 
-def construir_modelo(grupos=None, rho: float = -0.05, k_shrinkage: int = 5):
-    """Calcula la fila de features y el Elo de cada seleccion UNA sola vez."""
+# Nombre de ronda del bracket -> etiqueta interna de progreso (RONDAS). El
+# partido por el tercer lugar no es una ronda de avance: se ignora aqui.
+_RONDA_A_ETAPA = {
+    "Dieciseisavos de final": "16avos",
+    "Octavos de final": "Octavos",
+    "Cuartos de final": "Cuartos",
+    "Semifinales": "Semis",
+    "Final": "Final",
+}
+
+
+def construir_modelo(equipos, rho: float = -0.05, k_shrinkage: int = 5):
+    """
+    Calcula la fila de features y el Elo de cada seleccion UNA sola vez.
+
+    `equipos` es un iterable de nombres FBref (se deduplican conservando orden).
+    """
     if not existe_csv_maestro():
         raise SystemExit(
             "Falta base_mundial_2026.csv. Ejecuta descargar_datos.py "
             "(o actualizar_datos.py) para generarlo."
         )
 
-    if grupos is None:
-        grupos = cargar_grupos()
     df = cargar_historial_csv()
     prom = _cargar_promedios_liga()
     feats, elos = {}, {}
     faltantes = []
-    for equipos in grupos.values():
-        for eq in equipos:
-            if eq in feats:
-                continue
-            try:
-                hist = construir_historial_equipo(df, eq)
-                fila = ultima_fila_valida(
-                    procesar_equipo(hist, prom["xg_favor"], prom["xg_contra"],
-                                    prom["sot"], k_shrinkage=k_shrinkage)
-                )
-            except Exception:
-                fila = None
-            if fila is None:
-                faltantes.append(eq)
-            else:
-                feats[eq] = fila
-                elos[eq] = elo_de(eq)
+    for eq in dict.fromkeys(equipos):  # dedup preservando el orden
+        try:
+            hist = construir_historial_equipo(df, eq)
+            fila = ultima_fila_valida(
+                procesar_equipo(hist, prom["xg_favor"], prom["xg_contra"],
+                                prom["sot"], k_shrinkage=k_shrinkage)
+            )
+        except Exception:
+            fila = None
+        if fila is None:
+            faltantes.append(eq)
+        else:
+            feats[eq] = fila
+            elos[eq] = elo_de(eq)
     if faltantes:
         print(f"Aviso: sin datos suficientes para {faltantes}. Se usara Elo de respaldo.")
     return feats, elos, rho
+
+
+def cargar_bracket():
+    """Devuelve el bracket de eliminatorias confirmado (dict) si existe el JSON."""
+    if not os.path.exists(BRACKET_JSON_PATH):
+        return None
+    try:
+        with open(BRACKET_JSON_PATH, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return None
+
+
+def _a_fbref(nombre):
+    """Traduce un nombre en espanol del bracket al nombre FBref del modelo."""
+    return NOMBRE_DISPLAY.get(nombre, nombre)
+
+
+def equipos_del_bracket(bracket):
+    """Lista de equipos (FBref) de la primera ronda del bracket, en orden."""
+    equipos = []
+    for m in bracket["rounds"][0]["matches"]:
+        equipos.append(_a_fbref(m["team1"]))
+        equipos.append(_a_fbref(m["team2"]))
+    return equipos
 
 
 def crear_sampler(feats, elos, rho):
@@ -1426,24 +3444,79 @@ def simular_torneo(rng, dist, grupos):
     return etapa
 
 
+def simular_bracket(rng, dist, bracket):
+    """
+    Juega UNA vez el bracket de eliminatorias confirmado y devuelve
+    dict equipo -> etapa mas avanzada alcanzada.
+
+    Resuelve las referencias del bracket: 'W73' = ganador del partido 73,
+    'L101' = perdedor del partido 101, y cualquier otro valor es el nombre
+    (en espanol) de un equipo ya clasificado. Los empates se resuelven con un
+    volado 50/50 (penales). El partido por el tercer lugar se juega pero no
+    cuenta como ronda de avance.
+    """
+    ganador, perdedor, etapa = {}, {}, {}
+
+    def resolver(ref):
+        if isinstance(ref, str) and len(ref) > 1 and ref[0] in "WL" and ref[1:].isdigit():
+            mid = int(ref[1:])
+            return ganador[mid] if ref[0] == "W" else perdedor[mid]
+        return _a_fbref(ref)
+
+    for ronda in bracket["rounds"]:
+        etiqueta = _RONDA_A_ETAPA.get(ronda["round"])  # None en 'Tercer lugar'
+        for m in ronda["matches"]:
+            a, b = resolver(m["team1"]), resolver(m["team2"])
+            if etiqueta:  # ambos jugaron esta ronda
+                etapa[a] = etiqueta
+                etapa[b] = etiqueta
+            gi, gj = _marcador(rng, dist, a, b)
+            if gi > gj:
+                g, p = a, b
+            elif gj > gi:
+                g, p = b, a
+            else:
+                g, p = (a, b) if rng.random() < 0.5 else (b, a)  # penales
+            ganador[m["match_id"]] = g
+            perdedor[m["match_id"]] = p
+
+    # El ganador de la Final (ultima ronda del bracket) es el campeon.
+    final = bracket["rounds"][-1]["matches"][0]
+    etapa[ganador[final["match_id"]]] = "Campeon"
+    return etapa
+
+
 def correr(n_sim: int = 10000, semilla: int = 42, grupos=None) -> pd.DataFrame:
     """
     Corre la simulacion completa: precalcula el modelo una vez y juega el torneo
     `n_sim` veces. Cuenta cuantas veces cada seleccion llega a cada ronda y
     devuelve un DataFrame ordenado por % de titulo (lo guarda en
-    data/montecarlo_resultados.csv). `grupos` por defecto = cargar_grupos().
-    """
-    if grupos is None:
-        grupos = cargar_grupos()
-    feats, elos, rho = construir_modelo(grupos)
-    dist = crear_sampler(feats, elos, rho)
-    rng = np.random.default_rng(semilla)
+    data/montecarlo_resultados.csv).
 
-    equipos = [t for g in grupos.values() for t in g]
+    Si existe data/bracket_eliminatoria.json, las eliminatorias se juegan con
+    los cruces reales confirmados (los 32 equipos de ese bracket). Si no, se
+    simula la fase de grupos completa y se siembran las eliminatorias a partir
+    de `grupos` (por defecto = cargar_grupos()).
+    """
+    bracket = cargar_bracket()
+    if bracket is not None:
+        equipos = equipos_del_bracket(bracket)
+        feats, elos, rho = construir_modelo(equipos)
+        dist = crear_sampler(feats, elos, rho)
+        simular = lambda rng: simular_bracket(rng, dist, bracket)
+    else:
+        if grupos is None:
+            grupos = cargar_grupos()
+        equipos = [t for g in grupos.values() for t in g]
+        feats, elos, rho = construir_modelo(equipos)
+        dist = crear_sampler(feats, elos, rho)
+        simular = lambda rng: simular_torneo(rng, dist, grupos)
+
+    rng = np.random.default_rng(semilla)
     cont = {t: {r: 0 for r in RONDAS} for t in equipos}
 
     for _ in range(n_sim):
-        etapa = simular_torneo(rng, dist, grupos)
+        etapa = simular(rng)
         for t, e in etapa.items():
             # Llegar a la etapa e implica haber alcanzado todas las rondas
             # previas (un semifinalista tambien jugo cuartos, etc.), pero NO las
@@ -1480,108 +3553,6 @@ if __name__ == "__main__":
     for _, r in df.head(12).iterrows():
         print(f"  {r['Equipo']:<16}{r['Campeon_%']:>8.1f}%{r['Final_%']:>7.1f}%{r['Semis_%']:>7.1f}%")
     print(f"\nResultados completos guardados en '{SALIDA_CSV}'.")
-</file>
-
-<file path="src/analisis/README.md">
-# 📊 `src/analisis/` — Simulación y validación
-
-Herramientas que van más allá de un partido: simular el torneo completo y medir
-qué tan bueno es el modelo.
-
-## Módulos
-
-### `montecarlo_mundial.py` — simulación del torneo
-Juega el Mundial completo miles de veces y estima la probabilidad de título.
-- **`correr(n_sim, semilla, grupos)`** — devuelve un DataFrame con % de
-  campeón/final/semis/cuartos por selección y lo guarda en
-  `data/montecarlo_resultados.csv`.
-- **`construir_modelo(grupos)`** — calcula las features de cada selección **una sola
-  vez** (clave del rendimiento).
-- **`crear_sampler(...)`** — memoriza la distribución de marcadores de cada cruce.
-- **`simular_torneo(rng, dist, grupos)`** — juega grupos (con empates) +
-  eliminatorias (empate → penales 50/50) y decide con `numpy.random.choice` para
-  permitir sorpresas.
-- Lee los grupos de `data/grupos_mundial.json` si existe (editable desde la app),
-  con respaldo a `GRUPOS_MUNDIAL`.
-
-### `backtest_cuotas.py` — ¿le gana al mercado?
-Backtest contra las **cuotas de cierre reales** (Pinnacle/Bet365 de
-Football-Data.co.uk).
-- **`descargar_cuotas(liga, temporada)`** — baja el CSV de resultados + cuotas.
-- **`historial_desde_cuotas(df)`** — reconstruye el historial **del mismo CSV**
-  (100% offline, sin FBref).
-- **`correr(df, ...)`** — predice cada partido **sin fuga de datos** y devuelve
-  probabilidades del modelo vs mercado.
-- **`metricas(...)`** (log-loss/Brier/acierto), **`simular_roi(...)`** (ROI apostando
-  al "valor") y **`calibrar(dfs, rhos, ks)`** (barrido para encontrar el mejor `rho`/`k`).
-
-### `backtest.py` — backtest histórico + auditoría
-- **`correr_backtest(...)`** — calibra `rho`/`k` contra resultados históricos sin
-  fuga de datos.
-- **`auditar_ewm_sin_fuga()`** — verifica que el suavizado `.shift(1).ewm().mean()`
-  es causal: no filtra datos del partido actual ni del futuro.
-
-> Ejecutables: `py -3.11 src/analisis/montecarlo_mundial.py 10000` ·
-> `py -3.11 src/analisis/backtest_cuotas.py SP1 2425`
-</file>
-
-<file path="src/datos/actualizar_datos.py">
-"""
-Actualizacion INCREMENTAL de la base del Mundial.
-
-A diferencia de descargar_datos.py (que descarga todo de cero), este script trae
-los partidos recientes de FBref y los fusiona con base_mundial_2026.csv SIN
-borrarlo: agrega unicamente los partidos nuevos.
-
-IMPORTANTE sobre el tiempo: FBref no permite pedir "solo lo nuevo"; cada equipo
-baja su temporada completa, y FBref limita a los scrapers (soccerdata espacia las
-peticiones). Por eso actualizar las 48 selecciones tarda varios minutos. Si solo
-jugaron unos pocos equipos, actualiza SOLO esos pasandolos como argumento:
-
-    py -3.11 actualizar_datos.py                       # las 48 (lento)
-    py -3.11 actualizar_datos.py Spain Brazil Mexico   # solo esos (rapido)
-"""
-# ── Bootstrap de rutas: permite ejecutar este script directamente ──
-import os as _os, sys as _sys
-_SRC = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
-for _sub in ("", "modelo", "datos", "interfaz", "analisis"):
-    _ruta = _os.path.join(_SRC, _sub)
-    if _ruta not in _sys.path:
-        _sys.path.insert(0, _ruta)
-
-import sys
-
-import soccerdata as sd
-
-from ingest_fbref import actualizar_csv_maestro, CSV_MAESTRO_MUNDIAL
-from ligas_config import EQUIPOS_MUNDIAL
-
-# Equipos a actualizar: los pasados por argumento, o las 48 si no se pasa ninguno.
-equipos = sys.argv[1:] if len(sys.argv) > 1 else EQUIPOS_MUNDIAL
-
-desconocidos = [e for e in equipos if e not in EQUIPOS_MUNDIAL]
-if desconocidos:
-    print(f"Aviso: estos nombres no estan en la lista del Mundial (revisa "
-          f"el nombre exacto de FBref): {desconocidos}")
-
-# Sin equipos pasados -> actualizacion completa, con pausa anti-bloqueo.
-# Con pocos equipos -> sin pausa, es rapido.
-pausa = 6 if equipos is EQUIPOS_MUNDIAL else 0
-
-print("Actualizacion incremental del Mundial 2026")
-print(f"Equipos a actualizar: {len(equipos)}"
-      + (" (TODOS, puede tardar varios minutos)" if pausa else ""))
-
-# no_cache=True para que FBref traiga los partidos mas recientes, no la copia vieja.
-fbref = sd.FBref(leagues="INT-World Cup", seasons="2026", no_cache=True)
-resumen = actualizar_csv_maestro(fbref, equipos, pausa=pausa, verbose=True)
-
-print("\nResumen:")
-print(f"  Partidos nuevos agregados: {resumen['partidos_nuevos']}")
-print(f"  Total de partidos ahora:   {resumen['filas_despues']}")
-print(f"  Equipos en la base:        {resumen['equipos']}")
-print(f"\nListo. '{CSV_MAESTRO_MUNDIAL}' actualizado. Abre la app normalmente.")
-input("Presiona Enter para cerrar...")
 </file>
 
 <file path="src/datos/calcular_promedios_liga.py">
@@ -1715,77 +3686,6 @@ print(f"\nGuardado en {SALIDA.resolve()}")
 print("Ya puedes abrir la app con: py app_gui.py")
 </file>
 
-<file path="src/datos/descargar_datos.py">
-"""
-Descarga MASIVA del Mundial (equipo por equipo, con pausas anti-bloqueo) y al
-terminar regenera el CSV maestro. Tarda varios minutos; para mantener al dia usa
-mejor actualizar_datos.py (incremental).
-"""
-# ── Bootstrap de rutas: permite ejecutar este script directamente ──
-import os as _os, sys as _sys
-_SRC = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
-for _sub in ("", "modelo", "datos", "interfaz", "analisis"):
-    _ruta = _os.path.join(_SRC, _sub)
-    if _ruta not in _sys.path:
-        _sys.path.insert(0, _ruta)
-
-import soccerdata as sd
-import time
-import pandas as pd
-
-PAUSA = 45  # segundos entre cada equipo (evita bloqueo de FBref)
-
-print("Iniciando descarga por equipos...")
-fbref = sd.FBref(leagues="INT-World Cup", seasons="2026")
-
-from ligas_config import EQUIPOS_MUNDIAL
-equipos = EQUIPOS_MUNDIAL
-print(f"  {len(equipos)} equipos a descargar: {equipos[:5]}...")
-
-tiros_lista = []
-misc_lista  = []
-total = len(equipos)
-
-for i, equipo in enumerate(equipos, 1):
-    print(f"\n[{i}/{total}] {equipo}...")
-    
-    try:
-        t = fbref.read_team_match_stats(stat_type='shooting', team=equipo)
-        tiros_lista.append(t)
-        print(f"  tiros OK ({len(t)} partidos)")
-    except Exception as e:
-        print(f"  tiros FALLÓ: {e}")
-
-    time.sleep(8)
-
-    try:
-        m = fbref.read_team_match_stats(stat_type='misc', team=equipo)
-        misc_lista.append(m)
-        print(f"  misc OK ({len(m)} partidos)")
-    except Exception as e:
-        print(f"  misc FALLÓ: {e}")
-
-    if i < total:
-        print(f"  Pausa de {PAUSA}s antes del siguiente equipo...")
-        time.sleep(PAUSA)
-
-print("\n¡Descarga completada!")
-
-# Exportar un CSV maestro limpio y normalizado. A partir de aqui el predictor
-# lee este archivo directamente: 100% offline, rapido y sin depender del cache
-# interno de soccerdata.
-from ingest_fbref import exportar_historiales_csv, CSV_MAESTRO_MUNDIAL
-
-print(f"\nGenerando archivo maestro '{CSV_MAESTRO_MUNDIAL}'...")
-try:
-    exportar_historiales_csv(fbref, equipos)
-except Exception as e:
-    print(f"No se pudo generar el CSV maestro: {e}")
-
-print("Ahora abre app_gui.py normalmente.")
-input("Presiona Enter para cerrar...")
-</file>
-
 <file path="src/datos/ingest_fbref.py">
 """
 Ingesta automatica de datos desde FBref usando soccerdata.
@@ -1795,6 +3695,7 @@ equipo, igual que descargar_datos.py. soccerdata cachea por firma exacta de
 peticion, asi que esto reutiliza el cache local ya descargado.
 """
 import os
+import re
 from typing import List, Sequence
 
 import pandas as pd
@@ -1816,6 +3717,38 @@ COLUMNAS_REQUERIDAS = [
 # Archivo maestro limpio del Mundial. Se genera con descargar_datos.py y permite
 # que la prediccion sea 100% offline y rapida (sin tocar el cache de soccerdata).
 CSV_MAESTRO_MUNDIAL = data("base_mundial_2026.csv")
+
+
+def ruta_csv_liga(liga: str, temporada: str) -> str:
+    """
+    Ruta del CSV maestro de una liga de clubes: data/liga_<slug>_<temporada>.csv.
+
+    Mismo esquema y proposito que base_mundial_2026.csv pero por liga: permite que
+    la prediccion de clubes sea 100% offline (sin volver a parsear FBref cada vez).
+    El prefijo 'liga_' lo separa del 'base_mundial_' en .gitignore.
+    """
+    slug = re.sub(r"[^a-z0-9]+", "-", str(liga).lower()).strip("-")
+    return data(f"liga_{slug}_{temporada}.csv")
+
+
+def existe_csv_liga(liga: str, temporada: str) -> bool:
+    """True si ya hay un CSV maestro local para esa liga y temporada."""
+    return os.path.exists(ruta_csv_liga(liga, temporada))
+
+
+def _temporada_anterior(temporada: str):
+    """
+    Devuelve la temporada inmediatamente anterior, o None si no se puede inferir.
+    '2025-2026' -> '2024-2025'; '2026' -> '2025'.
+    """
+    t = str(temporada).strip()
+    if "-" in t:
+        a, b = t.split("-", 1)
+        if a.isdigit() and b.isdigit():
+            return f"{int(a) - 1}-{int(b) - 1}"
+    elif t.isdigit():
+        return str(int(t) - 1)
+    return None
 
 
 def _chequear_dependencia():
@@ -2089,6 +4022,78 @@ def actualizar_mundial(temporada: str = "2026", equipos: Sequence[str] = None,
     fbref = sd.FBref(leagues="INT-World Cup", seasons=temporada, no_cache=True)
     return actualizar_csv_maestro(fbref, equipos, pausa=pausa, verbose=verbose,
                                   callback=callback)
+
+
+def actualizar_liga_csv(liga: str, temporada: str, equipos: Sequence[str] = None,
+                        no_cache: bool = True, pausa: float = 0.0,
+                        verbose: bool = False, callback=None,
+                        temporada_previa: str = "auto",
+                        min_partidos: int = 5) -> dict:
+    """
+    Genera o actualiza incrementalmente el CSV maestro de una liga de CLUBES
+    (espejo de actualizar_mundial). Construye el historial normalizado de cada
+    equipo a partir de shooting/misc y lo fusiona con el CSV existente sin
+    duplicar partidos. A partir de ahi la prediccion lee el CSV (offline).
+
+    equipos: si es None, se enumeran del calendario de la liga (read_schedule).
+    pausa:   segundos entre equipos (anti-bloqueo de FBref); util en la 1a carga.
+
+    Arranque en frio (cold start): los equipos con menos de `min_partidos` en la
+    temporada actual se completan con su historial de `temporada_previa` (misma
+    liga), para que el shrinkage no los empuje al promedio. "auto" infiere la
+    temporada anterior; None lo desactiva. Nota: un ascendido cuya temporada
+    previa fue en OTRA division no tendra datos aqui y se omite.
+    """
+    import time
+
+    _chequear_dependencia()
+    fbref = sd.FBref(leagues=liga, seasons=temporada, no_cache=no_cache)
+    if equipos is None:
+        sched = _aplanar_columnas(fbref.read_schedule().reset_index())
+        equipos = obtener_equipos_liga(sched)
+    ruta = ruta_csv_liga(liga, temporada)
+    resumen = actualizar_csv_maestro(fbref, equipos, ruta=ruta, pausa=pausa,
+                                     verbose=verbose, callback=callback)
+
+    if temporada_previa == "auto":
+        temporada_previa = _temporada_anterior(temporada)
+    if not temporada_previa:
+        return resumen
+
+    # Equipos con pocos partidos en la temporada actual -> traer la anterior.
+    df = cargar_historial_csv(ruta)
+    conteo = (df.groupby("Team").size()
+              if ("Team" in df.columns and not df.empty) else pd.Series(dtype=int))
+    pocos = [eq for eq in equipos if int(conteo.get(eq, 0)) < min_partidos]
+    if not pocos:
+        return resumen
+
+    if verbose:
+        print(f"Arranque en frio: {len(pocos)} equipo(s) con <{min_partidos} "
+              f"partidos; completando con la temporada {temporada_previa}...")
+    fbref_prev = sd.FBref(leagues=liga, seasons=temporada_previa, no_cache=no_cache)
+    previos = []
+    for i, eq in enumerate(pocos, 1):
+        try:
+            dprev = construir_historial_equipo_directo(fbref_prev, eq)
+            dprev["Team"] = eq
+            previos.append(dprev)
+        except Exception as exc:
+            if verbose:
+                print(f"  (previa) sin datos para '{eq}': {exc}")
+        if pausa and i < len(pocos):
+            time.sleep(pausa)
+
+    if previos:
+        maestro = fusionar_historiales(cargar_historial_csv(ruta),
+                                       pd.concat(previos, ignore_index=True))
+        maestro.to_csv(ruta, index=False, encoding="utf-8")
+        resumen["cold_start_equipos"] = pocos
+        resumen["filas_con_previa"] = len(maestro)
+        if verbose:
+            print(f"Cold-start: CSV ampliado a {len(maestro)} filas "
+                  f"({len(previos)}/{len(pocos)} equipos con datos previos).")
+    return resumen
 
 
 def construir_historial_equipo(df_liga, nombre_equipo):
@@ -2468,50 +4473,6 @@ if __name__ == "__main__":
         diagnostico()
         print("\nUso: py proveedores.py            (diagnostico)")
         print("     py proveedores.py update [Equipo1 Equipo2 ...]  (actualizar)")
-</file>
-
-<file path="src/datos/README.md">
-# 🗄️ `src/datos/` — Ingesta y fuentes de datos
-
-Todo lo que trae y normaliza los datos de los partidos. El esquema normalizado
-(columnas `Date, Team, Opponent, Venue, Result, GF, GA, Poss, Sh, SoT, xG, xGA,
-Fls, CrdY, CrdR`) es el contrato que consume el modelo.
-
-## Módulos
-
-### `ingest_fbref.py`
-Núcleo de la ingesta desde FBref (vía `soccerdata`) y de la base maestra.
-- **`construir_historial_equipo_directo(fbref, equipo)`** — lee shooting + misc de
-  un equipo y normaliza columnas (sin `read_schedule`).
-- **`construir_historial_equipo(df, equipo)`** — filtra un equipo de un DataFrame
-  ya cargado (lo usa la base maestra del Mundial).
-- **`cargar_historial_csv()` / `existe_csv_maestro()`** — leen `data/base_mundial_2026.csv`.
-- **`fusionar_historiales(viejo, nuevo)`** — fusión **incremental** sin duplicar
-  (dedup por `Team+Date+Opponent`; prevalece el dato nuevo).
-- **`actualizar_csv_maestro(...)` / `actualizar_mundial()`** — actualizan el CSV
-  agregando solo partidos nuevos.
-- **`exportar_historiales_csv(...)`** — genera la base maestra desde cero.
-
-### `proveedores.py` — capa de fuentes intercambiables (plug-in)
-- **`ProveedorDatos`** — contrato común. Cada API es una subclase independiente.
-  Incluidas: **`FBrefProvider`** (xG/tiros, sin clave) y **`FootballDataOrgProvider`**
-  (resultados del Mundial, requiere API key gratis).
-- **`historial_combinado(...)` / `actualizar_csv(...)`** — cruzan todas las fuentes
-  disponibles; si una falla, las demás siguen (aislamiento).
-- **`diagnostico()`** — imprime qué fuentes están activas.
-- Agregar otra API = una subclase nueva registrada en `PROVEEDORES`.
-
-### Scripts ejecutables
-- **`actualizar_datos.py`** — actualización **incremental** (recomendada). Pasa los
-  equipos que jugaron para que tarde segundos.
-- **`descargar_datos.py`** — descarga **completa** del Mundial (lenta, con pausas).
-- **`calcular_promedios_liga.py`** — genera `data/promedios_liga.json` desde el
-  caché HTML local de soccerdata (sin red).
-
-## API keys
-Copia `apis.example.json` (en la raíz) a **`apis.local.json`** y pega tu clave, o
-usa la variable de entorno `FOOTBALL_DATA_ORG_KEY`. `apis.local.json` **no se sube
-a git**.
 </file>
 
 <file path="src/interfaz/app_gui.py">
@@ -3368,78 +5329,6 @@ if __name__ == "__main__":
     app.mainloop()
 </file>
 
-<file path="src/interfaz/paleta.py">
-"""
-Paleta de colores y tipografia de la interfaz. Cambia aqui los colores y toda la
-app se actualiza (estilo "design tokens"). Tema oscuro moderno tipo dashboard.
-"""
-
-# ── Fondos ──────────────────────────────────────────────────────────────────
-BG        = "#0b1120"   # fondo de la ventana (azul noche profundo)
-PANEL     = "#141d31"   # barra lateral
-CARD      = "#0f1828"   # area de contenido
-CARD2     = "#1b2740"   # tarjetas elevadas
-BORDE     = "#27324d"   # bordes sutiles
-
-# ── Texto ───────────────────────────────────────────────────────────────────
-TEXTO     = "#eaf0fb"
-TEXTO_SEC = "#8b98b6"
-
-# ── Acentos ─────────────────────────────────────────────────────────────────
-ACENTO       = "#6366f1"   # indigo (color principal / botones)
-ACENTO_HOVER = "#7c83f8"
-CIAN         = "#22d3ee"
-
-# Degradado del encabezado
-GRAD1 = "#6366f1"   # indigo
-GRAD2 = "#a855f7"   # violeta
-
-# Semaforo de resultados
-VERDE    = "#34d399"   # victoria (emerald)
-AMARILLO = "#fbbf24"   # empate (amber)
-ROJO     = "#fb7185"   # derrota (rose)
-
-# Tipografia
-FUENTE = "Segoe UI"     # fuente moderna nativa de Windows
-</file>
-
-<file path="src/interfaz/README.md">
-# 🖥️ `src/interfaz/` — La aplicación gráfica
-
-Interfaz de escritorio en **tkinter** con estilo moderno tipo dashboard. Es lo que
-abre `Abrir Predictor.bat`.
-
-## Módulos
-
-### `app_gui.py` — la aplicación principal
-La clase **`PredictorApp(tk.Tk)`** arma toda la ventana. Toda descarga/cálculo
-corre en un **hilo aparte** y las actualizaciones de UI pasan por `self.after(...)`,
-así la ventana nunca se congela.
-
-Componentes destacados:
-- **`Cabecera`, `Tarjeta`, `BarraProbabilidad`** — widgets de `Canvas` con esquinas
-  redondeadas, degradados y barras de probabilidad.
-- **`_iniciar_prediccion` / `_mostrar_resultado`** — predicen un partido y muestran
-  el panel en pestañas (Predicción / Análisis): tarjetas 1-X-2 con **cuota justa**,
-  mercados (incl. asiáticos), **Top 5 marcadores**, **radar de dominio** y mapa de
-  calor.
-- **`_iniciar_montecarlo` / `_mostrar_montecarlo`** — corren la simulación del
-  torneo y muestran el ranking de candidatos con gráfico de barras.
-- **`_abrir_editor_grupos`** — ventana para editar los 12 grupos (sorteo oficial),
-  con validación de 48 selecciones únicas; guarda en `data/grupos_mundial.json`.
-- **`_render_forma_sidebar`** — los círculos de forma (🟢W / ⚪D / 🔴L) y el descanso.
-
-### `paleta.py`
-**Design tokens**: todos los colores y la tipografía en un solo lugar. Cambia un
-color aquí y toda la app se actualiza.
-
-### `tema_oscuro.py`
-Estilo de los widgets `ttk` (combos, sliders, progreso, checks, pestañas) acorde a
-la paleta oscura. Se aplica con `aplicar_tema(root)`.
-
-> Ejecutar: `py -3.11 src/interfaz/app_gui.py` (o el `.bat`).
-</file>
-
 <file path="src/interfaz/tema_oscuro.py">
 """
 Tema oscuro moderno para los widgets ttk (combos, sliders, progreso, checks).
@@ -3521,312 +5410,6 @@ def aplicar_tema(root):
         foreground=[("active", TEXTO)],
         indicatorcolor=[("selected", ACENTO), ("active", BORDE)],
     )
-</file>
-
-<file path="src/ligas_config.py">
-"""
-Configuracion central del proyecto: ligas, temporadas, las 48 selecciones del
-Mundial (nombre español <-> FBref), el ranking Elo, los grupos del torneo y el
-diccionario PESOS_MODELO con todos los pesos calibrables del modelo.
-
-Es el unico modulo "compartido" (vive en src/, fuera de las subcarpetas) porque
-lo consumen el modelo, los datos, la interfaz y el analisis.
-"""
-import json
-import os
-
-from rutas import data
-
-# ── Pesos y umbrales del modelo de lambdas ──────────────────────────────────
-# Centralizados aqui para poder calibrar el modelo sin tocar las formulas
-# matematicas en calcular_lambdas.py. Cambia un numero aqui y se aplica en
-# todo el calculo.
-PESOS_MODELO = {
-    # Localia (solo se aplica si neutral=False; el Mundial juega en sede neutral)
-    "factor_local": 1.10,
-
-    # Fatiga: si un equipo descanso poco y el rival mucho, penaliza su ataque
-    "factor_descanso": 0.95,
-    "umbral_descanso_bajo": 4,   # dias: menos que esto = poco descanso
-    "umbral_descanso_alto": 6,   # dias: mas que esto = bien descansado
-
-    # Forma reciente (puntos promedio por partido en la ventana)
-    "bonus_racha": 1.03,
-    "penal_racha": 0.97,
-    "umbral_racha_alta": 2.0,
-    "umbral_racha_baja": 1.0,
-
-    # Posesion: un equipo que controla mas el balon genera algo mas de peligro
-    "bonus_posesion": 1.02,
-    "umbral_posesion": 55,
-
-    # Tiros a puerta: ajuste CONTINUO (no escalon). lambda *= 1 + (ratio-1)*peso,
-    # donde ratio = tiros_puerta_adj / default_tiros (acotado).
-    "default_tiros": 8.5,
-    "peso_tiros": 0.10,
-
-    # Fuerza del Calendario (SoS): si el equipo viene de rivales fuertes (alto
-    # sos_prom vs ELO_REFERENCIA) sus stats valen mas; si de rivales debiles, menos.
-    "peso_sos": 0.06,          # se acota a +/-3%
-
-    # Tasa de conversion (goles por tiro a puerta): premia/penaliza eficiencia.
-    "default_conversion": 0.32,
-    "umbral_conversion": 1.15,  # >115% de la media = hiper-efectivo
-    "bonus_conversion": 1.02,
-
-    # Diferencial de xG (xGD = ataque - defensa): bono de "dominio".
-    "peso_xgd": 0.03,          # se acota a +/-3%
-
-    # Disciplina: un equipo indisciplinado concede algo mas al rival
-    "bonus_disciplina": 1.02,
-    "umbral_disciplina": 20,
-
-    # Diferencia de fuerza Elo entre los dos equipos del partido. Empuja los
-    # lambdas hacia el favorito segun la formula Elo (expectativa 0..1). 0 lo
-    # desactiva; ~0.65 hace que un gigante se imponga a un equipo chico aunque
-    # este venga en racha.
-    "peso_elo": 0.65,
-
-    # Valores por defecto cuando FBref no publica el dato (selecciones)
-    "default_racha": 1.5,
-    "default_posesion": 50,
-    "default_disciplina": 15,
-}
-
-
-# ── Ranking de fuerza (Elo) ──────────────────────────────────────────────────
-# Elo aproximado de cada seleccion. Se usa para ponderar los goles por la fuerza
-# del rival (Strength of Schedule): anotar a un gigante "infla" el valor, anotar
-# a un equipo debil lo "desinfla". Ajusta los numeros aqui para recalibrar.
-ELO_REFERENCIA = 1650  # rival "promedio"; factor = elo_rival / ELO_REFERENCIA
-
-ELO_RANKING = {
-    # Selecciones del Mundial 2026 (nombres tal como los devuelve FBref)
-    "Argentina": 2120, "France": 2110, "Spain": 2100, "England": 2070,
-    "Brazil": 2060, "Portugal": 2050, "Netherlands": 2040, "Germany": 2010,
-    "Belgium": 1990, "Colombia": 1990, "Uruguay": 1980, "Croatia": 1970,
-    "Morocco": 1970, "Senegal": 1930, "Switzerland": 1920, "Japan": 1920,
-    "Ecuador": 1900, "Mexico": 1900, "Norway": 1900, "Türkiye": 1900,
-    "United States": 1900, "Korea Republic": 1860, "Austria": 1860,
-    "Sweden": 1860, "Egypt": 1850, "Scotland": 1840, "IR Iran": 1840,
-    "Côte d'Ivoire": 1840, "Algeria": 1820, "Czechia": 1820, "Paraguay": 1820,
-    "Tunisia": 1820, "Canada": 1830, "Australia": 1810, "South Africa": 1780,
-    "Bosnia & Herz.": 1760, "Ghana": 1760, "Qatar": 1750, "Uzbekistan": 1750,
-    "Congo DR": 1740, "Saudi Arabia": 1740, "Iraq": 1720, "Panama": 1720,
-    "Jordan": 1700, "Cabo Verde": 1680, "New Zealand": 1650, "Curaçao": 1620,
-    "Haiti": 1600,
-    # Rivales frecuentes de clasificatorias (mejoran el calculo de SoS)
-    "Serbia": 1850, "Nigeria": 1850, "Poland": 1850, "Ukraine": 1850,
-    "Italy": 2000, "Denmark": 1900, "Peru": 1750, "Chile": 1820,
-    "Venezuela": 1700, "Bolivia": 1600, "Iceland": 1700, "Greece": 1800,
-    "Hungary": 1800, "Honduras": 1650, "Guatemala": 1550, "Zambia": 1600,
-    "Guinea": 1650, "Mozambique": 1450, "Uganda": 1500, "Botswana": 1450,
-    "Mauritania": 1500, "Somalia": 1300, "Bangladesh": 1300, "Palestine": 1450,
-    "Lebanon": 1500,
-}
-
-# Alias: nombre "limpio" del rival -> clave en ELO_RANKING (cuando difieren).
-ELO_ALIAS = {
-    "Iran": "IR Iran", "South Korea": "Korea Republic", "USA": "United States",
-    "Ivory Coast": "Côte d'Ivoire", "Turkey": "Türkiye", "Czech Republic": "Czechia",
-    "DR Congo": "Congo DR", "Bosnia": "Bosnia & Herz.", "Cape Verde": "Cabo Verde",
-}
-
-
-def _limpiar_nombre_rival(opponent: str) -> str:
-    """FBref antepone un codigo de pais ('sa Saudi Arabia'). Lo quitamos."""
-    if not isinstance(opponent, str):
-        return ""
-    partes = opponent.strip().split(" ", 1)
-    # Si el primer token es un codigo corto en minusculas, lo descartamos.
-    if len(partes) == 2 and partes[0].islower() and len(partes[0]) <= 3:
-        return partes[1].strip()
-    return opponent.strip()
-
-
-def elo_de(opponent: str, default: float = ELO_REFERENCIA) -> float:
-    """Devuelve el Elo de un rival a partir del nombre que da FBref."""
-    nombre = _limpiar_nombre_rival(opponent)
-    if nombre in ELO_RANKING:
-        return ELO_RANKING[nombre]
-    if nombre in ELO_ALIAS:
-        return ELO_RANKING[ELO_ALIAS[nombre]]
-    return default
-
-
-LIGAS = {
-    "Mundial 2026": "INT-World Cup",
-    "Premier League (Inglaterra)": "ENG-Premier League",
-    "La Liga (España)": "ESP-La Liga",
-    "Liga MX (México)": "MEX-Liga MX",
-    "Bundesliga (Alemania)": "GER-Bundesliga",
-    "Serie A (Italia)": "ITA-Serie A",
-    "Ligue 1 (Francia)": "FRA-Ligue 1",
-}
-
-TEMPORADAS = {
-    "Mundial 2026": "2026",
-    "Premier League (Inglaterra)": "2025-2026",
-    "La Liga (España)": "2025-2026",
-    "Liga MX (México)": "2025-2026",
-    "Bundesliga (Alemania)": "2025-2026",
-    "Serie A (Italia)": "2025-2026",
-    "Ligue 1 (Francia)": "2025-2026",
-}
-
-# 48 equipos clasificados al Mundial 2026.
-# Los nombres apuntan a la forma inglesa/FBref mas probable. Si soccerdata
-# devuelve "No data found" para alguno, ajusta aqui el nombre exacto de FBref.
-EQUIPOS_MUNDIAL = [
-    "Algeria",
-    "Argentina",
-    "Australia",
-    "Austria",
-    "Belgium",
-    "Bosnia & Herz.",
-    "Brazil",
-    "Canada",
-    "Cabo Verde",
-    "Colombia",
-    "Croatia",
-    "Curaçao",
-    "Czechia",
-    "Congo DR",
-    "Ecuador",
-    "Egypt",
-    "England",
-    "France",
-    "Germany",
-    "Ghana",
-    "Haiti",
-    "IR Iran",
-    "Iraq",
-    "Côte d'Ivoire",
-    "Japan",
-    "Jordan",
-    "Korea Republic",
-    "Mexico",
-    "Morocco",
-    "Netherlands",
-    "New Zealand",
-    "Norway",
-    "Panama",
-    "Paraguay",
-    "Portugal",
-    "Qatar",
-    "Saudi Arabia",
-    "Scotland",
-    "Senegal",
-    "South Africa",
-    "Spain",
-    "Sweden",
-    "Switzerland",
-    "Tunisia",
-    "Türkiye",
-    "United States",
-    "Uruguay",
-    "Uzbekistan",
-]
-
-EQUIPOS_MUNDIAL.sort()
-assert len(EQUIPOS_MUNDIAL) == 48, f"Deberian ser 48 equipos, hay {len(EQUIPOS_MUNDIAL)}"
-
-# ── Cuadro del Mundial 2026: 12 grupos de 4 ─────────────────────────────────
-# IMPORTANTE: esta es una distribucion provisional, sembrada por Elo en bombos
-# (no es el sorteo oficial). EDITALA para reflejar los grupos reales: solo mueve
-# los nombres entre las listas. La simulacion (montecarlo_mundial.py) la lee tal
-# cual. Los nombres deben coincidir con los de FBref (los de EQUIPOS_MUNDIAL).
-GRUPOS_MUNDIAL = {
-    "A": ["Argentina", "Morocco", "Egypt", "Ghana"],
-    "B": ["France", "Senegal", "Scotland", "Qatar"],
-    "C": ["Spain", "Switzerland", "IR Iran", "Uzbekistan"],
-    "D": ["England", "Japan", "Côte d'Ivoire", "Congo DR"],
-    "E": ["Brazil", "Ecuador", "Canada", "Saudi Arabia"],
-    "F": ["Portugal", "Mexico", "Algeria", "Iraq"],
-    "G": ["Netherlands", "Norway", "Czechia", "Panama"],
-    "H": ["Germany", "Türkiye", "Paraguay", "Jordan"],
-    "I": ["Belgium", "United States", "Tunisia", "Cabo Verde"],
-    "J": ["Colombia", "Korea Republic", "Australia", "New Zealand"],
-    "K": ["Uruguay", "Austria", "South Africa", "Curaçao"],
-    "L": ["Croatia", "Sweden", "Bosnia & Herz.", "Haiti"],
-}
-
-# Los grupos se pueden editar desde la app y se guardan en este JSON, que tiene
-# prioridad sobre el GRUPOS_MUNDIAL de arriba (que queda como respaldo).
-GRUPOS_JSON_PATH = data("grupos_mundial.json")
-
-
-def cargar_grupos():
-    """Devuelve los grupos del JSON editable si existe; si no, los de respaldo."""
-    if os.path.exists(GRUPOS_JSON_PATH):
-        try:
-            with open(GRUPOS_JSON_PATH, "r", encoding="utf-8") as f:
-                grupos = json.load(f)
-            if grupos:
-                return grupos
-        except Exception:
-            pass
-    return GRUPOS_MUNDIAL
-
-
-def guardar_grupos(grupos):
-    """Guarda los grupos editados en el JSON (lo usa el editor de la app)."""
-    with open(GRUPOS_JSON_PATH, "w", encoding="utf-8") as f:
-        json.dump(grupos, f, ensure_ascii=False, indent=2)
-
-# Nombres para mostrar en la interfaz (espanol) -> nombre FBref.
-NOMBRE_DISPLAY = {
-    "Alemania": "Germany",
-    "Arabia Saudita": "Saudi Arabia",
-    "Argelia": "Algeria",
-    "Argentina": "Argentina",
-    "Australia": "Australia",
-    "Austria": "Austria",
-    "Bélgica": "Belgium",
-    "Bosnia y Herzegovina": "Bosnia & Herz.",
-    "Brasil": "Brazil",
-    "Cabo Verde": "Cabo Verde",
-    "Canadá": "Canada",
-    "Catar": "Qatar",
-    "Chequia": "Czechia",
-    "Colombia": "Colombia",
-    "Corea del Sur": "Korea Republic",
-    "Costa de Marfil": "Côte d'Ivoire",
-    "Croacia": "Croatia",
-    "Curazao": "Curaçao",
-    "Ecuador": "Ecuador",
-    "Egipto": "Egypt",
-    "Escocia": "Scotland",
-    "España": "Spain",
-    "Estados Unidos": "United States",
-    "Francia": "France",
-    "Ghana": "Ghana",
-    "Haití": "Haiti",
-    "Inglaterra": "England",
-    "Irak": "Iraq",
-    "Irán": "IR Iran",
-    "Japón": "Japan",
-    "Jordania": "Jordan",
-    "Marruecos": "Morocco",
-    "México": "Mexico",
-    "Noruega": "Norway",
-    "Nueva Zelanda": "New Zealand",
-    "Países Bajos": "Netherlands",
-    "Panamá": "Panama",
-    "Paraguay": "Paraguay",
-    "Portugal": "Portugal",
-    "RD Congo": "Congo DR",
-    "Senegal": "Senegal",
-    "Sudáfrica": "South Africa",
-    "Suecia": "Sweden",
-    "Suiza": "Switzerland",
-    "Túnez": "Tunisia",
-    "Turquía": "Türkiye",
-    "Uruguay": "Uruguay",
-    "Uzbekistán": "Uzbekistan",
-}
-
-EQUIPOS_MUNDIAL_ES = sorted(NOMBRE_DISPLAY.keys())
 </file>
 
 <file path="src/modelo/calcular_lambdas.py">
@@ -4004,7 +5587,7 @@ def aplicar_shrinkage(promedio_equipo, promedio_liga, n_partidos, k=5):
 def procesar_equipo(df_partidos, promedio_liga_xg_favor, promedio_liga_xg_contra,
                     promedio_liga_tiros, n_window=6, k_shrinkage=5,
                     ponderar_por_elo=True, suavizado="ewm", ewm_span=10,
-                    venue=None):
+                    venue=None, half_life_dias=180):
     """
     Convierte el historial de UN equipo en sus caracteristicas predictivas.
 
@@ -4021,7 +5604,10 @@ def procesar_equipo(df_partidos, promedio_liga_xg_favor, promedio_liga_xg_contra
     promedio_liga_* : float    Promedios del torneo para el shrinkage.
     n_window, ewm_span : int   Ventana y span del suavizado.
     k_shrinkage : int          Fuerza del shrinkage.
-    suavizado : "ewm" | "sma"  Tipo de promedio.
+    suavizado : "ewm" | "sma" | "tiempo"  Tipo de promedio. "tiempo" usa el
+        time-weighting de Dixon-Coles: cada partido pesa exp(-xi * dias) segun los
+        DIAS reales transcurridos (no su posicion), con xi = ln(2)/half_life_dias.
+    half_life_dias : int  Vida media del decaimiento temporal (solo "tiempo").
     venue : None | "Home" | "Away"  Filtra por sede (splits; off por defecto).
 
     Devuelve el DataFrame con todas las columnas de features anadidas.
@@ -4045,7 +5631,28 @@ def procesar_equipo(df_partidos, promedio_liga_xg_favor, promedio_liga_xg_contra
     # de datos). "ewm" (decaimiento exponencial) da mas peso a lo reciente
     # reflejando el "estado de forma"; "sma" es media movil simple. El span del
     # EWM se calibro contra el mercado (ver backtest_cuotas).
+    # Pesos del suavizado por tiempo (Dixon-Coles): para cada partido en curso,
+    # los anteriores pesan exp(-xi * dias_transcurridos). Solo depende de las
+    # fechas, asi que se calcula una vez y lo reusan todas las series. La mascara
+    # triangular (s antes que t por orden) evita la fuga de datos.
+    if suavizado == "tiempo":
+        _dias = (df_partidos['Date'] - df_partidos['Date'].min()).dt.days.to_numpy()
+        _n = len(_dias)
+        _dt = _dias[:, None] - _dias[None, :]
+        _prior = np.arange(_n)[:, None] > np.arange(_n)[None, :]
+        _xi = np.log(2) / max(half_life_dias, 1)
+        _W = np.where(_prior, np.exp(-_xi * np.clip(_dt, 0, None)), 0.0)
+
     def prom(serie):
+        if suavizado == "tiempo":
+            v = serie.to_numpy(dtype=float)
+            ok = ~np.isnan(v)
+            Wm = _W * ok[None, :]  # ignora partidos sin dato (xG ausente, etc.)
+            den = Wm.sum(axis=1)
+            num = Wm @ np.where(ok, v, 0.0)
+            nvalid = (Wm > 0).sum(axis=1)
+            out = np.divide(num, den, out=np.full(_n, np.nan), where=den > 0)
+            return pd.Series(np.where(nvalid >= min_p, out, np.nan), index=serie.index)
         s = serie.shift(1)
         if suavizado == "sma":
             return s.rolling(window=n_window, min_periods=min_p).mean()
@@ -4237,13 +5844,14 @@ from ingest_fbref import (
     construir_historial_equipo_directo,
     cargar_historial_csv,
     existe_csv_maestro,
+    ruta_csv_liga,
     _chequear_dependencia,
     sd,
 )
 from feature_engineering import procesar_equipo, ultima_fila_valida
 from calcular_lambdas import calcular_lambdas, _acota
 from matriz_poisson import generar_matriz_poisson
-from ligas_config import elo_de, _limpiar_nombre_rival
+from ligas_config import elo_de, factor_local_de, temporada_de, _limpiar_nombre_rival
 
 
 def _factor_h2h(df, local, visit, peso=0.04, min_partidos=3):
@@ -4349,12 +5957,22 @@ def predecir_partido(
         if neutral is None:
             neutral = True
     else:
-        df_liga = descargar_liga(liga, temporada, no_cache=no_cache)
-        prom_xg_fav = df_liga["xG"].mean() if "xG" in df_liga.columns else 1.2
-        prom_xg_con = df_liga["xGA"].mean() if "xGA" in df_liga.columns else 1.2
-        prom_tiros = df_liga["SoT"].mean() if "SoT" in df_liga.columns else 4.5
-        df_local = construir_historial_equipo(df_liga, equipo_local)
-        df_visitante = construir_historial_equipo(df_liga, equipo_visitante)
+        ruta_liga = ruta_csv_liga(liga, temporada)
+        if os.path.exists(ruta_liga) and not no_cache:
+            # Ruta rapida offline: CSV maestro de la liga (espejo del Mundial).
+            df_maestro = cargar_historial_csv(ruta_liga)
+            df_h2h = df_maestro
+            df_local = construir_historial_equipo(df_maestro, equipo_local)
+            df_visitante = construir_historial_equipo(df_maestro, equipo_visitante)
+            df_promedios = df_maestro
+        else:
+            # Respaldo: descarga/parseo en vivo desde FBref (lento la 1a vez).
+            df_promedios = descargar_liga(liga, temporada, no_cache=no_cache)
+            df_local = construir_historial_equipo(df_promedios, equipo_local)
+            df_visitante = construir_historial_equipo(df_promedios, equipo_visitante)
+        prom_xg_fav = df_promedios["xG"].mean() if "xG" in df_promedios.columns else 1.2
+        prom_xg_con = df_promedios["xGA"].mean() if "xGA" in df_promedios.columns else 1.2
+        prom_tiros = df_promedios["SoT"].mean() if "SoT" in df_promedios.columns else 4.5
         if neutral is None:
             neutral = False
 
@@ -4387,6 +6005,7 @@ def predecir_partido(
     lambda_local, lambda_visitante = calcular_lambdas(
         fila_local,
         fila_visitante,
+        factor_local=factor_local_de(liga),
         neutral=neutral,
         elo_local=elo_de(equipo_local),
         elo_visitante=elo_de(equipo_visitante),
@@ -4397,6 +6016,17 @@ def predecir_partido(
     lambda_local *= f_loc
     lambda_visitante *= f_vis
 
+    return _ensamblar_resultado(lambda_local, lambda_visitante, rho,
+                                df_local, df_visitante, fila_local, fila_visitante)
+
+
+def _ensamblar_resultado(lambda_local, lambda_visitante, rho,
+                         df_local, df_visitante, fila_local, fila_visitante) -> dict:
+    """
+    A partir de los goles esperados ya calculados, construye la matriz de Poisson,
+    las probabilidades 1X2, los mercados y el dict de salida que consume la GUI.
+    Lo comparten predecir_partido() y predecir_partido_interligas().
+    """
     matriz = generar_matriz_poisson(lambda_local, lambda_visitante, rho=rho)
 
     prob_local = float(np.sum(np.tril(matriz, -1)))
@@ -4442,6 +6072,100 @@ def predecir_partido(
     }
 
 
+def _historial_y_promedios(equipo, liga, temporada, no_cache=False):
+    """
+    Carga el historial normalizado de UN equipo y los promedios de su liga (para
+    el shrinkage): usa el CSV maestro local (Mundial o liga) si existe, o FBref.
+    Devuelve (df_equipo, (prom_xg_favor, prom_xg_contra, prom_tiros)).
+    Pensado para predicciones inter-ligas, donde cada equipo viene de una fuente.
+    """
+    if liga == "INT-World Cup":
+        if existe_csv_maestro() and not no_cache:
+            df_equipo = construir_historial_equipo(cargar_historial_csv(), equipo)
+        else:
+            _chequear_dependencia()
+            fbref = sd.FBref(leagues=liga, seasons=temporada, no_cache=no_cache)
+            df_equipo = construir_historial_equipo_directo(fbref, equipo)
+        prom = _cargar_promedios_liga()
+        return df_equipo, (
+            prom.get("xg_favor", PROMEDIOS_DEFAULT["xg_favor"]),
+            prom.get("xg_contra", PROMEDIOS_DEFAULT["xg_contra"]),
+            prom.get("sot", PROMEDIOS_DEFAULT["sot"]),
+        )
+
+    ruta = ruta_csv_liga(liga, temporada)
+    if os.path.exists(ruta) and not no_cache:
+        df_liga = cargar_historial_csv(ruta)
+    else:
+        df_liga = descargar_liga(liga, temporada, no_cache=no_cache)
+    df_equipo = construir_historial_equipo(df_liga, equipo)
+    return df_equipo, (
+        df_liga["xG"].mean() if "xG" in df_liga.columns else 1.2,
+        df_liga["xGA"].mean() if "xGA" in df_liga.columns else 1.2,
+        df_liga["SoT"].mean() if "SoT" in df_liga.columns else 4.5,
+    )
+
+
+def predecir_partido_interligas(
+    equipo_local: str,
+    liga_local: str,
+    equipo_visitante: str,
+    liga_visitante: str,
+    temporada_local: str | None = None,
+    temporada_visitante: str | None = None,
+    rho: float = -0.05,
+    k_shrinkage: int = 5,
+    no_cache: bool = False,
+    n_window: int = 6,
+    neutral: bool = True,
+) -> dict:
+    """
+    Predice un cruce entre equipos de DOS ligas distintas (Champions, Mundial de
+    Clubes, amistosos...). Cada equipo se evalua con los datos y promedios de SU
+    propia liga; el puente de fuerza entre ligas lo aporta el Elo de ClubElo
+    (via elo_de), comparable entre ligas europeas. Devuelve el mismo dict que
+    predecir_partido().
+
+    neutral=True por defecto (sede neutral). Con neutral=False se aplica la
+    localia de la liga del equipo local. No se aplica head-to-head: dos equipos
+    de ligas distintas rara vez aparecen enfrentados en los datos de liga.
+    """
+    if temporada_local is None:
+        temporada_local = temporada_de(liga_local)
+    if temporada_visitante is None:
+        temporada_visitante = temporada_de(liga_visitante)
+
+    df_local, prom_local = _historial_y_promedios(
+        equipo_local, liga_local, temporada_local, no_cache)
+    df_visitante, prom_visit = _historial_y_promedios(
+        equipo_visitante, liga_visitante, temporada_visitante, no_cache)
+
+    feats_local = procesar_equipo(df_local, *prom_local,
+                                  n_window=n_window, k_shrinkage=k_shrinkage)
+    feats_visitante = procesar_equipo(df_visitante, *prom_visit,
+                                      n_window=n_window, k_shrinkage=k_shrinkage)
+
+    fila_local = ultima_fila_valida(feats_local)
+    fila_visitante = ultima_fila_valida(feats_visitante)
+    if fila_local is None or fila_visitante is None:
+        raise ValueError(
+            f"No hay suficientes partidos completos para calcular ({equipo_local}: "
+            f"{len(df_local)} partidos, {equipo_visitante}: {len(df_visitante)} partidos)."
+        )
+
+    lambda_local, lambda_visitante = calcular_lambdas(
+        fila_local,
+        fila_visitante,
+        factor_local=factor_local_de(liga_local),
+        neutral=neutral,
+        elo_local=elo_de(equipo_local),
+        elo_visitante=elo_de(equipo_visitante),
+    )
+
+    return _ensamblar_resultado(lambda_local, lambda_visitante, rho,
+                                df_local, df_visitante, fila_local, fila_visitante)
+
+
 def calcular_mercados(matriz: np.ndarray) -> dict:
     """
     Deriva metricas tipo casa de apuestas de la matriz de Poisson, sin tocar la
@@ -4483,148 +6207,17 @@ def calcular_mercados(matriz: np.ndarray) -> dict:
 
 
 def cargar_equipos(liga: str, temporada: str):
-    """Descarga la liga y devuelve la lista de equipos para los desplegables."""
-    df_liga = descargar_liga(liga, temporada)
+    """
+    Lista de equipos para los desplegables (+ el DataFrame de la liga). Usa el
+    CSV maestro local si existe (offline e instantaneo); si no, descarga el
+    calendario desde FBref.
+    """
+    ruta = ruta_csv_liga(liga, temporada)
+    if os.path.exists(ruta):
+        df_liga = cargar_historial_csv(ruta)
+    else:
+        df_liga = descargar_liga(liga, temporada)
     return obtener_equipos_liga(df_liga), df_liga
-</file>
-
-<file path="src/modelo/README.md">
-# 🧠 `src/modelo/` — El modelo matemático
-
-El corazón del predictor. Convierte el historial de dos equipos en
-probabilidades. Pipeline: **features → lambdas → matriz de Poisson → 1X2 + mercados**.
-
-## Módulos
-
-### `feature_engineering.py`
-Convierte el historial de un equipo en sus "características" predictivas.
-- **`procesar_equipo(df, ...)`** — calcula promedios con **decaimiento exponencial
-  (EWM, span=10)** de xG/goles a favor y en contra, tiros, posesión, disciplina,
-  forma y descanso. Aplica **shrinkage** (mezcla con el promedio del torneo según
-  cuántos partidos tiene), ponderación por **Elo del rival** (Strength of
-  Schedule), y deriva **xGD** y la **tasa de conversión**. Si falta xG (típico en
-  selecciones) usa goles reales. El `shift(1)` garantiza **cero fuga de datos**.
-  Soporta `venue="Home"/"Away"` para splits (apagado por defecto: medido, empeora).
-- **`ultima_fila_valida(df)`** — devuelve la fila más reciente con las features
-  imprescindibles no nulas (o `None`).
-- **`aplicar_shrinkage(...)`** — la fórmula de regularización hacia la media.
-
-### `calcular_lambdas.py`
-Convierte las features de los dos equipos en sus **goles esperados (λ)**.
-- **`calcular_lambdas(local, visitante, ...)`** — λ base = combinación de ataque
-  y defensa, y aplica ajustes acotados: localía, fatiga (descanso), forma,
-  posesión, **tiros** (continuo), **SoS**, **conversión**, **xGD**, disciplina y un
-  empuje **Elo head-to-head** hacia el favorito. Todos los pesos vienen de
-  `PESOS_MODELO`.
-
-### `matriz_poisson.py`
-- **`generar_matriz_poisson(λ_local, λ_visitante, rho)`** — matriz 6×6 con la
-  probabilidad de cada marcador exacto (producto de dos Poisson) y la
-  **corrección Dixon-Coles** en los marcadores de pocos goles. Siempre suma 1.
-- **`correccion_dixon_coles(...)`** — el ajuste de las celdas (0,0), (1,0), (0,1), (1,1).
-
-### `predecir_partido.py` — el orquestador
-- **`predecir_partido(local, visitante, liga, temporada, ...)`** — encadena todo
-  el pipeline y devuelve un dict con probabilidades 1X2, λ, la matriz, los
-  **mercados**, la **forma**, el **descanso** y las **métricas** para el radar.
-- **`calcular_mercados(matriz)`** — deriva BTTS, Over/Under 1.5/2.5/3.5 y portería
-  a cero sumando regiones de la matriz.
-- **`_factor_h2h(df, local, visitante)`** — historial directo (paternidad): inclina
-  los λ ±4% con normalización **simétrica** de nombres.
-
-> Para calibrar el comportamiento, edita `PESOS_MODELO` en `src/ligas_config.py`,
-> no las fórmulas de aquí.
-</file>
-
-<file path="src/README.md">
-# 📦 `src/` — Código fuente
-
-Todo el código del predictor, organizado por capas. Cada subcarpeta tiene su
-propio README con el detalle de sus módulos.
-
-| Carpeta / archivo | Qué contiene |
-|-------------------|--------------|
-| [`modelo/`](modelo/README.md) | El modelo matemático: features, lambdas, matriz de Poisson y el orquestador de la predicción. |
-| [`datos/`](datos/README.md) | Ingesta desde FBref, capa de fuentes intercambiables y scripts de descarga/actualización. |
-| [`interfaz/`](interfaz/README.md) | La aplicación gráfica (tkinter) y su estilo. |
-| [`analisis/`](analisis/README.md) | Simulación Monte Carlo del torneo y backtests contra el mercado. |
-| `ligas_config.py` | **Configuración compartida** (vive aquí, fuera de las subcarpetas, porque la usan todas): ligas, las 48 selecciones (español ↔ FBref), `ELO_RANKING`, `GRUPOS_MUNDIAL`, `PESOS_MODELO` y los lectores de grupos editables. |
-| `rutas.py` | Rutas absolutas a `data/` y a la raíz, calculadas desde la ubicación del archivo (no del directorio actual). |
-
-## Cómo se resuelven los imports
-
-El proyecto usa imports planos (`from calcular_lambdas import ...`). Para que
-funcionen estando en subcarpetas, cada script **ejecutable** lleva al inicio un
-pequeño *bootstrap* que añade `src/` y todas sus subcarpetas a `sys.path`:
-
-```python
-import os as _os, sys as _sys
-_SRC = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
-for _sub in ("", "modelo", "datos", "interfaz", "analisis"):
-    _sys.path.insert(0, _os.path.join(_SRC, _sub))
-```
-
-Así puedes ejecutar cualquier script directamente desde la raíz del proyecto sin
-configurar `PYTHONPATH` ni instalar el paquete.
-</file>
-
-<file path="src/rutas.py">
-"""
-Rutas del proyecto.
-
-Centraliza la ubicacion de los archivos de datos y de configuracion. Las rutas
-se calculan a partir de la ubicacion de ESTE archivo (no del directorio actual),
-asi el programa funciona sin importar desde donde se ejecute.
-
-Estructura:
-    <raiz>/
-      ├── src/        <- codigo (aqui vive rutas.py)
-      └── data/       <- base_mundial_2026.csv, promedios_liga.json, salidas...
-"""
-import os
-
-SRC = os.path.dirname(os.path.abspath(__file__))   # .../src
-RAIZ = os.path.dirname(SRC)                          # .../mundial
-DATA = os.path.join(RAIZ, "data")
-
-
-def data(nombre: str) -> str:
-    """Ruta absoluta de un archivo dentro de la carpeta data/."""
-    return os.path.join(DATA, nombre)
-
-
-def raiz(nombre: str) -> str:
-    """Ruta absoluta de un archivo en la raiz del proyecto."""
-    return os.path.join(RAIZ, nombre)
-</file>
-
-<file path="Abrir Predictor.bat">
-@echo off
-REM ============================================================
-REM  Predictor de Futbol - Mundial 2026
-REM  Doble clic para abrir la aplicacion.
-REM ============================================================
-title Predictor de Futbol - Mundial 2026
-
-REM Ir a la carpeta donde esta este .bat (la del proyecto)
-cd /d "%~dp0"
-
-echo Abriendo el Predictor de Futbol...
-echo (Puedes cerrar esta ventana negra una vez que aparezca la aplicacion)
-echo.
-
-REM Usamos el lanzador "py" porque "python" en este equipo esta
-REM secuestrado por el atajo de la Microsoft Store y falla.
-py -3.11 src\interfaz\app_gui.py
-
-REM Si la app cierra por un error, la ventana queda abierta para leerlo.
-if errorlevel 1 (
-    echo.
-    echo ------------------------------------------------------------
-    echo La aplicacion se cerro con un error. Revisa el mensaje arriba.
-    echo ------------------------------------------------------------
-    pause
-)
 </file>
 
 <file path=".gitignore">
@@ -4639,6 +6232,8 @@ venv/
 montecarlo_resultados.csv
 resultados_backtest.csv
 data/grupos_mundial.json
+club_elo.csv
+liga_*.csv
 
 # Claves de API (nunca subir)
 apis.local.json
@@ -4763,6 +6358,12 @@ py -3.11 src/datos/proveedores.py update Spain     # cruzar fuentes
 # Descarga completa desde cero (regenera data/base_mundial_2026.csv)
 py -3.11 src/datos/descargar_datos.py
 py -3.11 src/datos/calcular_promedios_liga.py
+
+# Clubes: base maestra por liga (predicción offline e instantánea, con cold-start)
+py -3.11 src/datos/descargar_liga_csv.py "ENG-Premier League"   # genera liga_*.csv
+
+# Elo de clubes (ClubElo): reactiva SoS y jerarquía en ligas; puente inter-ligas
+py -3.11 src/datos/descargar_club_elo.py
 ```
 Para activar **football-data.org**: copia `apis.example.json` → `apis.local.json`
 (no se sube a git) y pega tu key gratis. Detalle en
@@ -4776,12 +6377,13 @@ Para activar **football-data.org**: copia `apis.example.json` → `apis.local.js
 # Simular el Mundial (también desde el botón 🏆 de la app)
 py -3.11 src/analisis/montecarlo_mundial.py 10000
 
-# ¿Le gana al mercado? Backtest contra cuotas reales de cierre
+# ¿Le gana al mercado? Backtest contra cuotas reales de cierre (log_loss/Brier/RPS)
 py -3.11 src/analisis/backtest_cuotas.py            # Premier League 2024-25
 py -3.11 src/analisis/backtest_cuotas.py SP1 2425   # E0/SP1/I1/D1/F1
+py -3.11 src/analisis/backtest_cuotas.py E0 2425 barrido   # barre half_life por RPS
 ```
-Calibración de `rho`/`k`, auditoría anti-fuga y simulador de ROI en
-**[src/analisis/README.md](src/analisis/README.md)**.
+Calibración de `rho`/`k`, **RPS**, time-weighting (`suavizado="tiempo"`), auditoría
+anti-fuga y simulador de ROI en **[src/analisis/README.md](src/analisis/README.md)**.
 
 ---
 
@@ -4817,12 +6419,18 @@ calibran contra el mercado; los defaults son **por contexto**:
 - **App**: interfaz moderna en pestañas, mercados + cuotas justas, top-5, radar,
   forma, simulador Monte Carlo integrado con editor de grupos.
 - **Datos**: base maestra offline, actualización incremental, capa de fuentes
-  intercambiables (FBref + football-data.org).
-- **QA**: backtest contra cuotas reales, calibración por contexto, auditoría
-  anti-fuga del EWM.
+  intercambiables (FBref + football-data.org), **base maestra por liga de clubes**
+  con **cold-start** (concatena la temporada anterior para equipos con pocos partidos).
+- **Clubes**: **Elo de ClubElo** (reactiva SoS y jerarquía fuera del Mundial),
+  **localía por liga** (`FACTOR_LOCAL`), y **predicción inter-ligas**
+  (`predecir_partido_interligas`) con el Elo de ClubElo como puente.
+- **Torneo**: el Monte Carlo simula el **bracket de eliminatorias confirmado**
+  (`data/bracket_eliminatoria.json`) si existe, en vez de sembrar los grupos.
+- **QA**: backtest contra cuotas reales con **RPS**, **time-weighting** opcional
+  (Dixon-Coles) calibrable por RPS, calibración por contexto, auditoría anti-fuga.
 
-**Pendiente**: backtest multi-temporada; xT (StatsBomb) y nivel jugador/PSxG;
-score effects medidos.
+**Pendiente**: GUI para inter-ligas (modo "Competiciones Internacionales");
+xT (StatsBomb) y nivel jugador/PSxG; score effects medidos.
 </file>
 
 </files>

@@ -22,7 +22,7 @@ def aplicar_shrinkage(promedio_equipo, promedio_liga, n_partidos, k=5):
 def procesar_equipo(df_partidos, promedio_liga_xg_favor, promedio_liga_xg_contra,
                     promedio_liga_tiros, n_window=6, k_shrinkage=5,
                     ponderar_por_elo=True, suavizado="ewm", ewm_span=10,
-                    venue=None):
+                    venue=None, half_life_dias=180):
     """
     Convierte el historial de UN equipo en sus caracteristicas predictivas.
 
@@ -39,7 +39,10 @@ def procesar_equipo(df_partidos, promedio_liga_xg_favor, promedio_liga_xg_contra
     promedio_liga_* : float    Promedios del torneo para el shrinkage.
     n_window, ewm_span : int   Ventana y span del suavizado.
     k_shrinkage : int          Fuerza del shrinkage.
-    suavizado : "ewm" | "sma"  Tipo de promedio.
+    suavizado : "ewm" | "sma" | "tiempo"  Tipo de promedio. "tiempo" usa el
+        time-weighting de Dixon-Coles: cada partido pesa exp(-xi * dias) segun los
+        DIAS reales transcurridos (no su posicion), con xi = ln(2)/half_life_dias.
+    half_life_dias : int  Vida media del decaimiento temporal (solo "tiempo").
     venue : None | "Home" | "Away"  Filtra por sede (splits; off por defecto).
 
     Devuelve el DataFrame con todas las columnas de features anadidas.
@@ -63,7 +66,28 @@ def procesar_equipo(df_partidos, promedio_liga_xg_favor, promedio_liga_xg_contra
     # de datos). "ewm" (decaimiento exponencial) da mas peso a lo reciente
     # reflejando el "estado de forma"; "sma" es media movil simple. El span del
     # EWM se calibro contra el mercado (ver backtest_cuotas).
+    # Pesos del suavizado por tiempo (Dixon-Coles): para cada partido en curso,
+    # los anteriores pesan exp(-xi * dias_transcurridos). Solo depende de las
+    # fechas, asi que se calcula una vez y lo reusan todas las series. La mascara
+    # triangular (s antes que t por orden) evita la fuga de datos.
+    if suavizado == "tiempo":
+        _dias = (df_partidos['Date'] - df_partidos['Date'].min()).dt.days.to_numpy()
+        _n = len(_dias)
+        _dt = _dias[:, None] - _dias[None, :]
+        _prior = np.arange(_n)[:, None] > np.arange(_n)[None, :]
+        _xi = np.log(2) / max(half_life_dias, 1)
+        _W = np.where(_prior, np.exp(-_xi * np.clip(_dt, 0, None)), 0.0)
+
     def prom(serie):
+        if suavizado == "tiempo":
+            v = serie.to_numpy(dtype=float)
+            ok = ~np.isnan(v)
+            Wm = _W * ok[None, :]  # ignora partidos sin dato (xG ausente, etc.)
+            den = Wm.sum(axis=1)
+            num = Wm @ np.where(ok, v, 0.0)
+            nvalid = (Wm > 0).sum(axis=1)
+            out = np.divide(num, den, out=np.full(_n, np.nan), where=den > 0)
+            return pd.Series(np.where(nvalid >= min_p, out, np.nan), index=serie.index)
         s = serie.shift(1)
         if suavizado == "sma":
             return s.rolling(window=n_window, min_periods=min_p).mean()

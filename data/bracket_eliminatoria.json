@@ -1,0 +1,67 @@
+{
+  "tournament": "Mundial 2026 - Fase Eliminatoria",
+  "rounds": [
+    {
+      "round": "Dieciseisavos de final",
+      "matches": [
+        { "match_id": 73, "date": "2026-06-28", "venue": "Los Ángeles (SoFi Stadium)", "time": "Por confirmar", "team1": "Sudáfrica", "team2": "Canadá" },
+        { "match_id": 74, "date": "2026-06-29", "venue": "Boston (Gillette Stadium)", "time": "Por confirmar", "team1": "Alemania", "team2": "Paraguay" },
+        { "match_id": 75, "date": "2026-06-29", "venue": "Monterrey (Estadio BBVA)", "time": "Por confirmar", "team1": "Países Bajos", "team2": "Marruecos" },
+        { "match_id": 76, "date": "2026-06-29", "venue": "Houston (NRG Stadium)", "time": "Por confirmar", "team1": "Brasil", "team2": "Japón" },
+        { "match_id": 77, "date": "2026-06-30", "venue": "Nueva York/Nueva Jersey (MetLife Stadium)", "time": "Por confirmar", "team1": "Francia", "team2": "Suecia" },
+        { "match_id": 78, "date": "2026-06-30", "venue": "Dallas (AT&T Stadium)", "time": "Por confirmar", "team1": "Costa de Marfil", "team2": "Noruega" },
+        { "match_id": 79, "date": "2026-06-30", "venue": "Ciudad de México (Estadio Azteca)", "time": "Por confirmar", "team1": "México", "team2": "Ecuador" },
+        { "match_id": 80, "date": "2026-07-01", "venue": "Atlanta (Mercedes-Benz Stadium)", "time": "Por confirmar", "team1": "Inglaterra", "team2": "RD Congo" },
+        { "match_id": 81, "date": "2026-07-01", "venue": "Dallas (AT&T Stadium)", "time": "Por confirmar", "team1": "Estados Unidos", "team2": "Bosnia y Herzegovina" },
+        { "match_id": 82, "date": "2026-07-01", "venue": "Seattle (Lumen Field)", "time": "Por confirmar", "team1": "Bélgica", "team2": "Senegal" },
+        { "match_id": 83, "date": "2026-07-02", "venue": "Toronto (BMO Field)", "time": "Por confirmar", "team1": "Portugal", "team2": "Croacia" },
+        { "match_id": 84, "date": "2026-07-02", "venue": "Los Ángeles (SoFi Stadium)", "time": "Por confirmar", "team1": "España", "team2": "Austria" },
+        { "match_id": 85, "date": "2026-07-02", "venue": "San Francisco (Levi's Stadium)", "time": "Por confirmar", "team1": "Suiza", "team2": "Argelia" },
+        { "match_id": 86, "date": "2026-07-03", "venue": "Miami (Hard Rock Stadium)", "time": "Por confirmar", "team1": "Argentina", "team2": "Cabo Verde" },
+        { "match_id": 87, "date": "2026-07-03", "venue": "Kansas City (Arrowhead Stadium)", "time": "Por confirmar", "team1": "Colombia", "team2": "Ghana" },
+        { "match_id": 88, "date": "2026-07-03", "venue": "Vancouver (BC Place)", "time": "Por confirmar", "team1": "Australia", "team2": "Egipto" }
+      ]
+    },
+    {
+      "round": "Octavos de final",
+      "matches": [
+        { "match_id": 89, "date": "2026-07-04", "venue": "Filadelfia (Lincoln Financial Field)", "time": "Por confirmar", "team1": "W73", "team2": "W74" },
+        { "match_id": 90, "date": "2026-07-04", "venue": "Houston (NRG Stadium)", "time": "Por confirmar", "team1": "W75", "team2": "W76" },
+        { "match_id": 91, "date": "2026-07-05", "venue": "Nueva York/Nueva Jersey (MetLife Stadium)", "time": "Por confirmar", "team1": "W77", "team2": "W78" },
+        { "match_id": 92, "date": "2026-07-05", "venue": "Ciudad de México (Estadio Azteca)", "time": "Por confirmar", "team1": "W79", "team2": "W80" },
+        { "match_id": 93, "date": "2026-07-06", "venue": "Dallas (AT&T Stadium)", "time": "Por confirmar", "team1": "W81", "team2": "W82" },
+        { "match_id": 94, "date": "2026-07-06", "venue": "Seattle (Lumen Field)", "time": "Por confirmar", "team1": "W83", "team2": "W84" },
+        { "match_id": 95, "date": "2026-07-07", "venue": "Atlanta (Mercedes-Benz Stadium)", "time": "Por confirmar", "team1": "W85", "team2": "W86" },
+        { "match_id": 96, "date": "2026-07-07", "venue": "Vancouver (BC Place)", "time": "Por confirmar", "team1": "W87", "team2": "W88" }
+      ]
+    },
+    {
+      "round": "Cuartos de final",
+      "matches": [
+        { "match_id": 97, "date": "2026-07-09", "venue": "Boston (Gillette Stadium)", "time": "Por confirmar", "team1": "W89", "team2": "W90" },
+        { "match_id": 98, "date": "2026-07-10", "venue": "Los Ángeles (SoFi Stadium)", "time": "Por confirmar", "team1": "W91", "team2": "W92" },
+        { "match_id": 99, "date": "2026-07-11", "venue": "Miami (Hard Rock Stadium)", "time": "Por confirmar", "team1": "W93", "team2": "W94" },
+        { "match_id": 100, "date": "2026-07-11", "venue": "Kansas City (Arrowhead Stadium)", "time": "Por confirmar", "team1": "W95", "team2": "W96" }
+      ]
+    },
+    {
+      "round": "Semifinales",
+      "matches": [
+        { "match_id": 101, "date": "2026-07-14", "venue": "Dallas (AT&T Stadium)", "time": "Por confirmar", "team1": "W97", "team2": "W98" },
+        { "match_id": 102, "date": "2026-07-15", "venue": "Atlanta (Mercedes-Benz Stadium)", "time": "Por confirmar", "team1": "W99", "team2": "W100" }
+      ]
+    },
+    {
+      "round": "Tercer lugar",
+      "matches": [
+        { "match_id": 103, "date": "2026-07-18", "venue": "Miami (Hard Rock Stadium)", "time": "Por confirmar", "team1": "L101", "team2": "L102" }
+      ]
+    },
+    {
+      "round": "Final",
+      "matches": [
+        { "match_id": 104, "date": "2026-07-19", "venue": "Nueva York/Nueva Jersey (MetLife Stadium)", "time": "15:00 EDT", "team1": "W101", "team2": "W102" }
+      ]
+    }
+  ]
+}

@@ -6,6 +6,7 @@ equipo, igual que descargar_datos.py. soccerdata cachea por firma exacta de
 peticion, asi que esto reutiliza el cache local ya descargado.
 """
 import os
+import re
 from typing import List, Sequence
 
 import pandas as pd
@@ -27,6 +28,38 @@ COLUMNAS_REQUERIDAS = [
 # Archivo maestro limpio del Mundial. Se genera con descargar_datos.py y permite
 # que la prediccion sea 100% offline y rapida (sin tocar el cache de soccerdata).
 CSV_MAESTRO_MUNDIAL = data("base_mundial_2026.csv")
+
+
+def ruta_csv_liga(liga: str, temporada: str) -> str:
+    """
+    Ruta del CSV maestro de una liga de clubes: data/liga_<slug>_<temporada>.csv.
+
+    Mismo esquema y proposito que base_mundial_2026.csv pero por liga: permite que
+    la prediccion de clubes sea 100% offline (sin volver a parsear FBref cada vez).
+    El prefijo 'liga_' lo separa del 'base_mundial_' en .gitignore.
+    """
+    slug = re.sub(r"[^a-z0-9]+", "-", str(liga).lower()).strip("-")
+    return data(f"liga_{slug}_{temporada}.csv")
+
+
+def existe_csv_liga(liga: str, temporada: str) -> bool:
+    """True si ya hay un CSV maestro local para esa liga y temporada."""
+    return os.path.exists(ruta_csv_liga(liga, temporada))
+
+
+def _temporada_anterior(temporada: str):
+    """
+    Devuelve la temporada inmediatamente anterior, o None si no se puede inferir.
+    '2025-2026' -> '2024-2025'; '2026' -> '2025'.
+    """
+    t = str(temporada).strip()
+    if "-" in t:
+        a, b = t.split("-", 1)
+        if a.isdigit() and b.isdigit():
+            return f"{int(a) - 1}-{int(b) - 1}"
+    elif t.isdigit():
+        return str(int(t) - 1)
+    return None
 
 
 def _chequear_dependencia():
@@ -300,6 +333,78 @@ def actualizar_mundial(temporada: str = "2026", equipos: Sequence[str] = None,
     fbref = sd.FBref(leagues="INT-World Cup", seasons=temporada, no_cache=True)
     return actualizar_csv_maestro(fbref, equipos, pausa=pausa, verbose=verbose,
                                   callback=callback)
+
+
+def actualizar_liga_csv(liga: str, temporada: str, equipos: Sequence[str] = None,
+                        no_cache: bool = True, pausa: float = 0.0,
+                        verbose: bool = False, callback=None,
+                        temporada_previa: str = "auto",
+                        min_partidos: int = 5) -> dict:
+    """
+    Genera o actualiza incrementalmente el CSV maestro de una liga de CLUBES
+    (espejo de actualizar_mundial). Construye el historial normalizado de cada
+    equipo a partir de shooting/misc y lo fusiona con el CSV existente sin
+    duplicar partidos. A partir de ahi la prediccion lee el CSV (offline).
+
+    equipos: si es None, se enumeran del calendario de la liga (read_schedule).
+    pausa:   segundos entre equipos (anti-bloqueo de FBref); util en la 1a carga.
+
+    Arranque en frio (cold start): los equipos con menos de `min_partidos` en la
+    temporada actual se completan con su historial de `temporada_previa` (misma
+    liga), para que el shrinkage no los empuje al promedio. "auto" infiere la
+    temporada anterior; None lo desactiva. Nota: un ascendido cuya temporada
+    previa fue en OTRA division no tendra datos aqui y se omite.
+    """
+    import time
+
+    _chequear_dependencia()
+    fbref = sd.FBref(leagues=liga, seasons=temporada, no_cache=no_cache)
+    if equipos is None:
+        sched = _aplanar_columnas(fbref.read_schedule().reset_index())
+        equipos = obtener_equipos_liga(sched)
+    ruta = ruta_csv_liga(liga, temporada)
+    resumen = actualizar_csv_maestro(fbref, equipos, ruta=ruta, pausa=pausa,
+                                     verbose=verbose, callback=callback)
+
+    if temporada_previa == "auto":
+        temporada_previa = _temporada_anterior(temporada)
+    if not temporada_previa:
+        return resumen
+
+    # Equipos con pocos partidos en la temporada actual -> traer la anterior.
+    df = cargar_historial_csv(ruta)
+    conteo = (df.groupby("Team").size()
+              if ("Team" in df.columns and not df.empty) else pd.Series(dtype=int))
+    pocos = [eq for eq in equipos if int(conteo.get(eq, 0)) < min_partidos]
+    if not pocos:
+        return resumen
+
+    if verbose:
+        print(f"Arranque en frio: {len(pocos)} equipo(s) con <{min_partidos} "
+              f"partidos; completando con la temporada {temporada_previa}...")
+    fbref_prev = sd.FBref(leagues=liga, seasons=temporada_previa, no_cache=no_cache)
+    previos = []
+    for i, eq in enumerate(pocos, 1):
+        try:
+            dprev = construir_historial_equipo_directo(fbref_prev, eq)
+            dprev["Team"] = eq
+            previos.append(dprev)
+        except Exception as exc:
+            if verbose:
+                print(f"  (previa) sin datos para '{eq}': {exc}")
+        if pausa and i < len(pocos):
+            time.sleep(pausa)
+
+    if previos:
+        maestro = fusionar_historiales(cargar_historial_csv(ruta),
+                                       pd.concat(previos, ignore_index=True))
+        maestro.to_csv(ruta, index=False, encoding="utf-8")
+        resumen["cold_start_equipos"] = pocos
+        resumen["filas_con_previa"] = len(maestro)
+        if verbose:
+            print(f"Cold-start: CSV ampliado a {len(maestro)} filas "
+                  f"({len(previos)}/{len(pocos)} equipos con datos previos).")
+    return resumen
 
 
 def construir_historial_equipo(df_liga, nombre_equipo):

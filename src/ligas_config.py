@@ -119,12 +119,26 @@ def _limpiar_nombre_rival(opponent: str) -> str:
 
 
 def elo_de(opponent: str, default: float = ELO_REFERENCIA) -> float:
-    """Devuelve el Elo de un rival a partir del nombre que da FBref."""
+    """
+    Devuelve el Elo de un rival a partir del nombre que da FBref.
+
+    Orden: 1) selecciones del ranking nacional, 2) sus alias, 3) clubes via
+    ClubElo (cache local; solo ligas europeas), 4) ELO_REFERENCIA de respaldo.
+    El paso 3 usa import diferido para no crear dependencia circular ni tocar la
+    red: si no hay cache de ClubElo descargado, simplemente cae al default.
+    """
     nombre = _limpiar_nombre_rival(opponent)
     if nombre in ELO_RANKING:
         return ELO_RANKING[nombre]
     if nombre in ELO_ALIAS:
         return ELO_RANKING[ELO_ALIAS[nombre]]
+    try:
+        from club_elo import elo_club
+        elo = elo_club(nombre)
+        if elo is not None:
+            return elo
+    except Exception:
+        pass
     return default
 
 
@@ -147,6 +161,38 @@ TEMPORADAS = {
     "Serie A (Italia)": "2025-2026",
     "Ligue 1 (Francia)": "2025-2026",
 }
+
+# Temporada por defecto de cada liga (por codigo FBref), derivada de TEMPORADAS.
+TEMPORADA_POR_LIGA = {codigo: TEMPORADAS[nombre] for nombre, codigo in LIGAS.items()}
+
+
+def temporada_de(liga: str, default: str = "2025-2026") -> str:
+    """Temporada por defecto de una liga (por su codigo FBref)."""
+    return TEMPORADA_POR_LIGA.get(liga, default)
+
+
+# Ventaja de localia por liga: multiplicador del lambda del equipo local (solo
+# se aplica cuando neutral=False, es decir en clubes; el Mundial juega en sede
+# neutral). La localia NO es universal: en Europa, con viajes cortos y canchas
+# parejas, ronda 1.05-1.08; en Liga MX (altitud, clima, viajes largos, afición)
+# es bastante mayor. Claves = codigo de liga FBref. Lo no listado usa el valor
+# generico de PESOS_MODELO["factor_local"].
+FACTOR_LOCAL = {
+    "ENG-Premier League": 1.06,
+    "ESP-La Liga": 1.08,
+    "ITA-Serie A": 1.08,
+    "GER-Bundesliga": 1.07,
+    "FRA-Ligue 1": 1.07,
+    "MEX-Liga MX": 1.16,
+}
+
+
+def factor_local_de(liga: str, default: float | None = None) -> float:
+    """Multiplicador de localia de una liga (default = PESOS_MODELO['factor_local'])."""
+    if default is None:
+        default = PESOS_MODELO["factor_local"]
+    return FACTOR_LOCAL.get(liga, default)
+
 
 # 48 equipos clasificados al Mundial 2026.
 # Los nombres apuntan a la forma inglesa/FBref mas probable. Si soccerdata

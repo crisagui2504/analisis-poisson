@@ -21,13 +21,15 @@ for _sub in ("", "modelo", "datos", "interfaz", "analisis"):
     if _ruta not in _sys.path:
         _sys.path.insert(0, _ruta)
 
+import json
+import os
 import sys
 
 import numpy as np
 import pandas as pd
 
 from rutas import data
-from ligas_config import GRUPOS_MUNDIAL, cargar_grupos, elo_de
+from ligas_config import GRUPOS_MUNDIAL, NOMBRE_DISPLAY, cargar_grupos, elo_de
 from ingest_fbref import cargar_historial_csv, construir_historial_equipo, existe_csv_maestro
 from feature_engineering import procesar_equipo, ultima_fila_valida
 from calcular_lambdas import calcular_lambdas
@@ -37,41 +39,79 @@ from predecir_partido import _cargar_promedios_liga
 RONDAS = ["16avos", "Octavos", "Cuartos", "Semis", "Final", "Campeon"]
 SALIDA_CSV = data("montecarlo_resultados.csv")
 
+# Bracket de eliminatorias confirmado (cruces reales). Si este JSON existe, la
+# simulacion lo usa en vez de sembrar las eliminatorias a partir de los grupos.
+BRACKET_JSON_PATH = data("bracket_eliminatoria.json")
 
-def construir_modelo(grupos=None, rho: float = -0.05, k_shrinkage: int = 5):
-    """Calcula la fila de features y el Elo de cada seleccion UNA sola vez."""
+# Nombre de ronda del bracket -> etiqueta interna de progreso (RONDAS). El
+# partido por el tercer lugar no es una ronda de avance: se ignora aqui.
+_RONDA_A_ETAPA = {
+    "Dieciseisavos de final": "16avos",
+    "Octavos de final": "Octavos",
+    "Cuartos de final": "Cuartos",
+    "Semifinales": "Semis",
+    "Final": "Final",
+}
+
+
+def construir_modelo(equipos, rho: float = -0.05, k_shrinkage: int = 5):
+    """
+    Calcula la fila de features y el Elo de cada seleccion UNA sola vez.
+
+    `equipos` es un iterable de nombres FBref (se deduplican conservando orden).
+    """
     if not existe_csv_maestro():
         raise SystemExit(
             "Falta base_mundial_2026.csv. Ejecuta descargar_datos.py "
             "(o actualizar_datos.py) para generarlo."
         )
 
-    if grupos is None:
-        grupos = cargar_grupos()
     df = cargar_historial_csv()
     prom = _cargar_promedios_liga()
     feats, elos = {}, {}
     faltantes = []
-    for equipos in grupos.values():
-        for eq in equipos:
-            if eq in feats:
-                continue
-            try:
-                hist = construir_historial_equipo(df, eq)
-                fila = ultima_fila_valida(
-                    procesar_equipo(hist, prom["xg_favor"], prom["xg_contra"],
-                                    prom["sot"], k_shrinkage=k_shrinkage)
-                )
-            except Exception:
-                fila = None
-            if fila is None:
-                faltantes.append(eq)
-            else:
-                feats[eq] = fila
-                elos[eq] = elo_de(eq)
+    for eq in dict.fromkeys(equipos):  # dedup preservando el orden
+        try:
+            hist = construir_historial_equipo(df, eq)
+            fila = ultima_fila_valida(
+                procesar_equipo(hist, prom["xg_favor"], prom["xg_contra"],
+                                prom["sot"], k_shrinkage=k_shrinkage)
+            )
+        except Exception:
+            fila = None
+        if fila is None:
+            faltantes.append(eq)
+        else:
+            feats[eq] = fila
+            elos[eq] = elo_de(eq)
     if faltantes:
         print(f"Aviso: sin datos suficientes para {faltantes}. Se usara Elo de respaldo.")
     return feats, elos, rho
+
+
+def cargar_bracket():
+    """Devuelve el bracket de eliminatorias confirmado (dict) si existe el JSON."""
+    if not os.path.exists(BRACKET_JSON_PATH):
+        return None
+    try:
+        with open(BRACKET_JSON_PATH, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return None
+
+
+def _a_fbref(nombre):
+    """Traduce un nombre en espanol del bracket al nombre FBref del modelo."""
+    return NOMBRE_DISPLAY.get(nombre, nombre)
+
+
+def equipos_del_bracket(bracket):
+    """Lista de equipos (FBref) de la primera ronda del bracket, en orden."""
+    equipos = []
+    for m in bracket["rounds"][0]["matches"]:
+        equipos.append(_a_fbref(m["team1"]))
+        equipos.append(_a_fbref(m["team2"]))
+    return equipos
 
 
 def crear_sampler(feats, elos, rho):
@@ -167,24 +207,79 @@ def simular_torneo(rng, dist, grupos):
     return etapa
 
 
+def simular_bracket(rng, dist, bracket):
+    """
+    Juega UNA vez el bracket de eliminatorias confirmado y devuelve
+    dict equipo -> etapa mas avanzada alcanzada.
+
+    Resuelve las referencias del bracket: 'W73' = ganador del partido 73,
+    'L101' = perdedor del partido 101, y cualquier otro valor es el nombre
+    (en espanol) de un equipo ya clasificado. Los empates se resuelven con un
+    volado 50/50 (penales). El partido por el tercer lugar se juega pero no
+    cuenta como ronda de avance.
+    """
+    ganador, perdedor, etapa = {}, {}, {}
+
+    def resolver(ref):
+        if isinstance(ref, str) and len(ref) > 1 and ref[0] in "WL" and ref[1:].isdigit():
+            mid = int(ref[1:])
+            return ganador[mid] if ref[0] == "W" else perdedor[mid]
+        return _a_fbref(ref)
+
+    for ronda in bracket["rounds"]:
+        etiqueta = _RONDA_A_ETAPA.get(ronda["round"])  # None en 'Tercer lugar'
+        for m in ronda["matches"]:
+            a, b = resolver(m["team1"]), resolver(m["team2"])
+            if etiqueta:  # ambos jugaron esta ronda
+                etapa[a] = etiqueta
+                etapa[b] = etiqueta
+            gi, gj = _marcador(rng, dist, a, b)
+            if gi > gj:
+                g, p = a, b
+            elif gj > gi:
+                g, p = b, a
+            else:
+                g, p = (a, b) if rng.random() < 0.5 else (b, a)  # penales
+            ganador[m["match_id"]] = g
+            perdedor[m["match_id"]] = p
+
+    # El ganador de la Final (ultima ronda del bracket) es el campeon.
+    final = bracket["rounds"][-1]["matches"][0]
+    etapa[ganador[final["match_id"]]] = "Campeon"
+    return etapa
+
+
 def correr(n_sim: int = 10000, semilla: int = 42, grupos=None) -> pd.DataFrame:
     """
     Corre la simulacion completa: precalcula el modelo una vez y juega el torneo
     `n_sim` veces. Cuenta cuantas veces cada seleccion llega a cada ronda y
     devuelve un DataFrame ordenado por % de titulo (lo guarda en
-    data/montecarlo_resultados.csv). `grupos` por defecto = cargar_grupos().
-    """
-    if grupos is None:
-        grupos = cargar_grupos()
-    feats, elos, rho = construir_modelo(grupos)
-    dist = crear_sampler(feats, elos, rho)
-    rng = np.random.default_rng(semilla)
+    data/montecarlo_resultados.csv).
 
-    equipos = [t for g in grupos.values() for t in g]
+    Si existe data/bracket_eliminatoria.json, las eliminatorias se juegan con
+    los cruces reales confirmados (los 32 equipos de ese bracket). Si no, se
+    simula la fase de grupos completa y se siembran las eliminatorias a partir
+    de `grupos` (por defecto = cargar_grupos()).
+    """
+    bracket = cargar_bracket()
+    if bracket is not None:
+        equipos = equipos_del_bracket(bracket)
+        feats, elos, rho = construir_modelo(equipos)
+        dist = crear_sampler(feats, elos, rho)
+        simular = lambda rng: simular_bracket(rng, dist, bracket)
+    else:
+        if grupos is None:
+            grupos = cargar_grupos()
+        equipos = [t for g in grupos.values() for t in g]
+        feats, elos, rho = construir_modelo(equipos)
+        dist = crear_sampler(feats, elos, rho)
+        simular = lambda rng: simular_torneo(rng, dist, grupos)
+
+    rng = np.random.default_rng(semilla)
     cont = {t: {r: 0 for r in RONDAS} for t in equipos}
 
     for _ in range(n_sim):
-        etapa = simular_torneo(rng, dist, grupos)
+        etapa = simular(rng)
         for t, e in etapa.items():
             # Llegar a la etapa e implica haber alcanzado todas las rondas
             # previas (un semifinalista tambien jugo cuartos, etc.), pero NO las
