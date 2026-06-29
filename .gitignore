@@ -9,6 +9,7 @@ venv/
 montecarlo_resultados.csv
 resultados_backtest.csv
 data/grupos_mundial.json
+elo_override.json
 club_elo.csv
 liga_*.csv
 

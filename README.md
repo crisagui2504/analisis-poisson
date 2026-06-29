@@ -113,6 +113,10 @@ py -3.11 src/datos/descargar_liga_csv.py "ENG-Premier League"   # genera liga_*.
 
 # Elo de clubes (ClubElo): reactiva SoS y jerarquía en ligas; puente inter-ligas
 py -3.11 src/datos/descargar_club_elo.py
+
+# Elo de selecciones al día: recalcula ELO_RANKING desde los resultados del Mundial
+py -3.11 src/datos/actualizar_elo.py            # desde el inicio del torneo
+py -3.11 src/datos/actualizar_elo.py 2026-06-11 # desde una fecha
 ```
 Para activar **football-data.org**: copia `apis.example.json` → `apis.local.json`
 (no se sube a git) y pega tu key gratis. Detalle en
@@ -173,10 +177,15 @@ calibran contra el mercado; los defaults son **por contexto**:
 - **Clubes**: **Elo de ClubElo** (reactiva SoS y jerarquía fuera del Mundial),
   **localía por liga** (`FACTOR_LOCAL`), y **predicción inter-ligas**
   (`predecir_partido_interligas`) con el Elo de ClubElo como puente.
+- **Elo de selecciones dinámico**: `actualizar_elo.py` recalcula `ELO_RANKING`
+  desde los resultados del Mundial (fórmula Elo + bono por margen) a un override
+  que `ligas_config` aplica solo. Calibración de **`peso_elo`** por RPS y
+  **penales sesgados por Elo** en el Monte Carlo.
 - **Torneo**: el Monte Carlo simula el **bracket de eliminatorias confirmado**
   (`data/bracket_eliminatoria.json`) si existe, en vez de sembrar los grupos.
 - **QA**: backtest contra cuotas reales con **RPS**, **time-weighting** opcional
   (Dixon-Coles) calibrable por RPS, calibración por contexto, auditoría anti-fuga.
 
 **Pendiente**: GUI para inter-ligas (modo "Competiciones Internacionales");
-xT (StatsBomb) y nivel jugador/PSxG; score effects medidos.
+Elo de clubes para Liga MX (ClubElo no la cubre); xT (StatsBomb) y nivel
+jugador/PSxG; score effects medidos.

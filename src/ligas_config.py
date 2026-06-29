@@ -106,6 +106,33 @@ ELO_ALIAS = {
     "DR Congo": "Congo DR", "Bosnia": "Bosnia & Herz.", "Cape Verde": "Cabo Verde",
 }
 
+# Prior "a mano" del Elo (pre-torneo), congelado antes de aplicar cualquier
+# override. src/datos/actualizar_elo.py parte SIEMPRE de aqui para no acumular
+# actualizaciones entre corridas.
+ELO_RANKING_BASE = dict(ELO_RANKING)
+
+# Override del Elo recalculado desde los resultados del Mundial. Si el JSON
+# existe, sus valores SOBREESCRIBEN ELO_RANKING al importar este modulo, de modo
+# que todo el modelo (predecir, Monte Carlo, SoS, penales) usa el Elo al dia sin
+# tocar el codigo. Lo genera src/datos/actualizar_elo.py.
+ELO_OVERRIDE_PATH = data("elo_override.json")
+
+
+def _aplicar_elo_override():
+    """Funde el override de Elo (si existe) sobre ELO_RANKING, en sitio."""
+    if not os.path.exists(ELO_OVERRIDE_PATH):
+        return
+    try:
+        with open(ELO_OVERRIDE_PATH, "r", encoding="utf-8") as f:
+            override = json.load(f)
+        if isinstance(override, dict):
+            ELO_RANKING.update({k: float(v) for k, v in override.items()})
+    except Exception:
+        pass
+
+
+_aplicar_elo_override()
+
 
 def _limpiar_nombre_rival(opponent: str) -> str:
     """FBref antepone un codigo de pais ('sa Saudi Arabia'). Lo quitamos."""

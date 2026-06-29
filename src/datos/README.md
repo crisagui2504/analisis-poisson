@@ -18,6 +18,16 @@ Núcleo de la ingesta desde FBref (vía `soccerdata`) y de la base maestra.
 - **`actualizar_csv_maestro(...)` / `actualizar_mundial()`** — actualizan el CSV
   agregando solo partidos nuevos.
 - **`exportar_historiales_csv(...)`** — genera la base maestra desde cero.
+- **`ruta_csv_liga(liga, temporada)` / `actualizar_liga_csv(...)`** — base maestra
+  **por liga de clubes** (espejo del Mundial) con **cold-start** (concatena la
+  temporada anterior para equipos con pocos partidos).
+- **`promedios_desde_csv(equipos=None)`** — promedios del torneo desde la base
+  maestra, filtrable (lo usa el bracket para promediar solo clasificados).
+
+### `club_elo.py` — Elo de clubes (ClubElo)
+- **`descargar_club_elo()`** baja el snapshot a `data/club_elo.csv`;
+  **`elo_club(nombre)`** lo lee del caché con normalización + alias. Solo ligas
+  europeas. Lo consulta `ligas_config.elo_de()` como respaldo para clubes.
 
 ### `proveedores.py` — capa de fuentes intercambiables (plug-in)
 - **`ProveedorDatos`** — contrato común. Cada API es una subclase independiente.
@@ -34,6 +44,11 @@ Núcleo de la ingesta desde FBref (vía `soccerdata`) y de la base maestra.
 - **`descargar_datos.py`** — descarga **completa** del Mundial (lenta, con pausas).
 - **`calcular_promedios_liga.py`** — genera `data/promedios_liga.json` desde el
   caché HTML local de soccerdata (sin red).
+- **`descargar_club_elo.py`** — refresca el caché de Elo de clubes (ClubElo).
+- **`descargar_liga_csv.py`** — genera/actualiza la base maestra de una liga de
+  clubes (predicción offline e instantánea).
+- **`actualizar_elo.py`** — recalcula el Elo de **selecciones** desde los
+  resultados del Mundial a `data/elo_override.json` (lo aplica `ligas_config`).
 
 ## API keys
 Copia `apis.example.json` (en la raíz) a **`apis.local.json`** y pega tu clave, o
