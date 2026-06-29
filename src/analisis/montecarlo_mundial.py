@@ -30,7 +30,8 @@ import pandas as pd
 
 from rutas import data
 from ligas_config import GRUPOS_MUNDIAL, NOMBRE_DISPLAY, cargar_grupos, elo_de
-from ingest_fbref import cargar_historial_csv, construir_historial_equipo, existe_csv_maestro
+from ingest_fbref import (cargar_historial_csv, construir_historial_equipo,
+                          existe_csv_maestro, promedios_desde_csv)
 from feature_engineering import procesar_equipo, ultima_fila_valida
 from calcular_lambdas import calcular_lambdas
 from matriz_poisson import generar_matriz_poisson
@@ -54,11 +55,14 @@ _RONDA_A_ETAPA = {
 }
 
 
-def construir_modelo(equipos, rho: float = -0.05, k_shrinkage: int = 5):
+def construir_modelo(equipos, rho: float = -0.05, k_shrinkage: int = 5,
+                     promedios=None):
     """
     Calcula la fila de features y el Elo de cada seleccion UNA sola vez.
 
     `equipos` es un iterable de nombres FBref (se deduplican conservando orden).
+    `promedios` (xg_favor/xg_contra/sot) sustituye a los del JSON si se pasa; lo
+    usa el bracket para promediar solo sobre los equipos clasificados.
     """
     if not existe_csv_maestro():
         raise SystemExit(
@@ -67,7 +71,7 @@ def construir_modelo(equipos, rho: float = -0.05, k_shrinkage: int = 5):
         )
 
     df = cargar_historial_csv()
-    prom = _cargar_promedios_liga()
+    prom = promedios if promedios is not None else _cargar_promedios_liga()
     feats, elos = {}, {}
     faltantes = []
     for eq in dict.fromkeys(equipos):  # dedup preservando el orden
@@ -147,18 +151,34 @@ def _marcador(rng, dist, a, b):
     return divmod(idx, n)
 
 
-def _ganador(rng, dist, a, b):
+# Cuanto inclina la diferencia de Elo la tanda de penales hacia el favorito.
+# 0 = volado 50/50; 1 = expectativa Elo pura. ~0.5 da ~57/43 a un claro favorito
+# (Elo +100), reflejando que los penales son mas azar que el juego abierto.
+PESO_PENALES_ELO = 0.5
+
+
+def _gana_penales(rng, a, b, elos):
+    """Resuelve una tanda de penales sesgada por la diferencia de Elo (comprimida
+    hacia 50/50 por PESO_PENALES_ELO). Devuelve el equipo que avanza."""
+    ea = elos.get(a, elo_de(a))
+    eb = elos.get(b, elo_de(b))
+    e = 1.0 / (1.0 + 10 ** ((eb - ea) / 400.0))   # expectativa Elo de a (0..1)
+    p = 0.5 + PESO_PENALES_ELO * (e - 0.5)
+    return a if rng.random() < p else b
+
+
+def _ganador(rng, dist, a, b, elos):
     """Devuelve el ganador de un cruce de eliminatoria: sortea el marcador y, si
-    hay empate, lo resuelve con un volado 50/50 (penales)."""
+    hay empate, lo resuelve por penales sesgados segun el Elo."""
     gi, gj = _marcador(rng, dist, a, b)
     if gi > gj:
         return a
     if gj > gi:
         return b
-    return a if rng.random() < 0.5 else b  # penales
+    return _gana_penales(rng, a, b, elos)
 
 
-def simular_torneo(rng, dist, grupos):
+def simular_torneo(rng, dist, grupos, elos):
     """Juega un Mundial completo y devuelve dict equipo -> etapa mas avanzada."""
     primeros_segundos, terceros = [], []
 
@@ -199,7 +219,7 @@ def simular_torneo(rng, dist, grupos):
         siguiente = []
         for i in range(len(ronda) // 2):
             a, b = ronda[i], ronda[len(ronda) - 1 - i]
-            g = _ganador(rng, dist, a, b)
+            g = _ganador(rng, dist, a, b, elos)
             siguiente.append(g)
             etapa[g] = RONDAS[nombre_idx]
         ronda = siguiente
@@ -207,15 +227,15 @@ def simular_torneo(rng, dist, grupos):
     return etapa
 
 
-def simular_bracket(rng, dist, bracket):
+def simular_bracket(rng, dist, bracket, elos):
     """
     Juega UNA vez el bracket de eliminatorias confirmado y devuelve
     dict equipo -> etapa mas avanzada alcanzada.
 
     Resuelve las referencias del bracket: 'W73' = ganador del partido 73,
     'L101' = perdedor del partido 101, y cualquier otro valor es el nombre
-    (en espanol) de un equipo ya clasificado. Los empates se resuelven con un
-    volado 50/50 (penales). El partido por el tercer lugar se juega pero no
+    (en espanol) de un equipo ya clasificado. Los empates se resuelven por
+    penales sesgados segun el Elo. El partido por el tercer lugar se juega pero no
     cuenta como ronda de avance.
     """
     ganador, perdedor, etapa = {}, {}, {}
@@ -239,7 +259,8 @@ def simular_bracket(rng, dist, bracket):
             elif gj > gi:
                 g, p = b, a
             else:
-                g, p = (a, b) if rng.random() < 0.5 else (b, a)  # penales
+                g = _gana_penales(rng, a, b, elos)  # penales sesgados por Elo
+                p = b if g == a else a
             ganador[m["match_id"]] = g
             perdedor[m["match_id"]] = p
 
@@ -264,16 +285,19 @@ def correr(n_sim: int = 10000, semilla: int = 42, grupos=None) -> pd.DataFrame:
     bracket = cargar_bracket()
     if bracket is not None:
         equipos = equipos_del_bracket(bracket)
-        feats, elos, rho = construir_modelo(equipos)
+        # En eliminatorias, promedia el shrinkage solo sobre los clasificados
+        # (los debiles ya cayeron): media mas representativa para octavos+.
+        prom_clasif = promedios_desde_csv(equipos)
+        feats, elos, rho = construir_modelo(equipos, promedios=prom_clasif)
         dist = crear_sampler(feats, elos, rho)
-        simular = lambda rng: simular_bracket(rng, dist, bracket)
+        simular = lambda rng: simular_bracket(rng, dist, bracket, elos)
     else:
         if grupos is None:
             grupos = cargar_grupos()
         equipos = [t for g in grupos.values() for t in g]
         feats, elos, rho = construir_modelo(equipos)
         dist = crear_sampler(feats, elos, rho)
-        simular = lambda rng: simular_torneo(rng, dist, grupos)
+        simular = lambda rng: simular_torneo(rng, dist, grupos, elos)
 
     rng = np.random.default_rng(semilla)
     cont = {t: {r: 0 for r in RONDAS} for t in equipos}

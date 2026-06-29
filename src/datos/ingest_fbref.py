@@ -144,6 +144,29 @@ def cargar_historial_csv(ruta: str = CSV_MAESTRO_MUNDIAL) -> pd.DataFrame:
     return df
 
 
+def promedios_desde_csv(equipos=None, ruta: str = CSV_MAESTRO_MUNDIAL) -> dict:
+    """
+    Calcula los promedios del torneo (xg_favor / xg_contra / sot) desde la base
+    maestra, opcionalmente solo para `equipos`. 100% offline (no toca el cache
+    HTML). Usa xG si existe y si no GF/GA, igual que el shrinkage del modelo.
+
+    Util en eliminatorias: pasando solo los equipos clasificados, la media deja
+    de estar contaminada por los equipos debiles ya eliminados.
+    """
+    df = cargar_historial_csv(ruta)
+    if equipos is not None:
+        df = df[df["Team"].isin(set(equipos))]
+    favor = df["xG"].where(df["xG"].notna(), df["GF"]) if "xG" in df else df["GF"]
+    contra = df["xGA"].where(df["xGA"].notna(), df["GA"]) if "xGA" in df else df["GA"]
+    sot = pd.to_numeric(df.get("SoT"), errors="coerce")
+    sot = sot[sot > 0]  # los 0 son placeholders de FBref para selecciones
+    return {
+        "xg_favor": round(float(favor.mean()), 4) if favor.notna().any() else 1.3,
+        "xg_contra": round(float(contra.mean()), 4) if contra.notna().any() else 1.3,
+        "sot": round(float(sot.mean()), 4) if not sot.empty else 4.5,
+    }
+
+
 CLAVES_PARTIDO = ["Team", "Date", "Opponent"]
 
 

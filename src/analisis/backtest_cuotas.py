@@ -32,6 +32,7 @@ from sklearn.metrics import log_loss
 from feature_engineering import procesar_equipo, ultima_fila_valida
 from calcular_lambdas import calcular_lambdas
 from matriz_poisson import generar_matriz_poisson
+from ligas_config import elo_de, PESOS_MODELO
 
 # Códigos de liga de Football-Data.co.uk
 LIGAS_FD = {
@@ -175,6 +176,54 @@ def calibrar(dfs, rhos=(-0.20, -0.15, -0.13, -0.10, -0.05, 0.0),
     return pd.DataFrame(filas).sort_values("log_loss").reset_index(drop=True)
 
 
+def calibrar_peso_elo(dfs, pesos_elo=(0.0, 0.15, 0.30, 0.45, 0.65, 0.85),
+                      rho=-0.05, k=2, min_previos=5):
+    """
+    Barrido del empuje por Elo (`peso_elo`) usando el Elo de ClubElo de cada club,
+    midiendo log_loss y RPS sin fuga de datos. Responde si el 0.65 fijo ayuda o si
+    aplasta las senales de forma/tiros: `peso_elo=0` = sin empuje por Elo.
+
+    Las features de cada partido se calculan una vez (dependen de k, no de
+    peso_elo) y se reusan en todo el barrido. Los clubes que no casan con ClubElo
+    caen a ELO_REFERENCIA (sin empuje para ese partido). Devuelve un DataFrame
+    ordenado por RPS (menor = mejor).
+    """
+    base = []  # (fila_local, fila_visit, elo_local, elo_visit, y)
+    for df in dfs:
+        hist = historial_desde_cuotas(df)
+        dfo = df.sort_values("Date").reset_index(drop=True)
+        for _, m in dfo.iterrows():
+            local, visit, fecha = m["HomeTeam"], m["AwayTeam"], m["Date"]
+            h_loc = hist[(hist["Team"] == local) & (hist["Date"] < fecha)]
+            h_vis = hist[(hist["Team"] == visit) & (hist["Date"] < fecha)]
+            if len(h_loc) < min_previos or len(h_vis) < min_previos:
+                continue
+            prom = hist[hist["Date"] < fecha]["GF"].mean()
+            f_loc = ultima_fila_valida(procesar_equipo(h_loc, prom, prom, 4.5, k_shrinkage=k))
+            f_vis = ultima_fila_valida(procesar_equipo(h_vis, prom, prom, 4.5, k_shrinkage=k))
+            if f_loc is None or f_vis is None:
+                continue
+            y = 0 if m["FTR"] == "H" else 1 if m["FTR"] == "D" else 2
+            base.append((f_loc, f_vis, elo_de(local), elo_de(visit), y))
+
+    filas = []
+    for pe in pesos_elo:
+        pesos = {**PESOS_MODELO, "peso_elo": pe}
+        probs, ys = [], []
+        for f_loc, f_vis, el, ev, y in base:
+            lam_l, lam_v = calcular_lambdas(f_loc, f_vis, neutral=False, pesos=pesos,
+                                            elo_local=el, elo_visitante=ev)
+            mat = generar_matriz_poisson(lam_l, lam_v, rho=rho)
+            probs.append([float(np.sum(np.tril(mat, -1))), float(np.sum(np.diag(mat))),
+                          float(np.sum(np.triu(mat, 1)))])
+            ys.append(y)
+        if probs:
+            mt = metricas(np.array(probs), np.array(ys))
+            filas.append({"peso_elo": pe, "n": len(ys), "rps": mt["rps"],
+                          "log_loss": mt["log_loss"], "acierto": mt["acierto"]})
+    return pd.DataFrame(filas).sort_values("rps").reset_index(drop=True)
+
+
 def metricas(probs, y):
     """Calidad de unas probabilidades vs el resultado real: log_loss, Brier, RPS
     y % de acierto. `probs` es Nx3 (local/empate/visitante), `y` el indice real.
@@ -265,3 +314,14 @@ if __name__ == "__main__":
             print(f"{r['suavizado']:12}{hl:>10}{r['rps']:>9.4f}"
                   f"{r['log_loss']:>10.4f}{r['acierto']*100:>8.1f}%")
         print("  (menor RPS = mejor; si ninguno bate al EWM, el EWM ya era suficiente)")
+
+    # Calibracion opcional de peso_elo (empuje por Elo de ClubElo) por RPS:
+    #   py -3.11 src/analisis/backtest_cuotas.py E0 2425 calibrar-elo
+    if "calibrar-elo" in sys.argv:
+        print("\nCalibracion de peso_elo (Elo de ClubElo) por RPS:")
+        tabla_pe = calibrar_peso_elo([df])
+        print(f"{'peso_elo':>9}{'rps':>9}{'log_loss':>10}{'acierto':>9}")
+        for _, r in tabla_pe.iterrows():
+            print(f"{r['peso_elo']:>9.2f}{r['rps']:>9.4f}"
+                  f"{r['log_loss']:>10.4f}{r['acierto']*100:>8.1f}%")
+        print("  (si gana peso_elo~0, el 0.65 fijo estaba aplastando forma/tiros en clubes)")
